@@ -9,7 +9,8 @@ export const MIGRATION_STATUSES = [
   'Change Request On Progress',
   'Hold By Owner',
   'Hold By IT',
-  'Hold By Client/Vendor'
+  'Hold By Client/Vendor',
+  'Canceled'
 ];
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -23,5 +24,6 @@ export const STATUS_COLORS: Record<string, string> = {
   'Change Request On Progress': 'bg-pink-900/50 text-pink-300 border-pink-700',
   'Hold By Owner': 'bg-red-900/50 text-red-300 border-red-700',
   'Hold By IT': 'bg-red-900/50 text-red-300 border-red-700',
-  'Hold By Client/Vendor': 'bg-red-900/50 text-red-300 border-red-700'
+  'Hold By Client/Vendor': 'bg-red-900/50 text-red-300 border-red-700',
+  'Canceled': 'bg-red-950/50 text-red-400 border-red-900'
 };
