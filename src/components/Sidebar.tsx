@@ -16,7 +16,8 @@ import {
   ChevronRight,
   Zap,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Database
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { cn } from '../lib/utils';
@@ -47,6 +48,7 @@ export function Sidebar({
   const userRole = user?.access_level || 'PIC';
 
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
+  const [isNotionExpanded, setIsNotionExpanded] = useState(true);
 
   // Sub-items for Project List
   const projectSubItems = [
@@ -61,7 +63,14 @@ export function Sidebar({
     { id: 'TOR_MONITOR', label: 'Om Dedy Tor Monitor', icon: ShieldCheck, path: '/tor-monitor', roles: ['Admin', 'Superadmin'] },
   ];
 
+  // Sub-items for Notion
+  const notionSubItems = [
+    { id: 'NOTION_MIGRATE', label: 'Om Dedy Migrate Notion', icon: Database, path: '/notion-migrate', roles: undefined },
+    { id: 'NOTION_MONITORING', label: 'Om Dedy Notion Monitoring', icon: LayoutGrid, path: '/notion-monitoring', roles: undefined },
+  ];
+
   const isSubMenuActive = projectSubItems.some(item => activeView === item.id) || activeView === 'PROJECTS';
+  const isNotionMenuActive = notionSubItems.some(item => activeView === item.id);
 
   // Auto-expand if sub-menu is active
   useEffect(() => {
@@ -69,6 +78,12 @@ export function Sidebar({
       setIsProjectsExpanded(true);
     }
   }, [isSubMenuActive]);
+
+  useEffect(() => {
+    if (isNotionMenuActive) {
+      setIsNotionExpanded(true);
+    }
+  }, [isNotionMenuActive]);
 
   const mainMenuItems = [
     { id: 'KANBAN', label: 'Status Monitoring', icon: LayoutGrid, path: '/kanban' },
@@ -166,6 +181,70 @@ export function Sidebar({
           {isOpen && isProjectsExpanded && (
             <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
               {projectSubItems.map((item) => (
+                <SidebarItem
+                  key={item.id}
+                  to={item.path}
+                  label={item.label}
+                  icon={item.icon}
+                  isOpen={isOpen}
+                  isActive={activeView === item.id}
+                  roles={item.roles}
+                  userRole={userRole}
+                  showDot={(item as any).showDot}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Notion Group */}
+        <div className="mb-2">
+          <div 
+            onClick={() => {
+              if (isOpen) {
+                setIsNotionExpanded(!isNotionExpanded);
+              } else {
+                setIsOpen(true);
+                setIsNotionExpanded(true);
+              }
+              navigate('/notion-monitoring');
+            }}
+            className={cn(
+              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
+              isNotionMenuActive 
+                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+            )}
+          >
+            <div className="flex items-center">
+              <Database className={cn(
+                "w-5 h-5 shrink-0 transition-colors z-10", 
+                isNotionMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"
+              )} />
+              {isOpen && (
+                <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">
+                  Om Dedy Notion
+                </span>
+              )}
+            </div>
+            {isOpen && (
+              isNotionExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />
+            )}
+            
+            {isNotionMenuActive && (
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />
+            )}
+            
+            {!isOpen && (
+              <div className="absolute left-full ml-2 px-3 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap shadow-xl pointer-events-none z-50 transition-opacity">
+                Om Dedy Notion
+              </div>
+            )}
+          </div>
+
+          {isOpen && isNotionExpanded && (
+            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+              {notionSubItems.map((item) => (
                 <SidebarItem
                   key={item.id}
                   to={item.path}

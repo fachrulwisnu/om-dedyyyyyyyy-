@@ -96,7 +96,21 @@ export interface AuditLog {
 }
 
 export type ViewScale = 'MONTH' | 'WEEK' | 'DAY';
-export type AppView = 'PROJECTS' | 'KANBAN' | 'PERSONEL' | 'AUDIT' | 'GANTT_DETAIL' | 'SCHEDULE' | 'RESCHEDULE' | 'LOGIN' | 'MASTER_PROJECT' | 'TOR_MONITOR' | 'TIMELINE';
+export type AppView = 'PROJECTS' | 'KANBAN' | 'PERSONEL' | 'AUDIT' | 'GANTT_DETAIL' | 'SCHEDULE' | 'RESCHEDULE' | 'LOGIN' | 'MASTER_PROJECT' | 'TOR_MONITOR' | 'TIMELINE' | 'NOTION_MIGRATE' | 'NOTION_MONITORING';
+
+export interface MigrateNotion {
+  id: string;
+  ticket_id: string | null;
+  project_name: string;
+  last_status: string;
+  pic_name: string;
+  owner_div: string | null;
+  owner_name: string | null;
+  project_type: string;
+  last_update_log: string | null;
+  raw_data: any;
+  created_at: string;
+}
 
 export interface Schedule {
   id: string;

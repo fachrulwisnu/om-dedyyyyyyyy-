@@ -51,7 +51,8 @@ import {
   Upload,
   Download,
   Filter,
-  Copy
+  Copy,
+  Database
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -117,6 +118,8 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { MasterProject as MasterProjectHub } from './components/MasterProject';
 import { TicketSelector } from './components/TicketSelector';
 import { TorMonitor } from './components/TorMonitor';
+import { NotionMigrationBoard } from './components/NotionMigrationBoard';
+import { NotionMonitoring } from './components/NotionMonitoring';
 import { exportToExcel } from './utils/exportExcel';
 
 const formatWorkday = (totalHours: number) => {
@@ -835,6 +838,8 @@ export default function App() {
     if (path === '/reschedule') return 'RESCHEDULE';
     if (path === '/master-project') return 'MASTER_PROJECT';
     if (path === '/tor-monitor') return 'TOR_MONITOR';
+    if (path === '/notion-migrate') return 'NOTION_MIGRATE';
+    if (path === '/notion-monitoring') return 'NOTION_MONITORING';
     if (path === '/login') return 'LOGIN';
     if (path.startsWith('/project/')) return 'GANTT_DETAIL';
     return viewState;
@@ -851,6 +856,8 @@ export default function App() {
       case 'RESCHEDULE': navigate('/reschedule'); break;
       case 'MASTER_PROJECT': navigate('/master-project'); break;
       case 'TOR_MONITOR': navigate('/tor-monitor'); break;
+      case 'NOTION_MIGRATE': navigate('/notion-migrate'); break;
+      case 'NOTION_MONITORING': navigate('/notion-monitoring'); break;
       case 'TIMELINE': navigate('/timeline'); break;
       case 'GANTT_DETAIL': 
         if (selectedProjectId) navigate(`/detail-timeline/${selectedProjectId}`);
@@ -1650,6 +1657,7 @@ export default function App() {
       { id: 'PERSONEL', label: 'Personel OM DEDY', icon: Users },
       { id: 'MASTER_PROJECT', label: 'Om Dedy Master Project', icon: FolderKanban },
       { id: 'TOR_MONITOR', label: 'Om Dedy Tor Monitor', icon: ShieldCheck },
+      { id: 'NOTION_MIGRATE', label: 'Om Dedy Migrate Notion', icon: Database },
       { id: 'AUDIT', label: 'System Audit Logs', icon: ShieldAlert },
     ];
 
@@ -1954,6 +1962,7 @@ export default function App() {
                  {activeView === 'MASTER_PROJECT' && 'Master Project Om Dedy'}
                  {activeView === 'TOR_MONITOR' && 'Om Dedy Tor Monitor'}
                  {activeView === 'AUDIT' && 'System Audit Rails'}
+                 {activeView === 'NOTION_MIGRATE' && 'Om Dedy Migrate Notion'}
                  {activeView === 'GANTT_DETAIL' && (
                     selectedProjectId ? (
                       <div className="flex items-center gap-3">
@@ -2117,6 +2126,8 @@ export default function App() {
               <Route path="/audit" element={
                 <AuditLogView logs={allAuditLogs} projects={projects} users={users} isMobile={isMobile} />
               } />
+              <Route path="/notion-migrate" element={<NotionMigrationBoard />} />
+              <Route path="/notion-monitoring" element={<NotionMonitoring />} />
               <Route path="/timeline" element={<GanttDetailView {...ganttProps} projectId={null} />} />
               <Route path="/detail-timeline" element={<Navigate to="/projects" replace />} />
               <Route path="/detail-timeline/:projectId" element={<GanttDetailView {...ganttProps} />} />
