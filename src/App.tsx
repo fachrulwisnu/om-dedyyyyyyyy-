@@ -2626,7 +2626,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
       subtasks: [{ 
         id: createPersistentId(), 
         custom_id: `#TS-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-        title: 'ENTER TASK NAME...', 
+        title: '', 
         assignee: pic || user?.name || user?.email || '',
         start_date: '',
         end_date: '',
@@ -2643,7 +2643,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
       phase.subtasks = [...phase.subtasks, { 
         id: createPersistentId(), 
         custom_id: `#TS-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-        title: 'ENTER TASK NAME...', 
+        title: '', 
         assignee: pic || user?.name || user?.email || '',
         start_date: '',
         end_date: '',
@@ -3027,7 +3027,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                             </span>
                             <LocalInput 
                               value={sub.title}
-                              placeholder="Activity description..."
+                              placeholder="Enter the task breakdown name..."
                               onChange={(v) => {
                                 const newPhases = [...phases];
                                 newPhases[pIdx].subtasks[sIdx].title = v;
@@ -6837,7 +6837,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                         isProject ? "text-base font-bold uppercase text-white tracking-tight" : 
                         "text-zinc-200 text-xs font-medium tracking-wider"
                       )}
-                      placeholder="ENTER TASK NAME..."
+                      placeholder="Enter the task breakdown name..."
                       disabled={disabled}
                     />
                   )}

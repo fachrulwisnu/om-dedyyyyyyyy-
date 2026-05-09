@@ -94,7 +94,7 @@ export function LoginPage() {
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="name@company.com"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-slate-200 outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-inner dark:shadow-none"
+                  className="w-full px-4 py-3 bg-white dark:bg-[#0f1423] text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 pl-12 transition-all shadow-inner dark:shadow-none"
                 />
               </div>
             </div>
@@ -109,7 +109,7 @@ export function LoginPage() {
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl pl-12 pr-4 py-3 text-slate-900 dark:text-slate-200 outline-none focus:border-indigo-500 focus:bg-white transition-all shadow-inner dark:shadow-none"
+                  className="w-full px-4 py-3 bg-white dark:bg-[#0f1423] text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 pl-12 transition-all shadow-inner dark:shadow-none"
                 />
               </div>
             </div>

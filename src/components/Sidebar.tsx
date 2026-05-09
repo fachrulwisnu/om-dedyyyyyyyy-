@@ -11,6 +11,7 @@ import {
   ShieldAlert, 
   ShieldCheck,
   LogOut, 
+  LogIn,
   ChevronLeft, 
   ChevronRight,
   Zap,
@@ -230,6 +231,20 @@ export function Sidebar({
               title="Log Out"
             >
               <LogOut className="w-5 h-5" />
+            </button>
+          </div>
+        ) : !user ? (
+          <div className={cn("p-2", !isOpen && "flex justify-center")}>
+            <button 
+              onClick={() => navigate('/login')} 
+              className={cn(
+                "w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/20",
+                !isOpen && "p-3 w-auto"
+              )}
+              title="Login to Dashboard"
+            >
+              <LogIn className={cn("w-5 h-5", isOpen && "w-4 h-4")} /> 
+              {isOpen && <span className="text-xs uppercase tracking-widest">Login to Dashboard</span>}
             </button>
           </div>
         ) : null}
