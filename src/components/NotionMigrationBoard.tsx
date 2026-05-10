@@ -30,7 +30,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { cn } from '../lib/utils';
 import { MIGRATION_STATUSES, STATUS_COLORS } from '../constants/migration';
 
-export function NotionMigrationBoard() {
+export default function NotionMigrationBoard() {
   const [data, setData] = useState<MigrateNotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [isImporting, setIsImporting] = useState(false);

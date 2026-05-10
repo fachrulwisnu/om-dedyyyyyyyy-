@@ -118,8 +118,10 @@ import { ThemeToggle } from './components/ThemeToggle';
 import { MasterProject as MasterProjectHub } from './components/MasterProject';
 import { TicketSelector } from './components/TicketSelector';
 import { TorMonitor } from './components/TorMonitor';
-import { NotionMigrationBoard } from './components/NotionMigrationBoard';
+import NotionMigrationBoard from './components/NotionMigrationBoard';
 import { NotionMonitoring } from './components/NotionMonitoring';
+import { NotionSyncDashboard } from './components/NotionSyncDashboard';
+import KanbanNotionAPI from './components/KanbanNotionAPI';
 import { exportToExcel } from './utils/exportExcel';
 
 const formatWorkday = (totalHours: number) => {
@@ -2128,6 +2130,8 @@ export default function App() {
               } />
               <Route path="/notion-migrate" element={<NotionMigrationBoard />} />
               <Route path="/notion-monitoring" element={<NotionMonitoring />} />
+              <Route path="/notion-api" element={<NotionSyncDashboard />} />
+              <Route path="/notion-api-results" element={<KanbanNotionAPI />} />
               <Route path="/timeline" element={<GanttDetailView {...ganttProps} projectId={null} />} />
               <Route path="/detail-timeline" element={<Navigate to="/projects" replace />} />
               <Route path="/detail-timeline/:projectId" element={<GanttDetailView {...ganttProps} />} />

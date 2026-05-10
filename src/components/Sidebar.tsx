@@ -17,7 +17,9 @@ import {
   Zap,
   ChevronDown,
   ChevronUp,
-  Database
+  Database,
+  RefreshCw,
+  Table
 } from 'lucide-react';
 import { SidebarItem } from './SidebarItem';
 import { cn } from '../lib/utils';
@@ -67,6 +69,8 @@ export function Sidebar({
   const notionSubItems = [
     { id: 'NOTION_MIGRATE', label: 'Om Dedy Migrate Notion', icon: Database, path: '/notion-migrate', roles: undefined },
     { id: 'NOTION_MONITORING', label: 'Om Dedy Notion Monitoring', icon: LayoutGrid, path: '/notion-monitoring', roles: undefined },
+    { id: 'NOTION_API_RESULTS', label: 'Kanban Notion API', icon: Table, path: '/notion-api-results', roles: undefined },
+    { id: 'NOTION_API', label: 'Om Dedy Notion API', icon: RefreshCw, path: '/notion-api', roles: ['Admin', 'Superadmin'] },
   ];
 
   const isSubMenuActive = projectSubItems.some(item => activeView === item.id) || activeView === 'PROJECTS';
