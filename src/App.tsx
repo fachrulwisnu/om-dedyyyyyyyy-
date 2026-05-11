@@ -833,17 +833,19 @@ export default function App() {
   const activeView = useMemo(() => {
     const path = location.pathname;
     if (path === '/timeline') return 'TIMELINE';
-    if (path === '/' || path === '/portfolio' || path === '/projects') return 'PROJECTS';
+    if (path === '/' || path === '/portofolio' || path === '/portfolio' || path === '/projects') return 'PROJECTS';
     if (path.startsWith('/detail-timeline')) return 'GANTT_DETAIL';
     if (path === '/kanban') return 'KANBAN';
-    if (path === '/omdedy') return 'SCHEDULE';
+    if (path === '/schedule') return 'SCHEDULE';
     if (path === '/audit') return 'AUDIT';
     if (path === '/personnel') return 'PERSONEL';
     if (path === '/reschedule') return 'RESCHEDULE';
+    if (path === '/approvals') return 'RESCHEDULE';
     if (path === '/master-project') return 'MASTER_PROJECT';
     if (path === '/tor-monitor') return 'TOR_MONITOR';
     if (path === '/notion-migrate') return 'NOTION_MIGRATE';
     if (path === '/notion-monitoring') return 'NOTION_MONITORING';
+    if (path === '/notion-api-results') return 'NOTION_API_RESULTS';
     if (path === '/kaldev') return 'OM_DEDY_KALDEV';
     if (path === '/api-docs') return 'API_DOCS';
     if (path === '/login') return 'LOGIN';
@@ -854,22 +856,23 @@ export default function App() {
   const setActiveView = (view: AppView) => {
     setViewState(view);
     switch(view) {
-      case 'PROJECTS': navigate('/portfolio'); break;
+      case 'PROJECTS': navigate('/portofolio'); break;
       case 'KANBAN': navigate('/kanban'); break;
-      case 'SCHEDULE': navigate('/omdedy'); break;
+      case 'SCHEDULE': navigate('/schedule'); break;
       case 'AUDIT': navigate('/audit'); break;
       case 'PERSONEL': navigate('/personnel'); break;
-      case 'RESCHEDULE': navigate('/reschedule'); break;
+      case 'RESCHEDULE': navigate('/approvals'); break;
       case 'MASTER_PROJECT': navigate('/master-project'); break;
       case 'TOR_MONITOR': navigate('/tor-monitor'); break;
       case 'NOTION_MIGRATE': navigate('/notion-migrate'); break;
       case 'NOTION_MONITORING': navigate('/notion-monitoring'); break;
+      case 'NOTION_API_RESULTS': navigate('/notion-api-results'); break;
       case 'TIMELINE': navigate('/timeline'); break;
       case 'OM_DEDY_KALDEV': navigate('/kaldev'); break;
       case 'API_DOCS': navigate('/api-docs'); break;
       case 'GANTT_DETAIL': 
         if (selectedProjectId) navigate(`/detail-timeline/${selectedProjectId}`);
-        else navigate('/projects');
+        else navigate('/portofolio');
         break;
     }
   };
@@ -878,9 +881,9 @@ export default function App() {
   useEffect(() => {
     if (!authLoading && user) {
       const path = location.pathname;
-      const isRestrictedPath = path === '/personnel' || path === '/reschedule' || path === '/audit';
+      const isRestrictedPath = path === '/personnel' || path === '/approvals' || path === '/audit';
       if (isRestrictedPath && !isAdmin) {
-        navigate('/portfolio');
+        navigate('/portofolio');
       }
     }
   }, [location.pathname, isAdmin, user, authLoading]);
@@ -2065,14 +2068,14 @@ export default function App() {
         <section className={cn("flex-1 overflow-auto scrollbar-hide", activeView === 'GANTT_DETAIL' ? 'p-4' : 'p-8')}>
           <ErrorBoundary>
             <Routes>
-              <Route path="/" element={<Navigate to="/projects" replace />} />
-              <Route path="/projects" element={
+              <Route path="/" element={<Navigate to="/portofolio" replace />} />
+              <Route path="/portofolio" element={
                 <PortfolioDashboard 
                   user={user}
                   projects={projects} 
                   tasks={tasks}
                   loading={loading}
-                  onOpenProject={(id) => { setSelectedProjectId(id); navigate(`/project/${id}`); }} 
+                  onOpenProject={(id) => { setSelectedProjectId(id); navigate(`/detail-timeline/${id}`); }} 
                   onDeleteProject={handleDeleteProject}
                   onUpdateProject={handleUpdateProject}
                   onCreateRequested={() => setIsCreateProjectModalOpen(true)}
@@ -2080,6 +2083,7 @@ export default function App() {
                   isMobile={isMobile}
                 />
               } />
+              <Route path="/projects" element={<Navigate to="/portofolio" replace />} />
               <Route path="/schedule" element={
                 <OmDedySchedule 
                   user={user} 
@@ -2096,7 +2100,7 @@ export default function App() {
                 <KanbanView 
                   projects={projects} 
                   tasks={tasks}
-                  onOpenGantt={(id) => { setSelectedProjectId(id); navigate(`/project/${id}`); }}
+                  onOpenGantt={(id) => { setSelectedProjectId(id); navigate(`/detail-timeline/${id}`); }}
                   onUpdateProject={handleUpdateProject}
                   isMobile={isMobile}
                 />
@@ -2141,7 +2145,7 @@ export default function App() {
               <Route path="/kaldev" element={<KaldevView />} />
               <Route path="/api-docs" element={<SwaggerDocs />} />
               <Route path="/timeline" element={<GanttDetailView {...ganttProps} projectId={null} />} />
-              <Route path="/detail-timeline" element={<Navigate to="/projects" replace />} />
+              <Route path="/detail-timeline" element={<Navigate to="/portofolio" replace />} />
               <Route path="/detail-timeline/:projectId" element={<GanttDetailView {...ganttProps} />} />
               <Route path="/project/:projectId" element={<ProjectRedirect />} />
               <Route path="/project/:id" element={

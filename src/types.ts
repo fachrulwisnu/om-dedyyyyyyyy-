@@ -96,7 +96,7 @@ export interface AuditLog {
 }
 
 export type ViewScale = 'MONTH' | 'WEEK' | 'DAY';
-export type AppView = 'PROJECTS' | 'KANBAN' | 'PERSONEL' | 'AUDIT' | 'GANTT_DETAIL' | 'SCHEDULE' | 'RESCHEDULE' | 'LOGIN' | 'MASTER_PROJECT' | 'TOR_MONITOR' | 'TIMELINE' | 'NOTION_MIGRATE' | 'NOTION_MONITORING' | 'NOTION_API' | 'OM_DEDY_KALDEV' | 'API_DOCS';
+export type AppView = 'PROJECTS' | 'KANBAN' | 'PERSONEL' | 'AUDIT' | 'GANTT_DETAIL' | 'SCHEDULE' | 'RESCHEDULE' | 'LOGIN' | 'MASTER_PROJECT' | 'TOR_MONITOR' | 'TIMELINE' | 'NOTION_MIGRATE' | 'NOTION_MONITORING' | 'NOTION_API' | 'NOTION_API_RESULTS' | 'OM_DEDY_KALDEV' | 'API_DOCS';
 
 export interface KaldevProject {
   id: string;

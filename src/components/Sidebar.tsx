@@ -54,30 +54,39 @@ export function Sidebar({
   const [isExternalExpanded, setIsExternalExpanded] = useState(true);
   const [isAdminExpanded, setIsAdminExpanded] = useState(true);
 
-  // 1. PROJECT LIST
+  // 1. OM DEDY PROJECT LIST
   const projectSubItems = [
-    { id: 'TIMELINE', label: 'Om Dedy Timeline', icon: BarChart3, path: '/timeline' },
-    { id: 'TOR_MONITOR', label: 'Om Dedy TOR Monitor', icon: ShieldCheck, path: '/tor-monitor', roles: ['Admin', 'Superadmin'] },
+    { id: 'PROJECTS', label: 'OM DEDY PROJECT LIST', icon: LayoutDashboard, path: '/portofolio' },
+    { id: 'GANTT_DETAIL', label: 'PROJECT DETAIL TIMELINE', icon: BarChart3, path: '/detail-timeline' },
+    { id: 'TIMELINE', label: 'OM DEDY TIMELINE', icon: Activity, path: '/timeline' },
+    { id: 'TOR_MONITOR', label: 'OM DEDY TOR MONITOR', icon: ShieldCheck, path: '/tor-monitor', roles: ['Admin', 'Superadmin'] },
   ];
 
   // 2. OM DEDY NOTION (API Sync)
   const notionSubItems = [
-    { id: 'NOTION_API_RESULTS', label: 'Kanban Notion API', icon: Table, path: '/notion-api-results', roles: undefined },
-    { id: 'NOTION_API', label: 'Om Dedy Notion API', icon: RefreshCw, path: '/notion-api', roles: ['Admin', 'Superadmin'] },
+    { id: 'NOTION_MIGRATE', label: 'OM DEDY MIGRATE NOTION', icon: Database, path: '/notion-migrate', roles: undefined },
+    { id: 'NOTION_MONITORING', label: 'OM DEDY NOTION MONITORING', icon: LayoutGrid, path: '/notion-monitoring', roles: undefined },
+    { id: 'NOTION_API_RESULTS', label: 'KANBAN NOTION API', icon: Table, path: '/notion-api-results', roles: undefined },
+    { id: 'NOTION_API', label: 'OM DEDY NOTION API', icon: RefreshCw, path: '/notion-api', roles: ['Admin', 'Superadmin'] },
   ];
 
   // 3. EXTERNAL INTEGRATION
   const externalSubItems = [
-    { id: 'OM_DEDY_KALDEV', label: 'Om Dedy Kaldev', icon: Zap, path: '/kaldev', roles: undefined },
-    { id: 'API_DOCS', label: 'API Documentation', icon: Database, path: '/api-docs', roles: undefined },
+    { id: 'OM_DEDY_KALDEV', label: 'OM DEDY KALDEV', icon: Zap, path: '/kaldev', roles: undefined },
+    { id: 'API_DOCS', label: 'API DOCUMENTATION', icon: Database, path: '/api-docs', roles: undefined },
   ];
 
   // 4. ADMINISTRATIVE
   const adminSubItems = [
-    { id: 'RESCHEDULE', label: 'Approvals', icon: History, path: '/approvals', roles: ['Admin', 'Superadmin'], badgeCount: pendingRescheduleCount },
-    { id: 'PERSONEL', label: 'Personel Om Dedy', icon: Users, path: '/personnel', roles: ['Admin', 'Superadmin'] },
-    { id: 'MASTER_PROJECT', label: 'Master Project', icon: FolderKanban, path: '/master-project', roles: ['Admin', 'Superadmin'] },
-    { id: 'AUDIT', label: 'System Audit Logs', icon: ShieldAlert, path: '/audit', roles: ['Admin', 'Superadmin'] },
+    { id: 'SCHEDULE', label: 'OM DEDY SCHEDULE', icon: Calendar, path: '/schedule', roles: undefined },
+    { id: 'RESCHEDULE', label: 'APPROVALS', icon: History, path: '/approvals', roles: ['Admin', 'Superadmin'], badgeCount: pendingRescheduleCount },
+    { id: 'PERSONEL', label: 'PERSONEL OM DEDY', icon: Users, path: '/personnel', roles: ['Admin', 'Superadmin'] },
+    { id: 'AUDIT', label: 'SYSTEM AUDIT LOGS', icon: ShieldAlert, path: '/audit', roles: ['Admin', 'Superadmin'] },
+  ];
+
+  const mainMenuItems = [
+    { id: 'KANBAN', label: 'Status Monitoring', icon: LayoutGrid, path: '/kanban' },
+    { id: 'MASTER_PROJECT', label: 'OM DEDY MASTER PROJECT', icon: FolderKanban, path: '/master-project', roles: ['Admin', 'Superadmin'] },
   ];
 
   const isProjectMenuActive = projectSubItems.some(item => activeView === item.id);
@@ -92,11 +101,6 @@ export function Sidebar({
     if (isExternalMenuActive) setIsExternalExpanded(true);
     if (isAdminMenuActive) setIsAdminExpanded(true);
   }, [isProjectMenuActive, isNotionMenuActive, isExternalMenuActive, isAdminMenuActive]);
-
-  const mainMenuItems = [
-    { id: 'KANBAN', label: 'Status Monitoring', icon: LayoutGrid, path: '/kanban' },
-    { id: 'SCHEDULE', label: 'Om Dedy Schedule', icon: Calendar, path: '/schedule' },
-  ];
 
   return (
     <aside className={cn(
@@ -166,7 +170,7 @@ export function Sidebar({
           >
             <div className="flex items-center">
               <LayoutDashboard className={cn("w-5 h-5 shrink-0 transition-colors z-10", isProjectMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Project List</span>}
+              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Om Dedy Project List</span>}
             </div>
             {isOpen && (isProjectsExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
             {isProjectMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
