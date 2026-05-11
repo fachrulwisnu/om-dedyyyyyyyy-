@@ -51,51 +51,51 @@ export function Sidebar({
 
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
   const [isNotionExpanded, setIsNotionExpanded] = useState(true);
+  const [isExternalExpanded, setIsExternalExpanded] = useState(true);
+  const [isAdminExpanded, setIsAdminExpanded] = useState(true);
 
-  // Sub-items for Project List
+  // 1. PROJECT LIST
   const projectSubItems = [
     { id: 'TIMELINE', label: 'Om Dedy Timeline', icon: BarChart3, path: '/timeline' },
-    ...(selectedProjectId ? [{ 
-      id: 'GANTT_DETAIL', 
-      label: 'Om Dedy Detail Timeline', 
-      icon: Activity, 
-      path: `/detail-timeline/${selectedProjectId}`, 
-      showDot: true 
-    }] : []),
-    { id: 'TOR_MONITOR', label: 'Om Dedy Tor Monitor', icon: ShieldCheck, path: '/tor-monitor', roles: ['Admin', 'Superadmin'] },
+    { id: 'TOR_MONITOR', label: 'Om Dedy TOR Monitor', icon: ShieldCheck, path: '/tor-monitor', roles: ['Admin', 'Superadmin'] },
   ];
 
-  // Sub-items for Notion
+  // 2. OM DEDY NOTION (API Sync)
   const notionSubItems = [
-    { id: 'NOTION_MIGRATE', label: 'Om Dedy Migrate Notion', icon: Database, path: '/notion-migrate', roles: undefined },
-    { id: 'NOTION_MONITORING', label: 'Om Dedy Notion Monitoring', icon: LayoutGrid, path: '/notion-monitoring', roles: undefined },
     { id: 'NOTION_API_RESULTS', label: 'Kanban Notion API', icon: Table, path: '/notion-api-results', roles: undefined },
     { id: 'NOTION_API', label: 'Om Dedy Notion API', icon: RefreshCw, path: '/notion-api', roles: ['Admin', 'Superadmin'] },
   ];
 
-  const isSubMenuActive = projectSubItems.some(item => activeView === item.id) || activeView === 'PROJECTS';
+  // 3. EXTERNAL INTEGRATION
+  const externalSubItems = [
+    { id: 'OM_DEDY_KALDEV', label: 'Om Dedy Kaldev', icon: Zap, path: '/kaldev', roles: undefined },
+    { id: 'API_DOCS', label: 'API Documentation', icon: Database, path: '/api-docs', roles: undefined },
+  ];
+
+  // 4. ADMINISTRATIVE
+  const adminSubItems = [
+    { id: 'RESCHEDULE', label: 'Approvals', icon: History, path: '/approvals', roles: ['Admin', 'Superadmin'], badgeCount: pendingRescheduleCount },
+    { id: 'PERSONEL', label: 'Personel Om Dedy', icon: Users, path: '/personnel', roles: ['Admin', 'Superadmin'] },
+    { id: 'MASTER_PROJECT', label: 'Master Project', icon: FolderKanban, path: '/master-project', roles: ['Admin', 'Superadmin'] },
+    { id: 'AUDIT', label: 'System Audit Logs', icon: ShieldAlert, path: '/audit', roles: ['Admin', 'Superadmin'] },
+  ];
+
+  const isProjectMenuActive = projectSubItems.some(item => activeView === item.id);
   const isNotionMenuActive = notionSubItems.some(item => activeView === item.id);
+  const isExternalMenuActive = externalSubItems.some(item => activeView === item.id);
+  const isAdminMenuActive = adminSubItems.some(item => activeView === item.id);
 
   // Auto-expand if sub-menu is active
   useEffect(() => {
-    if (isSubMenuActive) {
-      setIsProjectsExpanded(true);
-    }
-  }, [isSubMenuActive]);
-
-  useEffect(() => {
-    if (isNotionMenuActive) {
-      setIsNotionExpanded(true);
-    }
-  }, [isNotionMenuActive]);
+    if (isProjectMenuActive) setIsProjectsExpanded(true);
+    if (isNotionMenuActive) setIsNotionExpanded(true);
+    if (isExternalMenuActive) setIsExternalExpanded(true);
+    if (isAdminMenuActive) setIsAdminExpanded(true);
+  }, [isProjectMenuActive, isNotionMenuActive, isExternalMenuActive, isAdminMenuActive]);
 
   const mainMenuItems = [
     { id: 'KANBAN', label: 'Status Monitoring', icon: LayoutGrid, path: '/kanban' },
     { id: 'SCHEDULE', label: 'Om Dedy Schedule', icon: Calendar, path: '/schedule' },
-    { id: 'RESCHEDULE', label: 'APPROVALS', icon: History, path: '/approvals', roles: ['Admin', 'Superadmin'] },
-    { id: 'PERSONEL', label: 'Personel OM DEDY', icon: Users, path: '/personnel', roles: ['Admin', 'Superadmin'] },
-    { id: 'MASTER_PROJECT', label: 'Om Dedy Master Project', icon: FolderKanban, path: '/master-project', roles: ['Admin', 'Superadmin'] },
-    { id: 'AUDIT', label: 'System Audit Logs', icon: ShieldAlert, path: '/audit', roles: ['Admin', 'Superadmin'] },
   ];
 
   return (
@@ -133,141 +133,6 @@ export function Sidebar({
 
       {/* Navigation */}
       <nav className="py-6 space-y-1 overflow-y-auto scrollbar-hide">
-        {/* Project List Group */}
-        <div className="mb-2">
-          <div 
-            onClick={() => {
-              if (isOpen) {
-                setIsProjectsExpanded(!isProjectsExpanded);
-              } else {
-                setIsOpen(true);
-                setIsProjectsExpanded(true);
-              }
-              // Optionally navigate to projects if clicking the parent
-              navigate('/projects');
-            }}
-            className={cn(
-              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
-              isSubMenuActive 
-                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
-            )}
-          >
-            <div className="flex items-center">
-              <LayoutDashboard className={cn(
-                "w-5 h-5 shrink-0 transition-colors z-10", 
-                isSubMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"
-              )} />
-              {isOpen && (
-                <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">
-                  Project List
-                </span>
-              )}
-            </div>
-            {isOpen && (
-              isProjectsExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />
-            )}
-            
-            {isSubMenuActive && (
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />
-            )}
-            
-            {!isOpen && (
-              <div className="absolute left-full ml-2 px-3 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap shadow-xl pointer-events-none z-50 transition-opacity">
-                Project List
-              </div>
-            )}
-
-            {/* Glow Effect on Hover */}
-            <div className="absolute inset-0 bg-indigo-500/0 group-hover:bg-indigo-500/5 transition-colors" />
-          </div>
-
-          {isOpen && isProjectsExpanded && (
-            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
-              {projectSubItems.map((item) => (
-                <SidebarItem
-                  key={item.id}
-                  to={item.path}
-                  label={item.label}
-                  icon={item.icon}
-                  isOpen={isOpen}
-                  isActive={activeView === item.id}
-                  roles={item.roles}
-                  userRole={userRole}
-                  showDot={(item as any).showDot}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Notion Group */}
-        <div className="mb-2">
-          <div 
-            onClick={() => {
-              if (isOpen) {
-                setIsNotionExpanded(!isNotionExpanded);
-              } else {
-                setIsOpen(true);
-                setIsNotionExpanded(true);
-              }
-              navigate('/notion-monitoring');
-            }}
-            className={cn(
-              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
-              isNotionMenuActive 
-                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
-            )}
-          >
-            <div className="flex items-center">
-              <Database className={cn(
-                "w-5 h-5 shrink-0 transition-colors z-10", 
-                isNotionMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300"
-              )} />
-              {isOpen && (
-                <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">
-                  Om Dedy Notion
-                </span>
-              )}
-            </div>
-            {isOpen && (
-              isNotionExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />
-            )}
-            
-            {isNotionMenuActive && (
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />
-            )}
-            
-            {!isOpen && (
-              <div className="absolute left-full ml-2 px-3 py-1 bg-slate-800 text-white text-[10px] rounded opacity-0 group-hover:opacity-100 whitespace-nowrap shadow-xl pointer-events-none z-50 transition-opacity">
-                Om Dedy Notion
-              </div>
-            )}
-          </div>
-
-          {isOpen && isNotionExpanded && (
-            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
-              {notionSubItems.map((item) => (
-                <SidebarItem
-                  key={item.id}
-                  to={item.path}
-                  label={item.label}
-                  icon={item.icon}
-                  isOpen={isOpen}
-                  isActive={activeView === item.id}
-                  roles={item.roles}
-                  userRole={userRole}
-                  showDot={(item as any).showDot}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Separator if needed or just space */}
-        <div className="h-px bg-slate-200 dark:bg-slate-800/50 mx-4 my-2" />
-
         {/* Main Menu Items */}
         {mainMenuItems.map((item) => (
           <SidebarItem
@@ -277,12 +142,133 @@ export function Sidebar({
             icon={item.icon}
             isOpen={isOpen}
             isActive={activeView === item.id}
-            badgeCount={item.id === 'RESCHEDULE' ? pendingRescheduleCount : undefined}
-            roles={item.roles}
+            roles={(item as any).roles}
             userRole={userRole}
             showDot={(item as any).showDot}
           />
         ))}
+
+        <div className="h-px bg-slate-200 dark:bg-slate-800/50 mx-4 my-2" />
+
+        {/* 1. PROJECT LIST */}
+        <div className="mb-2">
+          <div 
+            onClick={() => {
+              if (isOpen) setIsProjectsExpanded(!isProjectsExpanded);
+              else { setIsOpen(true); setIsProjectsExpanded(true); }
+            }}
+            className={cn(
+              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
+              isProjectMenuActive 
+                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+            )}
+          >
+            <div className="flex items-center">
+              <LayoutDashboard className={cn("w-5 h-5 shrink-0 transition-colors z-10", isProjectMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
+              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Project List</span>}
+            </div>
+            {isOpen && (isProjectsExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
+            {isProjectMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+          </div>
+          {isOpen && isProjectsExpanded && (
+            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+              {projectSubItems.map((item) => (
+                <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 2. OM DEDY NOTION */}
+        <div className="mb-2">
+          <div 
+            onClick={() => {
+              if (isOpen) setIsNotionExpanded(!isNotionExpanded);
+              else { setIsOpen(true); setIsNotionExpanded(true); }
+            }}
+            className={cn(
+              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
+              isNotionMenuActive 
+                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+            )}
+          >
+            <div className="flex items-center">
+              <Database className={cn("w-5 h-5 shrink-0 transition-colors z-10", isNotionMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
+              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Om Dedy Notion</span>}
+            </div>
+            {isOpen && (isNotionExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
+            {isNotionMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+          </div>
+          {isOpen && isNotionExpanded && (
+            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+              {notionSubItems.map((item) => (
+                <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 3. EXTERNAL INTEGRATION */}
+        <div className="mb-2">
+          <div 
+            onClick={() => {
+              if (isOpen) setIsExternalExpanded(!isExternalExpanded);
+              else { setIsOpen(true); setIsExternalExpanded(true); }
+            }}
+            className={cn(
+              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
+              isExternalMenuActive 
+                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+            )}
+          >
+            <div className="flex items-center">
+              <Zap className={cn("w-5 h-5 shrink-0 transition-colors z-10", isExternalMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
+              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">External Integration</span>}
+            </div>
+            {isOpen && (isExternalExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
+            {isExternalMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+          </div>
+          {isOpen && isExternalExpanded && (
+            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+              {externalSubItems.map((item) => (
+                <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 4. ADMINISTRATIVE */}
+        <div className="mb-2">
+          <div 
+            onClick={() => {
+              if (isOpen) setIsAdminExpanded(!isAdminExpanded);
+              else { setIsOpen(true); setIsAdminExpanded(true); }
+            }}
+            className={cn(
+              "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
+              isAdminMenuActive 
+                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
+                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+            )}
+          >
+            <div className="flex items-center">
+              <Users className={cn("w-5 h-5 shrink-0 transition-colors z-10", isAdminMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
+              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Administrative</span>}
+            </div>
+            {isOpen && (isAdminExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
+            {isAdminMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+          </div>
+          {isOpen && isAdminExpanded && (
+            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+              {adminSubItems.map((item) => (
+                <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} badgeCount={item.badgeCount} />
+              ))}
+            </div>
+          )}
+        </div>
       </nav>
 
       {/* User Footer */}

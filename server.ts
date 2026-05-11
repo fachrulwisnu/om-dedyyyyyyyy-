@@ -61,6 +61,45 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok", message: "Backend is alive!" });
 });
 
+app.post("/webhook-kaldev", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader && authHeader.split(' ')[1];
+  const secretToken = process.env.KALDEV_SECRET_TOKEN;
+
+  // For testing, if secretToken is not set in env, we might want to warn
+  if (!secretToken) {
+    console.warn("KALDEV_SECRET_TOKEN is not configured in environment variables.");
+  }
+
+  if (secretToken && token !== secretToken) {
+    return res.status(401).json({ success: false, error: "Unauthorized" });
+  }
+
+  const payload = req.body;
+  const { ticket_id, project_name } = payload;
+
+  if (!ticket_id || !project_name) {
+    return res.status(400).json({ success: false, error: "ticket_id and project_name are required" });
+  }
+
+  try {
+    // Perform upsert based on ticket_id
+    const { error } = await supabase
+      .from('kaldev_projects')
+      .upsert({
+        ...payload,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'ticket_id' });
+
+    if (error) throw error;
+
+    return res.status(200).json({ success: true, message: "Data Synced Successfully" });
+  } catch (error: any) {
+    console.error("Kaldev Webhook Error:", error);
+    return res.status(500).json({ success: false, error: error.message || "Internal Server Error" });
+  }
+});
+
 app.post("/sync-notion", async (req, res) => {
   // CORS (redundant but requested)
   res.setHeader('Access-Control-Allow-Origin', '*');

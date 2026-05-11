@@ -122,6 +122,8 @@ import NotionMigrationBoard from './components/NotionMigrationBoard';
 import { NotionMonitoring } from './components/NotionMonitoring';
 import { NotionSyncDashboard } from './components/NotionSyncDashboard';
 import KanbanNotionAPI from './components/KanbanNotionAPI';
+import KaldevView from './components/KaldevView';
+import SwaggerDocs from './components/SwaggerDocs';
 import { exportToExcel } from './utils/exportExcel';
 
 const formatWorkday = (totalHours: number) => {
@@ -842,6 +844,8 @@ export default function App() {
     if (path === '/tor-monitor') return 'TOR_MONITOR';
     if (path === '/notion-migrate') return 'NOTION_MIGRATE';
     if (path === '/notion-monitoring') return 'NOTION_MONITORING';
+    if (path === '/kaldev') return 'OM_DEDY_KALDEV';
+    if (path === '/api-docs') return 'API_DOCS';
     if (path === '/login') return 'LOGIN';
     if (path.startsWith('/project/')) return 'GANTT_DETAIL';
     return viewState;
@@ -861,6 +865,8 @@ export default function App() {
       case 'NOTION_MIGRATE': navigate('/notion-migrate'); break;
       case 'NOTION_MONITORING': navigate('/notion-monitoring'); break;
       case 'TIMELINE': navigate('/timeline'); break;
+      case 'OM_DEDY_KALDEV': navigate('/kaldev'); break;
+      case 'API_DOCS': navigate('/api-docs'); break;
       case 'GANTT_DETAIL': 
         if (selectedProjectId) navigate(`/detail-timeline/${selectedProjectId}`);
         else navigate('/projects');
@@ -2132,6 +2138,8 @@ export default function App() {
               <Route path="/notion-monitoring" element={<NotionMonitoring />} />
               <Route path="/notion-api" element={<NotionSyncDashboard />} />
               <Route path="/notion-api-results" element={<KanbanNotionAPI />} />
+              <Route path="/kaldev" element={<KaldevView />} />
+              <Route path="/api-docs" element={<SwaggerDocs />} />
               <Route path="/timeline" element={<GanttDetailView {...ganttProps} projectId={null} />} />
               <Route path="/detail-timeline" element={<Navigate to="/projects" replace />} />
               <Route path="/detail-timeline/:projectId" element={<GanttDetailView {...ganttProps} />} />
