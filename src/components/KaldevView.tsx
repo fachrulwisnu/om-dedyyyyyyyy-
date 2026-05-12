@@ -14,7 +14,8 @@ import {
   User,
   Zap,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -178,6 +179,19 @@ export default function KaldevView() {
                   <span className={cn("text-[10px] font-bold uppercase", (project.realized_days || 0) > (project.mandays || 0) ? "text-rose-400" : "text-emerald-400")}>
                     {project.realized_days || 0}d
                   </span>
+                </div>
+              </div>
+
+              {/* Project Diajukan Section */}
+              <div className="mt-3 pt-3 border-t border-white/5 mb-4">
+                <div className="flex items-start gap-2 text-[11px]">
+                  <FileText className="w-3.5 h-3.5 text-indigo-400 shrink-0 mt-0.5" />
+                  <div className="flex flex-col">
+                    <span className="text-slate-500 font-semibold uppercase text-[9px]">Project Diajukan</span>
+                    <span className="text-slate-300 line-clamp-2 italic" title={project.project_diajukan || "Belum ada informasi"}>
+                      {project.project_diajukan || "-"}
+                    </span>
+                  </div>
                 </div>
               </div>
 

@@ -67,6 +67,7 @@ export const taskService = {
         pic_name: project.pic_name || null,
         owner_name: project.owner_name || null,
         div_owner: project.div_owner || null,
+        project_diajukan: project.project_diajukan || null,
         ticket_id: project.ticket_id || null
       }])
       .select()
@@ -313,7 +314,7 @@ export const taskService = {
     });
   },
 
-  async updateProject(id: string, updates: Partial<Project>, actor: string): Promise<Project> {
+  async updateProject(id: string, updates: Partial<Project>, actor: string, options?: { isAutoSync?: boolean }): Promise<Project> {
     const { data: existing, error: fetchError } = await supabase
       .from('projects')
       .select('*')
@@ -327,6 +328,7 @@ export const taskService = {
     };
     if (updates.start_date !== undefined) finalUpdates.start_date = sanitizeDate(updates.start_date);
     if (updates.end_date !== undefined) finalUpdates.end_date = sanitizeDate(updates.end_date);
+    if (updates.project_diajukan !== undefined) finalUpdates.project_diajukan = updates.project_diajukan || null;
 
     const { data: updated, error: updateError } = await supabase
       .from('projects')
@@ -349,7 +351,58 @@ export const taskService = {
       }
     }
 
-    await this.logAudit({ project_id: id, actor, action: 'Updated Project', oldValue: existing, newValue: updated });
+    const isAutoSync = options?.isAutoSync || actor.toLowerCase().includes('system') || actor.toLowerCase().includes('auto');
+
+    if (isAutoSync) {
+      // ➡️ ROUTE 1: SYSTEM LOGS
+      await this.logAudit({ 
+        project_id: id, 
+        actor: actor, // Fixed column name (removed authorized_by in logAudit)
+        action: 'Auto-sync update', 
+        oldValue: existing, 
+        newValue: updated 
+      });
+    } else {
+      // ➡️ ROUTE 2: HISTORY EDIT (Manual changes)
+      const ignoredFields = ['updated_at', 'created_at', 'id', 'project_id', 'raw_data'];
+      const changesToLog: any[] = [];
+
+      for (const key in updates) {
+        if (ignoredFields.includes(key)) continue;
+
+        const oldVal = (existing as any)[key];
+        const newVal = (updated as any)[key];
+
+        if (String(oldVal || "") !== String(newVal || "")) {
+          const formattedFieldName = key.replace(/_/g, ' ').toUpperCase();
+
+          changesToLog.push({
+            project_id: id,
+            pic_name: actor,
+            field_name: formattedFieldName,
+            before_value: oldVal !== undefined && oldVal !== null ? String(oldVal) : "-",
+            after_value: newVal !== undefined && newVal !== null ? String(newVal) : "-"
+          });
+        }
+      }
+
+      if (changesToLog.length > 0) {
+        const { error: historyErr } = await supabase.from('history_edit_project').insert(changesToLog);
+        if (historyErr) console.error("🚨 HISTORY EDIT INSERT FAILED:", historyErr);
+      }
+
+      // Avoid double logging in audit_logs for manual edits.
+      // They are recorded in history_edit_project and master_project_audit_logs.
+      await this.logAudit({ 
+        project_id: id, 
+        actor, 
+        action: 'Manual Update', 
+        oldValue: existing, 
+        newValue: updated,
+        skipAuditLogs: true 
+      });
+    }
+
     return updated;
   },
 
@@ -365,19 +418,50 @@ export const taskService = {
     return data || [];
   },
 
-  async logAudit({ task_id, project_id, user_id, actor, action, oldValue, newValue }: { 
+  async getHistoryEditProjects(projectId?: string, taskId?: string): Promise<any[]> {
+    let query = supabase.from('history_edit_project').select('*').order('created_at', { ascending: false });
+    if (projectId) query = query.eq('project_id', projectId);
+    if (taskId) query = query.eq('task_id', taskId);
+    const { data, error } = await query;
+    if (error) throw error;
+    return data || [];
+  },
+
+  async logAudit({ task_id, project_id, user_id, actor, action, oldValue, newValue, skipAuditLogs }: { 
     task_id?: string, 
     project_id?: string, 
     user_id?: string, 
     actor: string, 
     action: string, 
     oldValue?: any, 
-    newValue?: any 
+    newValue?: any,
+    skipAuditLogs?: boolean
   }) {
-    // Determine note from payloads if available
+    // 1. Insert into specific audit_logs table (used by Task Detail / Project Detail UI)
+    if (!skipAuditLogs) {
+      const { error: auditError } = await supabase
+        .from('audit_logs')
+        .insert([{
+          task_id,
+          project_id,
+          user_id,
+          actor,
+          action,
+          old_payload: oldValue || null,
+          new_payload: newValue || null,
+          created_at: new Date().toISOString()
+        }]);
+
+      if (auditError) {
+        console.error("🚨 AUDIT LOG INSERT FAILED (audit_logs):", auditError.message, auditError.details, {
+          task_id, project_id, actor, action
+        });
+      }
+    }
+
+    // 2. Determine note and master_project_id for master_project_audit_logs
     const note = `Action: ${action}${oldValue ? ` | From: ${JSON.stringify(oldValue)}` : ''}${newValue ? ` | To: ${JSON.stringify(newValue)}` : ''}`;
     
-    // Attempt to find master_project_id if it's a project related log
     let masterProjectId = null;
     if (project_id) {
        const { data: proj } = await supabase.from('projects').select('ticket_id').eq('id', project_id).maybeSingle();
@@ -387,20 +471,21 @@ export const taskService = {
        }
     }
 
-    const { error } = await supabase
+    const { error: masterError } = await supabase
       .from('master_project_audit_logs')
       .insert([{
         master_project_id: masterProjectId,
         actor,
         action: action.includes('IMPORT') ? 'IMPORT' : (action.includes('CREATE') ? 'CREATE' : (action.includes('DELETE') ? 'DELETE' : 'UPDATE')),
-        note: note.substring(0, 1000), // Ensure it fits
+        note: note.substring(0, 1000), 
         changed_fields: JSON.stringify({ oldValue, newValue }),
         created_at: new Date().toISOString()
       }]);
     
-    if (error) {
-       console.error('Failed to log audit to master_project_audit_logs:', JSON.stringify(error));
-       throw new Error(`Gagal menyimpan log audit: ${error.message}`);
+    if (masterError) {
+       console.error("🚨 AUDIT LOG INSERT FAILED (master_project_audit_logs):", masterError.message, masterError.details, {
+         masterProjectId, actor, action
+       });
     }
   },
 
@@ -478,7 +563,7 @@ export const taskService = {
     return data;
   },
 
-  async updateTask(id: string, updates: Partial<Task>, actor: string): Promise<Task> {
+  async updateTask(id: string, updates: Partial<Task>, actor: string, options?: { isAutoSync?: boolean }): Promise<Task> {
     const { data: existing, error: fetchError } = await supabase
       .from('tasks')
       .select('*')
@@ -504,14 +589,61 @@ export const taskService = {
 
     if (updateError) throw updateError;
 
-    await this.logAudit({ 
-      task_id: id, 
-      project_id: updated.project_id || undefined, 
-      actor, 
-      action: 'Updated Task', 
-      oldValue: existing, 
-      newValue: updated 
-    });
+    const isAutoSync = options?.isAutoSync || actor.toLowerCase().includes('system') || actor.toLowerCase().includes('auto');
+
+    if (isAutoSync) {
+      // ➡️ ROUTE 1: SYSTEM LOGS
+      await this.logAudit({ 
+        task_id: id, 
+        project_id: updated.project_id || undefined, 
+        actor, 
+        action: 'Auto-sync task update', 
+        oldValue: existing, 
+        newValue: updated 
+      });
+    } else {
+      // ➡️ ROUTE 2: HISTORY EDIT (Manual changes)
+      const ignoredFields = ['updated_at', 'created_at', 'id', 'project_id', 'raw_data'];
+      const changesToLog: any[] = [];
+      const taskPrefix = `[WBS: ${existing.title || existing.task_name || existing.name || 'Task'}] `;
+
+      for (const key in updates) {
+        if (ignoredFields.includes(key)) continue;
+
+        const oldVal = (existing as any)[key];
+        const newVal = (updated as any)[key];
+
+        if (String(oldVal || "") !== String(newVal || "")) {
+          const formattedFieldName = taskPrefix + key.replace(/_/g, ' ').toUpperCase();
+
+          changesToLog.push({
+            project_id: updated.project_id,
+            task_id: id,
+            pic_name: actor,
+            field_name: formattedFieldName,
+            before_value: oldVal !== undefined && oldVal !== null ? String(oldVal) : "-",
+            after_value: newVal !== undefined && newVal !== null ? String(newVal) : "-"
+          });
+        }
+      }
+
+      if (changesToLog.length > 0) {
+        const { error: historyErr } = await supabase.from('history_edit_project').insert(changesToLog);
+        if (historyErr) console.error("🚨 WBS HISTORY EDIT INSERT FAILED:", historyErr);
+      }
+
+      // Avoid double logging in audit_logs for manual WBS edits as per Task 4.
+      // But still log to master_project_audit_logs via logAudit.
+      await this.logAudit({ 
+        task_id: id, 
+        project_id: updated.project_id || undefined, 
+        actor, 
+        action: 'Manual Task Update', 
+        oldValue: existing, 
+        newValue: updated,
+        skipAuditLogs: true 
+      });
+    }
     
     return updated;
   },

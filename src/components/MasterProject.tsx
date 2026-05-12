@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { CustomDatePicker } from './ui/CustomDatePicker';
 import { 
   FolderKanban, 
   Search, 
@@ -754,20 +755,16 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
                       <div className="grid grid-cols-2 gap-6">
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Plan Start Date</label>
-                          <input 
-                            type="date"
-                            value={selectedProject.plan_start_date ? selectedProject.plan_start_date.substring(0, 10) : ''}
-                            onChange={e => setSelectedProject({ ...selectedProject, plan_start_date: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all"
+                          <CustomDatePicker 
+                            selectedDate={selectedProject.plan_start_date ? selectedProject.plan_start_date.substring(0, 10) : null}
+                            onChange={date => setSelectedProject({ ...selectedProject, plan_start_date: date ? `${date}T00:00:00Z` : null })}
                           />
                         </div>
                         <div className="space-y-1.5">
                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Plan End Date</label>
-                          <input 
-                            type="date"
-                            value={selectedProject.plan_end_date ? selectedProject.plan_end_date.substring(0, 10) : ''}
-                            onChange={e => setSelectedProject({ ...selectedProject, plan_end_date: e.target.value })}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white focus:border-indigo-500 outline-none transition-all"
+                          <CustomDatePicker 
+                            selectedDate={selectedProject.plan_end_date ? selectedProject.plan_end_date.substring(0, 10) : null}
+                            onChange={date => setSelectedProject({ ...selectedProject, plan_end_date: date ? `${date}T00:00:00Z` : null })}
                           />
                         </div>
                       </div>

@@ -52,7 +52,8 @@ import {
   Download,
   Filter,
   Copy,
-  Database
+  Database,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -86,9 +87,10 @@ import {
   isWeekend
 } from 'date-fns';
 import { calculateTimelineRange, calculateBarCoordinates, sanitizeDate, normalizeDate, calculateParentRange } from './utils/timelineEngine';
-import { Task, ViewScale, TaskStatus, ProjectStatus, Project, AppUser, AppView, AuditLog, Schedule, ProjectRescheduleLog, RescheduleRequest, MasterProject, MasterProjectAuditLog } from './types';
+import { Task, ViewScale, TaskStatus, ProjectStatus, Project, AppUser, AppView, AuditLog, Schedule, ProjectRescheduleLog, RescheduleRequest, MasterProject, MasterProjectAuditLog, HistoryEditProject } from './types';
 import { cn } from './lib/utils';
 import { getSafeKey } from './utils/keyHelper';
+import ProjectDetail from './components/ProjectDetail';
 
 /**
  * ROBUST PERSISTENT ID GENERATOR
@@ -125,6 +127,7 @@ import KanbanNotionAPI from './components/KanbanNotionAPI';
 import KaldevView from './components/KaldevView';
 import SwaggerDocs from './components/SwaggerDocs';
 import { exportToExcel } from './utils/exportExcel';
+import { CustomDatePicker } from './components/ui/CustomDatePicker';
 
 const formatWorkday = (totalHours: number) => {
   if (!totalHours || totalHours <= 0) return '-';
@@ -911,6 +914,7 @@ export default function App() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allAuditLogs, setAllAuditLogs] = useState<AuditLog[]>([]);
+  const [allHistoryEditLogs, setAllHistoryEditLogs] = useState<HistoryEditProject[]>([]);
 
   // Automatic "Project Late" Detection
   useEffect(() => {
@@ -940,6 +944,7 @@ export default function App() {
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [activeAuditTab, setActiveAuditTab] = useState<'LOG_SYSTEM' | 'HISTORY_EDIT'>('HISTORY_EDIT');
   
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -980,6 +985,8 @@ export default function App() {
     }
   };
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
+  const [isProjectDetailOpen, setIsProjectDetailOpen] = useState(false);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [reschedulingProject, setReschedulingProject] = useState<Project | null>(null);
   const [itemToDelete, setItemToDelete] = useState<{id: string, type: 'task' | 'project' | 'user' | 'phase' | 'subtask', phaseIdx?: number, subIdx?: number} | null>(null);
 
@@ -1009,11 +1016,12 @@ export default function App() {
 
   const fetchData = async () => {
     try {
-      const [p, u, t, a] = await Promise.all([
+      const [p, u, t, a, h] = await Promise.all([
         taskService.getProjects(),
         taskService.getUsers(),
         taskService.getAllTasks(),
-        taskService.getAuditLogs()
+        taskService.getAuditLogs(),
+        taskService.getHistoryEditProjects()
       ]);
       const processedTasks = (t || []).map(task => ({
         ...task,
@@ -1042,6 +1050,7 @@ export default function App() {
       setUsers(u || []);
       setTasks(processedTasks);
       setAllAuditLogs(a || []);
+      setAllHistoryEditLogs(h || []);
     } catch (err) {
       console.error("Fetch failed:", err);
     } finally {
@@ -1141,7 +1150,7 @@ export default function App() {
     onConfirm: () => void;
     onCancel: () => void;
     itemName: string;
-    type: 'task' | 'schedule';
+    type: 'task' | 'schedule' | 'project';
   }>({
     isOpen: false,
     picName: '',
@@ -1157,12 +1166,16 @@ export default function App() {
     if (!task) return;
     const oldValue = task[field];
 
-    // Ownership check: If not owner, show warning modal
-    const isOwner = user?.name === task.assignee || user?.email === task.assignee;
+    const project = projects.find(p => p.id === task.project_id);
+    const projectPic = project?.pic_name || task.assignee || 'PIC';
+
+    // Ownership check: If current user name doesn't match Project PIC Name, show warning
+    const isOwner = user?.name?.toLowerCase() === projectPic?.toLowerCase();
+    
     if (user && !isOwner && !isAdmin && !isSuperadmin) {
       setOwnershipModal({
         isOpen: true,
-        picName: task.assignee || 'PIC',
+        picName: projectPic,
         itemName: task.title,
         type: 'task',
         onCancel: () => {
@@ -1205,13 +1218,8 @@ export default function App() {
 
         if (needsProjectUpdate) {
           try {
-            const { data: updatedProj, error: prjErr } = await supabase
-              .from('projects')
-              .update(projectUpdatePayload)
-              .eq('id', proj.id)
-              .select().single();
-            
-            if (prjErr) throw prjErr;
+            const actorName = currentUser?.name || user?.name || user?.email || 'User';
+            const updatedProj = await taskService.updateProject(proj.id, projectUpdatePayload, `${actorName} (System Expansion)`, { isAutoSync: true });
             setProjects(prev => prev.map(p => p.id === proj.id ? updatedProj : p));
           } catch (err) {
             console.error('Project expansion failed:', err);
@@ -1239,12 +1247,8 @@ export default function App() {
 
           if (needsL1Update) {
             try {
-              const { data: updatedL1, error: l1Err } = await supabase
-                .from('tasks')
-                .update(l1UpdatePayload)
-                .eq('id', parent.id)
-                .select().single();
-              if (l1Err) throw l1Err;
+              const actorName = currentUser?.name || user?.name || user?.email || 'User';
+              const updatedL1 = await taskService.updateTask(parent.id, l1UpdatePayload, `${actorName} (System L1 Expansion)`, { isAutoSync: true });
               setTasks(prev => prev.map(t => t.id === parent.id ? updatedL1 : t));
             } catch (err) {
               console.error('L1 expansion failed:', err);
@@ -1262,14 +1266,16 @@ export default function App() {
             return isStart ? cDate < newValueStr : cDate > newValueStr;
           });
 
+          const actorName = currentUser?.name || user?.name || user?.email || 'User';
           for (const child of outOfBoundsChildren) {
              const childField = isStart ? 'start_time' : 'end_time';
              try {
-                const { data: updatedChild } = await supabase
-                  .from('tasks')
-                  .update({ [childField]: newValueStr, updated_at: new Date().toISOString() })
-                  .eq('id', child.id)
-                  .select().single();
+                const updatedChild = await taskService.updateTask(
+                  child.id, 
+                  { [childField]: newValueStr }, 
+                  `${actorName} (System Boundary Sync)`, 
+                  { isAutoSync: true }
+                );
                 if (updatedChild) {
                   setTasks(prev => prev.map(t => t.id === child.id ? updatedChild : t));
                 }
@@ -1333,29 +1339,25 @@ export default function App() {
           updatePayload.is_manual_override = true;
        }
 
-       const { data: updatedTask, error: updateError } = await supabase
-         .from('tasks')
-         .update(updatePayload)
-         .eq('id', id)
-         .select()
-         .single();
-          
-       if (updateError) throw updateError;
+       const updatedTask = await taskService.updateTask(id, updatePayload, actorName);
        
        if (updatedTask) {
          setTasks((prev: Task[]) => prev.map((t: any) => t.id === id ? updatedTask : t));
-
-         // --- LOG AUDIT (Mandatory for status/realized changes) ---
-         if (field === 'status' || field === 'realized_finish_date') {
-            await taskService.logAudit({
-               task_id: id,
-               project_id: updatedTask.project_id || undefined,
-               actor: actorName,
-               action: `Updated ${field}`,
-               oldValue: { [field]: task[field as keyof Task] },
-               newValue: { [field]: sanitizedVal }
-            });
+         
+         // Task 3: Real-time UI refresh (Auto re-fetch history if sidebar is open)
+         if (showAuditLog && selectedTask?.id === id) {
+           const [sysLogs, histLogs] = await Promise.all([
+             taskService.getAuditLogs({ taskId: id }),
+             taskService.getHistoryEditProjects(updatedTask.project_id || undefined, id)
+           ]).catch(e => {
+             console.error("Refresh audit error:", e);
+             return [[], []];
+           });
+           setAuditLogs(sysLogs);
+           setTaskHistoryLogs(histLogs);
          }
+         
+         setRefreshKey(prev => prev + 1);
 
          // --- TOR Monitor Auto-Status Sync ---
          if (field === 'status' || field === 'realized_finish_date') {
@@ -1399,12 +1401,18 @@ export default function App() {
     }
   };
 
+  const [taskHistoryLogs, setTaskHistoryLogs] = useState<any[]>([]);
+
   const handleOpenAudit = async (task: Task) => {
     setSelectedTask(task);
     setShowAuditLog(true);
     try {
-      const logs = await taskService.getAuditLogs({ taskId: task.id });
-      setAuditLogs(logs);
+      const [sysLogs, histLogs] = await Promise.all([
+        taskService.getAuditLogs({ taskId: task.id }),
+        taskService.getHistoryEditProjects(task.project_id || undefined, task.id)
+      ]);
+      setAuditLogs(sysLogs);
+      setTaskHistoryLogs(histLogs);
     } catch (err) {
       console.error('Audit fetch failed:', err);
     }
@@ -1564,62 +1572,50 @@ export default function App() {
   }, [tasks, projects.length, loading]);
   
   const handleUpdateProject = async (id: string, updates: Partial<Project>) => {
-    const oldProject = projects.find(p => p.id === id);
+    const project = projects.find(p => p.id === id);
+    if (!project) return;
+
+    const isOwner = user?.name?.toLowerCase() === project.pic_name?.toLowerCase();
+
+    if (user && !isOwner && !isAdmin && !isSuperadmin) {
+      // Intercept with warning modal
+      setOwnershipModal({
+        isOpen: true,
+        picName: project.pic_name || 'PIC',
+        itemName: project.name,
+        type: 'project',
+        onCancel: () => {
+          setOwnershipModal(prev => ({ ...prev, isOpen: false }));
+          fetchData(); // Rollback local state
+        },
+        onConfirm: async () => {
+          setOwnershipModal(prev => ({ ...prev, isOpen: false }));
+          await executeProjectUpdate(id, updates);
+        }
+      });
+      return;
+    }
+
+    await executeProjectUpdate(id, updates);
+  };
+
+  const executeProjectUpdate = async (id: string, updates: Partial<Project>) => {
     // Optimistic Update
     setProjects(prev => prev.map(p => p.id === id ? { ...p, ...updates } : p));
     
     try {
-      const { data, error } = await supabase
-        .from('projects')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-        
-      if (error) throw error;
+      const actorName = user?.name || user?.email || 'System';
+      const updated = await taskService.updateProject(id, updates, actorName);
       
       // Immediate state sync with server data
-      if (data) {
-        setProjects(prev => prev.map(p => p.id === id ? data : p));
-        
-        // Sync to MasterProjects if relevant (TRIPLE-MENU SYNCHRONIZATION)
-        if (data.ticket_id) {
-           const masterPayload: any = {
-              ticket_id: data.ticket_id,
-              project_name: data.name,
-              status: data.status,
-              global_status: data.status,
-              pic_name: data.pic_name || 'Unassigned',
-              owner_name: data.owner_name || '',
-              div_owner: data.div_owner || '',
-              updated_at: new Date().toISOString()
-           };
-
-           const { data: m } = await supabase.from('master_projects').select('id').eq('ticket_id', data.ticket_id).maybeSingle();
-           if (m) {
-              await taskService.updateMasterProject(m.id, masterPayload, user?.name || 'System Sync');
-           } else {
-              // INSERT if mirror does not exist
-              await supabase.from('master_projects').insert([{ ...masterPayload, created_at: new Date().toISOString() }]);
-           }
-        }
-      }
+      setProjects(prev => prev.map(p => p.id === id ? updated : p));
       
-      // Audit Logging for Timeline Changes
-      if (oldProject && (updates.start_date || updates.end_date)) {
-        await taskService.createProjectRescheduleLog({
-          project_id: id,
-          changed_by: user?.name || user?.email || 'Anonymous',
-          old_start_date: oldProject.start_date || '',
-          new_start_date: updates.start_date || oldProject.start_date || '',
-          old_end_date: oldProject.end_date || '',
-          new_end_date: updates.end_date || oldProject.end_date || '',
-          reason: 'Auto-sync from WBS Inline Edit'
-        });
-      }
     } catch (err: any) {
-      console.error("Failed to update project:", err);
-      fetchData(); // Rollback
+      console.error('Project Update failed:', err);
+      // Revert optimistic update by refetching
+      const { data } = await supabase.from('projects').select('*').order('created_at', { ascending: false });
+      if (data) setProjects(data);
+      alert('CRUD Failed (Update Project): ' + err.message);
     }
   };
 
@@ -1735,12 +1731,15 @@ export default function App() {
     setRefreshKey,
     handleToggleExpand,
     handleUpdateTask,
+    handleUpdateProject,
     handleOpenAudit,
     handleDeleteTask: requestDeleteTask,
     setScale,
     onReschedule: handleOpenReschedule,
     onNotif: setNotif,
     setTasks,
+    auditLogs: allAuditLogs,
+    historyEditLogs: allHistoryEditLogs,
     isMobile,
     isAdmin,
     isSuperadmin,
@@ -2080,6 +2079,8 @@ export default function App() {
                   onUpdateProject={handleUpdateProject}
                   onCreateRequested={() => setIsCreateProjectModalOpen(true)}
                   onReschedule={(p) => setReschedulingProject(p)}
+                  setEditingProject={setEditingProject}
+                  setIsProjectDetailOpen={setIsProjectDetailOpen}
                   isMobile={isMobile}
                 />
               } />
@@ -2192,6 +2193,22 @@ export default function App() {
             />
           </ErrorBoundary>
         )}
+
+        {isProjectDetailOpen && editingProject && (
+          <ErrorBoundary key="project-detail-modal-error-boundary">
+             <ProjectDetail 
+               project={editingProject}
+               isOpen={isProjectDetailOpen}
+               user={user}
+               onClose={() => setIsProjectDetailOpen(false)}
+               onUpdate={async (id, updates) => {
+                 await handleUpdateProject(id, updates);
+                 setNotif("Project details updated successfully");
+               }}
+               isMobile={isMobile}
+             />
+          </ErrorBoundary>
+        )}
         {showAuditLog && selectedTask && (
           <React.Fragment key="audit-trail-fragment">
             <motion.div 
@@ -2209,75 +2226,166 @@ export default function App() {
               exit={{ x: '100%' }}
               className="fixed top-0 right-0 bottom-0 w-[450px] bg-slate-900 border-l border-slate-800 shadow-2xl z-50 overflow-y-auto"
             >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-8">
-                  <div>
-                    <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                      <History className="w-5 h-5 text-indigo-500" />
-                      Immutable Audit Trail
-                    </h2>
-                    <p className="text-xs text-slate-500 mt-1">Governance Layer for {selectedTask.title}</p>
+              <div className="p-0 flex flex-col h-full">
+                <div className="p-6 pb-4 border-b border-white/5">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                        <History className="w-5 h-5 text-indigo-500" />
+                        Audit Trail
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">Governance Layer for {selectedTask.title}</p>
+                    </div>
+                    <button onClick={() => setShowAuditLog(false)} className="text-slate-400 hover:text-white transition-colors">
+                      <Plus className="w-6 h-6 rotate-45" />
+                    </button>
                   </div>
-                  <button onClick={() => setShowAuditLog(false)} className="text-slate-400 hover:text-white">
-                    <Plus className="w-6 h-6 rotate-45" />
-                  </button>
+
+                  {/* Tabs Header */}
+                  <div className="flex gap-2 mb-6">
+                    <button 
+                      onClick={() => setActiveAuditTab('LOG_SYSTEM')}
+                      className={cn(
+                        "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-md",
+                        activeAuditTab === 'LOG_SYSTEM' 
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                          : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                      )}
+                    >
+                      LOG SYSTEM
+                    </button>
+                    <button 
+                      onClick={() => setActiveAuditTab('HISTORY_EDIT')}
+                      className={cn(
+                        "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-md",
+                        activeAuditTab === 'HISTORY_EDIT' 
+                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
+                          : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                      )}
+                    >
+                      HISTORY EDIT
+                    </button>
+                  </div>
                 </div>
 
-                <div className="space-y-6">
-                    {auditLogs.map((log, i) => {
-                      if (!log) return null;
-                      const logId = getSafeKey(log, i, 'audit-log');
+                <div className="flex-1 p-6">
+                  {(() => {
+                    const systemLogs = auditLogs.filter(log => 
+                      (log.actor || '').toLowerCase().includes('system') || 
+                      (log.authorized_by || '').toLowerCase().includes('system') ||
+                      (log.log_type || '').includes('SYSTEM')
+                    );
+                    const historyLogs = auditLogs.filter(log => 
+                      !(log.actor || '').toLowerCase().includes('system') && 
+                      !(log.authorized_by || '').toLowerCase().includes('system') &&
+                      !(log.log_type || '').includes('SYSTEM')
+                    );
+
+                    if (activeAuditTab === 'HISTORY_EDIT') {
                       return (
-                        <div key={logId} className="relative pl-8 pb-6 group">
-                        {i !== (auditLogs || []).length - 1 && (
-                          <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-slate-800 group-last:hidden" />
-                        )}
-                        <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center z-10">
-                          <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                        <div className="overflow-x-auto bg-[#0F111A] rounded-lg border border-slate-800">
+                          <table className="w-full text-left text-[10px] text-slate-300">
+                            <thead className="bg-[#16192B] text-slate-500 uppercase font-black tracking-widest">
+                              <tr>
+                                <th className="px-4 py-3 border-b border-slate-800">PIC Name</th>
+                                <th className="px-4 py-3 border-b border-slate-800">Date Editing</th>
+                                <th className="px-4 py-3 border-b border-slate-800">Field</th>
+                                <th className="px-4 py-3 border-b border-slate-800">Before</th>
+                                <th className="px-4 py-3 border-b border-slate-800">After</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-800">
+                              {taskHistoryLogs.length === 0 ? (
+                                <tr>
+                                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500 italic">
+                                    Belum ada riwayat edit dari PIC untuk task ini.
+                                  </td>
+                                </tr>
+                              ) : (
+                                taskHistoryLogs.map((log, i) => (
+                                  <tr key={log.id || i} className="hover:bg-white/5 transition-colors group">
+                                    <td className="px-4 py-3 text-indigo-400 font-bold">{log.pic_name}</td>
+                                    <td className="px-4 py-3 font-mono text-slate-500">{new Date(log.created_at).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-slate-400">{log.field_name}</td>
+                                    <td className="px-4 py-3 line-through text-red-500/70">{log.before_value}</td>
+                                    <td className="px-4 py-3 text-emerald-400">{log.after_value}</td>
+                                  </tr>
+                                ))
+                              )}
+                            </tbody>
+                          </table>
                         </div>
-                        
-                        <div className="bg-slate-800/40 border border-slate-800 p-4 rounded-xl">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs font-bold text-indigo-400">{log.actor || 'System'}</span>
-                            <span className="text-[10px] text-slate-500 font-mono">{log.created_at ? format(new Date(log.created_at), 'MM/dd HH:mm:ss') : 'N/A'}</span>
-                          </div>
-                          <p className="text-sm font-medium text-slate-200 mb-2">{log.action || 'Unknown Action'}</p>
-                          
-                          {log.old_payload && log.new_payload && (
-                            <div className="mt-4 space-y-2 border-t border-slate-700/50 pt-4">
-                              <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-2">Payload Comparison</p>
-                              {(() => {
-                                const oldP = log.old_payload as any;
-                                const newP = log.new_payload as any;
-                                const allKeys = Array.from(new Set([...Object.keys(oldP), ...Object.keys(newP)]));
+                      );
+                    }
+
+                    // Log System View (Default)
+                    if (systemLogs.length === 0) {
+                      return (
+                        <div className="flex flex-col items-center justify-center py-20 text-center">
+                          <History className="w-12 h-12 text-slate-800 mb-4" />
+                          <p className="text-slate-500 text-sm italic">Belum ada riwayat aktivitas sistem.</p>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div className="space-y-6">
+                        {systemLogs.map((log, i) => {
+                          const logId = getSafeKey(log, i, 'audit-log');
+                          return (
+                            <div key={logId} className="relative pl-8 pb-6 group">
+                              {i !== systemLogs.length - 1 && (
+                                <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-slate-800 group-last:hidden" />
+                              )}
+                              <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center z-10 transition-colors group-hover:border-indigo-500/50">
+                                <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:scale-125 transition-transform" />
+                              </div>
+                              
+                              <div className="bg-slate-800/40 border border-slate-800 p-4 rounded-xl hover:bg-slate-800/60 transition-colors shadow-sm">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{log.actor || 'System'}</span>
+                                  <span className="text-[9px] text-slate-500 font-mono">{log.created_at ? format(new Date(log.created_at), 'MM/dd HH:mm:ss') : 'N/A'}</span>
+                                </div>
+                                <p className="text-xs font-bold text-slate-200 mb-2">{log.action || 'Unknown Action'}</p>
                                 
-                                return allKeys.map((key, ki) => {
-                                  if (key === 'updated_at' || key === 'id' || key === 'created_at') return null;
-                                  if (JSON.stringify(oldP[key]) === JSON.stringify(newP[key])) return null;
-                                  
-                                  const diffKey = getSafeKey({id: key}, ki, 'payload-diff');
-                                  return (
-                                    <div key={diffKey} className="flex flex-col gap-1 pb-2 border-b border-white/5 last:border-0">
-                                      <span className="text-[10px] font-mono text-indigo-400/70">{key}</span>
-                                      <div className="grid grid-cols-[1fr,auto,1fr] items-center gap-2">
-                                        <div className="bg-rose-500/10 text-rose-400 text-[10px] p-1 rounded border border-rose-500/20 line-through opacity-60 truncate">
-                                          {String(oldP[key] ?? 'null')}
-                                        </div>
-                                        <ArrowRight className="w-3 h-3 text-slate-600" />
-                                        <div className="bg-emerald-500/10 text-emerald-400 text-[10px] p-1 rounded border border-emerald-500/20 font-bold italic truncate">
-                                          {String(newP[key] ?? 'null')}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  );
-                                });
-                              })()}
+                                {log.old_payload && log.new_payload && (
+                                  <div className="mt-4 space-y-2 border-t border-slate-700/50 pt-4">
+                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-2 opacity-50">Auto-Log Details</p>
+                                    {(() => {
+                                      const oldP = log.old_payload as any;
+                                      const newP = log.new_payload as any;
+                                      const allKeys = Array.from(new Set([...Object.keys(oldP), ...Object.keys(newP)]));
+                                      
+                                      return allKeys.map((key, ki) => {
+                                        if (key === 'updated_at' || key === 'id' || key === 'created_at') return null;
+                                        if (JSON.stringify(oldP[key]) === JSON.stringify(newP[key])) return null;
+                                        
+                                        const diffKey = getSafeKey({id: key}, ki, 'payload-diff');
+                                        return (
+                                          <div key={diffKey} className="flex flex-col gap-1 pb-1 border-b border-white/5 last:border-0">
+                                            <span className="text-[9px] font-mono text-indigo-400/70">{key}</span>
+                                            <div className="grid grid-cols-[1fr,auto,1fr] items-center gap-2">
+                                              <div className="text-[8px] text-rose-400 truncate opacity-60">
+                                                {String(oldP[key] ?? 'null')}
+                                              </div>
+                                              <ArrowRight className="w-2 h-2 text-slate-600" />
+                                              <div className="text-[8px] text-emerald-400 font-bold italic truncate">
+                                                {String(newP[key] ?? 'null')}
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      });
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </div>
+                          );
+                        })}
                       </div>
                     );
-                  })}
+                  })()}
                 </div>
               </div>
             </motion.div>
@@ -2331,10 +2439,16 @@ export default function App() {
 function OwnershipWarningModal({ picName, itemName, type, onConfirm, onCancel }: {
   picName: string;
   itemName: string;
-  type: 'task' | 'schedule',
+  type: 'task' | 'schedule' | 'project',
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const getEntityLabel = () => {
+    if (type === 'project') return 'proyek';
+    if (type === 'task') return 'tugas';
+    return 'jadwal';
+  };
+
   return (
     <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
       <motion.div 
@@ -2353,7 +2467,7 @@ function OwnershipWarningModal({ picName, itemName, type, onConfirm, onCancel }:
           <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-4">⚠️ Peringatan Kepemilikan</h2>
           
           <p className="text-slate-300 text-sm leading-relaxed mb-8 text-center px-4">
-            Anda sedang mengedit {type === 'task' ? 'tugas' : 'jadwal'} milik <span className="text-amber-400 font-bold">{picName}</span>. 
+            Anda sedang mengedit {getEntityLabel()} milik <span className="text-amber-400 font-bold">{picName}</span>. 
             Tindakan ini akan dicatat dalam <span className="text-indigo-400 font-bold underline decoration-indigo-500/30">Audit Log</span> sebagai bukti (evidence) untuk akuntabilitas.
             <br/><br/>
             Apakah Anda yakin ingin melanjutkan update pada <span className="italic">"{itemName}"</span>?
@@ -2471,29 +2585,17 @@ function ProjectRescheduleModal({ project, user, onClose, onSuccess }: { project
               <div className="space-y-4">
                 <div className="flex flex-col gap-1.5">
                    <label className="text-[8px] font-bold text-slate-500 uppercase ml-1">Start Date</label>
-                   <div className="relative group">
-                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-indigo-500 transition-colors" />
-                     <input 
-                       type="date"
-                       value={newStart}
-                       onChange={(e) => setNewStart(e.target.value)}
-                       required
-                       className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all"
-                     />
-                   </div>
+                   <CustomDatePicker 
+                     selectedDate={newStart || null}
+                     onChange={setNewStart}
+                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
                    <label className="text-[8px] font-bold text-slate-500 uppercase ml-1">End Date</label>
-                   <div className="relative group">
-                     <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 group-focus-within:text-indigo-500 transition-colors" />
-                     <input 
-                       type="date"
-                       value={newEnd}
-                       onChange={(e) => setNewEnd(e.target.value)}
-                       required
-                       className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500/50 outline-none transition-all"
-                     />
-                   </div>
+                   <CustomDatePicker 
+                     selectedDate={newEnd || null}
+                     onChange={setNewEnd}
+                   />
                 </div>
               </div>
             </div>
@@ -2562,6 +2664,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
   const [divOwner, setDivOwner] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [projectDiajukan, setProjectDiajukan] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   
   const [phases, setPhases] = useState([{ 
@@ -2712,6 +2815,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         pic_name: finalPic,
         owner_name: ownerName,
         div_owner: divOwner,
+        project_diajukan: projectDiajukan,
         start_date: pStart || undefined,
         end_date: pEnd || undefined
       }, actorEmail);
@@ -2801,74 +2905,92 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         </div>
 
         <div className="p-4 sm:p-8 flex-1 overflow-x-auto overflow-y-auto space-y-8 scrollbar-hide">
-          <div className={cn("grid gap-6 sm:gap-8 max-w-6xl mx-auto", isMobile ? "grid-cols-1" : "grid-cols-5")}>
-            <div className="space-y-2 relative">
-              <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest px-1">Ticket ID</label>
-              <TicketSelector 
-                value={ticketId}
-                onChange={(val) => setTicketId(val)}
-                onSelectMaster={selectMasterProject}
-              />
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Row 1: Ticket ID, Lead PIC, Start Date, End Date */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
+              <div className="space-y-2 relative">
+                <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest px-1">Ticket ID</label>
+                <TicketSelector 
+                  value={ticketId}
+                  onChange={(val) => setTicketId(val)}
+                  onSelectMaster={selectMasterProject}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Lead PIC</label>
+                <LocalInput 
+                  value={pic}
+                  onChange={v => setPic(v)}
+                  placeholder="Lead PIC Name..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
+                <CustomDatePicker 
+                  selectedDate={startDate}
+                  onChange={setStartDate}
+                  className="!min-w-[160px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
+                <CustomDatePicker 
+                  selectedDate={endDate}
+                  onChange={setEndDate}
+                  className="!min-w-[160px]"
+                />
+              </div>
             </div>
 
+            {/* Row 2: Project Name (Full Width Textarea) */}
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Project Name</label>
-              <LocalInput 
+              <textarea 
+                rows={2}
                 autoFocus={!ticketId}
                 value={title}
-                onChange={v => setTitle(v)}
-                placeholder="Project Name..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold"
+                onChange={e => setTitle(e.target.value)}
+                placeholder="Ex Detail: Pengembangan Fitur Automated Reporting..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold text-sm resize-none"
               />
             </div>
             
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Division / Owner Div</label>
-              <div className="grid grid-cols-2 gap-2">
+            {/* Row 3: Owner Name & Division */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Owner Name</label>
                 <LocalInput 
                   value={ownerName}
                   onChange={v => setOwnerName(v)}
-                  placeholder="Owner Name..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-[10px] text-slate-400 outline-none focus:border-indigo-500 font-bold"
+                  placeholder="Enter Owner Name..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 text-sm text-slate-200 outline-none focus:border-indigo-500 font-bold"
                 />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Division</label>
                 <LocalInput 
                   value={divOwner}
                   onChange={v => setDivOwner(v)}
-                  placeholder="Division..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-[10px] text-slate-400 outline-none focus:border-indigo-500 font-bold"
+                  placeholder="Enter Division Name..."
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 text-sm text-slate-200 outline-none focus:border-indigo-500 font-bold"
                 />
               </div>
             </div>
 
+            {/* Row 4: Project Diajukan (Full Width Textarea) */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Lead PIC</label>
-              <LocalInput 
-                value={pic}
-                onChange={v => setPic(v)}
-                placeholder="Lead PIC Name..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold"
+              <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest px-1">Project Diajukan</label>
+              <textarea 
+                rows={2}
+                value={projectDiajukan}
+                onChange={e => setProjectDiajukan(e.target.value)}
+                placeholder="Detail pengajuan project..."
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold text-sm resize-none"
               />
-            </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
-                <input 
-                  type="date"
-                  value={startDate}
-                  onChange={e => setStartDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-colors font-bold text-xs"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
-                <input 
-                  type="date"
-                  value={endDate}
-                  onChange={e => setEndDate(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-3 outline-none focus:border-indigo-500 transition-colors font-bold text-xs"
-                />
-              </div>
             </div>
           </div>
 
@@ -2923,33 +3045,25 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
 
                     <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
                       {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">From Date</label>}
-                      <input 
-                        type="date"
-                        value={phase.start_date}
-                        min={undefined}
-                        max={undefined}
-                        onChange={(e) => {
+                      <CustomDatePicker 
+                        selectedDate={phase.start_date}
+                        onChange={date => {
                           const newPhases = [...phases];
-                          newPhases[pIdx].start_date = e.target.value;
+                          newPhases[pIdx].start_date = date || '';
                           setPhases(newPhases);
                         }}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2.5 text-[10px] text-white focus:border-indigo-500 outline-none transition-all"
                       />
                     </div>
 
                     <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
                       {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">To Date</label>}
-                      <input 
-                        type="date"
-                        value={phase.end_date}
-                        min={undefined}
-                        max={undefined}
-                        onChange={(e) => {
+                      <CustomDatePicker 
+                        selectedDate={phase.end_date}
+                        onChange={date => {
                           const newPhases = [...phases];
-                          newPhases[pIdx].end_date = e.target.value;
+                          newPhases[pIdx].end_date = date || '';
                           setPhases(newPhases);
                         }}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2.5 text-[10px] text-white focus:border-indigo-500 outline-none transition-all"
                       />
                     </div>
 
@@ -3066,43 +3180,33 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
 
                           <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
                             {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">From Date</label>}
-                            <input 
-                              type="date"
-                              value={sub.start_date}
-                              min={phase.start_date}
-                              max={phase.end_date || undefined}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (phase.start_date && val < phase.start_date) {
+                            <CustomDatePicker 
+                              selectedDate={sub.start_date}
+                              onChange={date => {
+                                if (phase.start_date && date && date < phase.start_date) {
                                   alert("Tanggal mulai child task tidak boleh mendahului tanggal pada task!");
                                   return;
                                 }
                                 const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].start_date = val;
+                                newPhases[pIdx].subtasks[sIdx].start_date = date || '';
                                 setPhases(newPhases);
                               }}
-                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-[10px] text-white focus:border-indigo-500/50 outline-none transition-all"
                             />
                           </div>
 
                           <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
                             {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">To Date</label>}
-                            <input 
-                              type="date"
-                              value={sub.end_date}
-                              min={sub.start_date || phase.start_date}
-                              max={phase.end_date || undefined}
-                              onChange={(e) => {
-                                const val = e.target.value;
-                                if (phase.end_date && val > phase.end_date) {
+                            <CustomDatePicker 
+                              selectedDate={sub.end_date}
+                              onChange={date => {
+                                if (phase.end_date && date && date > phase.end_date) {
                                   alert("Tanggal selesai child task tidak boleh melebihi task utama!");
                                   return;
                                 }
                                 const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].end_date = val;
+                                newPhases[pIdx].subtasks[sIdx].end_date = date || '';
                                 setPhases(newPhases);
                               }}
-                              className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-[10px] text-white focus:border-indigo-500/50 outline-none transition-all"
                             />
                           </div>
 
@@ -3347,15 +3451,13 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
                     <option value="WFC">WFC</option>
                     <option value="LIBUR">LIBUR</option>
                   </select>
-                  <input 
-                    type="date"
-                    value={row.schedule_date}
-                    onChange={(e) => {
+                  <CustomDatePicker 
+                    selectedDate={row.schedule_date}
+                    onChange={(date) => {
                       const newRows = [...rows];
-                      newRows[idx].schedule_date = e.target.value;
+                      newRows[idx].schedule_date = date || '';
                       setRows(newRows);
                     }}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500/50 outline-none font-bold"
                   />
                   <button 
                     onClick={() => setRows(rows.filter((_, i) => i !== idx))}
@@ -3439,7 +3541,20 @@ function DashboardStats({ tasks, projects }: { tasks: Task[], projects: Project[
   );
 }
 
-function PortfolioDashboard({ user, projects, tasks, loading, onOpenProject, onDeleteProject, onUpdateProject, onCreateRequested, onReschedule, isMobile }: { 
+function PortfolioDashboard({ 
+  user,
+  projects, 
+  tasks,
+  loading,
+  onOpenProject,
+  onDeleteProject,
+  onUpdateProject,
+  onCreateRequested,
+  onReschedule,
+  setEditingProject,
+  setIsProjectDetailOpen,
+  isMobile
+}: { 
   user: any,
   projects: Project[], 
   tasks: Task[],
@@ -3449,6 +3564,8 @@ function PortfolioDashboard({ user, projects, tasks, loading, onOpenProject, onD
   onUpdateProject: (id: string, updates: Partial<Project>) => void,
   onCreateRequested: () => void,
   onReschedule: (p: Project) => void,
+  setEditingProject: (p: Project) => void,
+  setIsProjectDetailOpen: (open: boolean) => void,
   isMobile?: boolean
 }) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -3584,6 +3701,19 @@ function PortfolioDashboard({ user, projects, tasks, loading, onOpenProject, onD
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
+                      setEditingProject(p);
+                      setIsProjectDetailOpen(true);
+                    }}
+                    className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                    title="Edit Project Details"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+                {user && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setDeleteId(p.id);
                     }}
                     className="p-2 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-500/50"
@@ -3626,8 +3756,14 @@ function PortfolioDashboard({ user, projects, tasks, loading, onOpenProject, onD
                   )}
                   <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                     <UserIcon className="w-3 h-3 text-indigo-500" />
-                    <span>PIC: <span className="text-slate-300">{p.pic_name || p.leader_email || 'Unassigned'}</span></span>
+                    <span>PIC: <span className="text-slate-900 dark:text-slate-300 transition-colors uppercase">{p.pic_name || p.leader_email || 'Unassigned'}</span></span>
                   </div>
+                  {(p.owner_name || p.div_owner) && (
+                    <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+                      <ShieldCheck className="w-3 h-3 text-indigo-400" />
+                      <span>OWNER: <span className="text-slate-900 dark:text-slate-300 transition-colors uppercase">{p.owner_name || '-'} ({p.div_owner || '-'})</span></span>
+                    </div>
+                  )}
                   <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                     <Clock className="w-3 h-3 text-indigo-500" />
                     <span>MAN HOURS: <span className="text-slate-700 dark:text-slate-300 transition-colors">
@@ -3642,6 +3778,19 @@ function PortfolioDashboard({ user, projects, tasks, loading, onOpenProject, onD
                     <span>Timeline: <span className="text-slate-700 dark:text-slate-300 font-mono tracking-tighter transition-colors">
                       {p.start_date ? format(new Date(p.start_date), 'MMM dd') : 'Belum Set'} - {p.end_date ? format(new Date(p.end_date), 'MMM dd, yyyy') : 'Belum Set'}
                     </span></span>
+                  </div>
+                </div>
+
+                {/* Add this inside the card body, below the MAN HOURS / TIMELINE section */}
+                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-gray-700/50">
+                  <div className="flex items-start gap-2 text-[11px]">
+                    <FileText className="w-3.5 h-3.5 text-indigo-500 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-slate-500 dark:text-gray-500 font-semibold uppercase text-[9px]">Project Diajukan</span>
+                      <span className="text-slate-700 dark:text-gray-300 line-clamp-2 italic" title={p.project_diajukan || "Belum ada informasi"}>
+                        {p.project_diajukan || "-"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -4510,15 +4659,12 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <label className="text-[8px] text-slate-500 font-black uppercase tracking-widest ml-1">Tanggal Pengganti</label>
-                            <input 
-                              type="date"
-                              value={requestModal.swapDate || ''}
-                              onChange={(e) => {
-                                const date = e.target.value;
+                            <CustomDatePicker 
+                              selectedDate={requestModal.swapDate || ''}
+                              onChange={(date) => {
                                 const swapCurrentStatus = scheduleGrid[requestModal.pic]?.[date] || '';
                                 setRequestModal({ ...requestModal, swapDate: date, swapCurrentStatus });
                               }}
-                              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50"
                             />
                           </div>
                           <div className="space-y-2">
@@ -5249,8 +5395,8 @@ const ProjectRedirect = () => {
 
 function GanttDetailView({ 
   user, users, projectId: propsProjectId, setFocusedProjectId, projects, setProjects, tasks, hierarchicalTasks, expandedRows, scale, 
-  setRefreshKey, handleToggleExpand, handleUpdateTask, handleOpenAudit, handleDeleteTask, 
-  setScale, setTasks, onReschedule, onNotif, isAdmin, isSuperadmin, isMobile, authLoading
+  setRefreshKey, handleToggleExpand, handleUpdateTask, handleUpdateProject, handleOpenAudit, handleDeleteTask, 
+  setScale, setTasks, onReschedule, onNotif, auditLogs, historyEditLogs, isAdmin, isSuperadmin, isMobile, authLoading
 }: any) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -5265,12 +5411,36 @@ function GanttDetailView({
     }
   }, [projectId, navigate, authLoading, isGlobalView]);
 
-  const [activeTab, setActiveTab] = useState<'TASKS' | 'AUDIT'>('TASKS');
+  const [activeView, setActiveView] = useState<'INFRASTRUCTURE' | 'SYSTEM_LOG' | 'HISTORY_EDIT'>('INFRASTRUCTURE');
   const [rescheduleLogs, setRescheduleLogs] = useState<ProjectRescheduleLog[]>([]);
   const [globalStatus, setGlobalStatus] = useState<string>("");
   const scrollRef = React.useRef<HTMLDivElement>(null);
   
   const currentProject = useMemo(() => (projects || []).find((p: any) => p.id === projectId), [projects, projectId]);
+
+  // DERIVE PROJECT SPECIFIC AUDIT LOGS
+  const systemLogs = useMemo(() => {
+    if (!auditLogs) return [];
+    const filtered = isGlobalView ? auditLogs : auditLogs.filter((log: any) => log.project_id === projectId);
+    // Explicitly focus on system logs now
+    return filtered.filter((log: any) => {
+      const actor = (log.actor || "").toLowerCase();
+      const logType = (log.log_type || "");
+      const action = (log.action || "").toLowerCase();
+      const newPayloadStr = typeof log.new_payload === 'string' ? log.new_payload : JSON.stringify(log.new_payload || {});
+      
+      return actor.includes('system') || 
+             logType.includes('SYSTEM') || 
+             action.includes('auto') ||
+             newPayloadStr.toLowerCase().includes('"changed_by":"system');
+    });
+  }, [auditLogs, projectId, isGlobalView]);
+
+  const historyLogs = useMemo(() => {
+    if (!historyEditLogs) return [];
+    if (isGlobalView) return historyEditLogs;
+    return historyEditLogs.filter((log: any) => log.project_id === projectId);
+  }, [historyEditLogs, projectId, isGlobalView]);
 
   // AUTO-SCROLL TO TODAY
   const timelineRange = useMemo(() => {
@@ -5653,22 +5823,31 @@ function GanttDetailView({
                 <div className="flex items-center gap-6">
                   <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-white/5">
                     <button 
-                      onClick={() => setActiveTab('TASKS')}
+                      onClick={() => setActiveView('INFRASTRUCTURE')}
                       className={cn(
                         "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
-                        activeTab === 'TASKS' ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md dark:shadow-lg dark:shadow-indigo-600/20" : "text-slate-500 hover:text-indigo-600 dark:hover:text-slate-300"
+                        activeView === 'INFRASTRUCTURE' ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md dark:shadow-lg dark:shadow-indigo-600/20" : "text-slate-500 hover:text-indigo-600 dark:hover:text-slate-300"
                       )}
                     >
                       Infrastructure Breakdown
                     </button>
                     <button 
-                      onClick={() => setActiveTab('AUDIT')}
+                      onClick={() => setActiveView('SYSTEM_LOG')}
                       className={cn(
                         "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
-                        activeTab === 'AUDIT' ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md dark:shadow-lg dark:shadow-indigo-600/20" : "text-slate-500 hover:text-indigo-600 dark:hover:text-slate-300"
+                        activeView === 'SYSTEM_LOG' ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md dark:shadow-lg dark:shadow-indigo-600/20" : "text-slate-500 hover:text-indigo-600 dark:hover:text-slate-300"
                       )}
                     >
-                      Audit Trail
+                      System Log
+                    </button>
+                    <button 
+                      onClick={() => setActiveView('HISTORY_EDIT')}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all",
+                        activeView === 'HISTORY_EDIT' ? "bg-white dark:bg-indigo-600 text-indigo-600 dark:text-white shadow-md dark:shadow-lg dark:shadow-indigo-600/20" : "text-slate-500 hover:text-indigo-600 dark:hover:text-slate-300"
+                      )}
+                    >
+                      History Edit
                     </button>
                   </div>
 
@@ -5690,18 +5869,15 @@ function GanttDetailView({
                       <div className="flex flex-col">
                         <div className="flex flex-wrap items-center gap-3">
                            <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/5 shadow-inner group z-[100] relative pointer-events-auto transition-colors">
-                              <Calendar className="w-3.5 h-3.5 text-indigo-400" />
                               <div className="flex items-center gap-1">
-                                <input 
-                                  type="date"
-                                  value={displayStart}
-                                  onChange={async (e) => {
-                                    const newDate = e.target.value;
-                                    if (!newDate || !projectId) return;
+                                <CustomDatePicker 
+                                  selectedDate={displayStart}
+                                  onChange={async (date) => {
+                                    if (!date || !projectId) return;
                                     try {
                                       const { data, error } = await supabase
                                         .from('projects')
-                                        .update({ start_date: newDate })
+                                        .update({ start_date: date })
                                         .eq('id', projectId)
                                         .select()
                                         .single();
@@ -5717,30 +5893,26 @@ function GanttDetailView({
                                         changed_by: user?.name || user?.email || 'User',
                                         old_start_date: displayStart,
                                         old_end_date: displayEnd,
-                                        new_start_date: newDate,
+                                        new_start_date: date,
                                         new_end_date: displayEnd,
                                         reason: 'Direct Header Adjustment'
                                       });
                                       onNotif?.("Project timeline updated!");
-                                      // setRefreshKey?.((prev: number) => prev + 1); // No longer needed if we update state directly
                                     } catch (err) {
                                       console.error("Failed to update project start date:", err);
                                     }
                                   }}
                                   className="bg-transparent text-[9px] sm:text-[10px] text-indigo-100 font-mono italic font-bold outline-none cursor-pointer hover:text-white transition-colors relative z-[110]"
-                                  disabled={!user}
                                 />
                                 <span className="text-slate-500 mx-0.5">-</span>
-                                <input 
-                                  type="date"
-                                  value={displayEnd}
-                                  onChange={async (e) => {
-                                    const newDate = e.target.value;
-                                    if (!newDate || !projectId) return;
+                                <CustomDatePicker 
+                                  selectedDate={displayEnd}
+                                  onChange={async (date) => {
+                                    if (!date || !projectId) return;
                                     try {
                                       const { data, error } = await supabase
                                         .from('projects')
-                                        .update({ end_date: newDate })
+                                        .update({ end_date: date })
                                         .eq('id', projectId)
                                         .select()
                                         .single();
@@ -5757,20 +5929,18 @@ function GanttDetailView({
                                         old_start_date: displayStart,
                                         old_end_date: displayEnd,
                                         new_start_date: displayStart,
-                                        new_end_date: newDate,
+                                        new_end_date: date,
                                         reason: 'Direct Header Adjustment'
                                       });
                                       onNotif?.("Project timeline updated!");
-                                      // setRefreshKey?.((prev: number) => prev + 1);
                                     } catch (err) {
                                       console.error("Failed to update project end date:", err);
                                     }
                                   }}
                                   className="bg-transparent text-[9px] sm:text-[10px] text-indigo-100 font-mono italic font-bold outline-none cursor-pointer hover:text-white transition-colors relative z-[110]"
-                                  disabled={!user}
                                 />
                               </div>
-                            </div>
+                           </div>
                            <div className="flex items-center gap-2">
                              {user && (
                                <button 
@@ -5797,7 +5967,7 @@ function GanttDetailView({
                   )}
                 </div>
                 
-                {activeTab === 'TASKS' && user && (
+                {activeView === 'INFRASTRUCTURE' && user && (
                   <button 
                     onClick={handleAddInlineL1}
                     className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all active:scale-95 flex items-center gap-2 border border-indigo-400/30"
@@ -5808,8 +5978,26 @@ function GanttDetailView({
                 )}
               </div>
               
+              {!isGlobalView && currentProject && (
+                <div className="px-5 py-4 bg-slate-100 dark:bg-black/60 border-b border-slate-200 dark:border-white/5 transition-colors">
+                  <div className="flex items-center gap-2 mb-3">
+                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+                      Detail Pengajuan Project (Project Diajukan)
+                    </span>
+                  </div>
+                  <textarea 
+                    value={currentProject.project_diajukan || ''}
+                    onChange={(e) => handleUpdateProject(currentProject.id, { project_diajukan: e.target.value })}
+                    className="w-full bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl p-4 text-slate-800 dark:text-slate-300 text-xs font-medium italic leading-relaxed focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all resize-none min-h-[80px]"
+                    placeholder="Belum ada detail pengajuan untuk project ini..."
+                    disabled={!user}
+                  />
+                </div>
+              )}
+              
               <div className="flex-1 overflow-auto scrollbar-hide bg-slate-950/40 relative">
-                {activeTab === 'TASKS' ? (
+                {activeView === 'INFRASTRUCTURE' ? (
                   isMobile ? (
                     <div className="flex-1 overflow-y-auto px-4 py-6">
                       <div className="space-y-4">
@@ -5848,9 +6036,17 @@ function GanttDetailView({
                       </div>
                     </div>
                   )
+                ) : activeView === 'SYSTEM_LOG' ? (
+                  <div className="p-8">
+                     <SystemLogTable logs={systemLogs} />
+                     <div className="mt-8 border-t border-white/5 pt-8">
+                       <h4 className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.3em] mb-4">Project Timeline Adjustment History</h4>
+                       <AuditLogTable logs={rescheduleLogs} />
+                     </div>
+                  </div>
                 ) : (
                   <div className="p-8">
-                     <AuditLogTable logs={rescheduleLogs} />
+                    <HistoryEditTable logs={historyLogs} users={users} />
                   </div>
                 )}
               </div>
@@ -6528,11 +6724,9 @@ function AuditLogView({ logs, projects, users, isMobile }: { logs: AuditLog[], p
         </div>
         <div className={cn("flex items-center gap-3", isMobile && "w-full justify-between")}>
           <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Filter Date</label>
-          <input 
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 text-white rounded-xl px-4 py-2.5 text-xs outline-none focus:border-indigo-500 transition-all font-bold"
+          <CustomDatePicker 
+            selectedDate={dateFilter}
+            onChange={setDateFilter}
           />
         </div>
       </div>
@@ -6730,6 +6924,103 @@ const DeferredTextarea = ({ value, onSave, className, placeholder, disabled }: {
   );
 };
 
+function SystemLogTable({ logs }: { logs: AuditLog[] }) {
+  if (!logs || logs.length === 0) {
+    return <div className="text-center py-10 text-slate-500 font-bold uppercase text-[10px] tracking-widest border border-dashed border-slate-800 rounded-2xl">No system logs recorded</div>;
+  }
+  return (
+    <div className="overflow-hidden bg-slate-900/50 rounded-2xl border border-white/5 shadow-2xl">
+      <table className="w-full text-left border-collapse">
+        <thead className="bg-slate-950/80 sticky top-0 z-10 border-b border-white/5">
+          <tr>
+            <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Action</th>
+            <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest text-center">Auth By</th>
+            <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest text-right">Timestamp</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/5">
+          {logs.map((log) => (
+            <tr key={log.id} className="hover:bg-indigo-500/5 transition-colors group">
+              <td className="px-6 py-4">
+                <span className="text-[11px] font-black text-slate-200 uppercase tracking-tight group-hover:text-white transition-colors">{log.action || 'INTERNAL OPERATION'}</span>
+              </td>
+              <td className="px-6 py-4 text-center">
+                <span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20 uppercase tracking-widest">
+                  {log.actor || 'SYSTEM'}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-right">
+                <span className="text-[10px] font-mono text-slate-500 font-bold">
+                  {log.created_at ? format(new Date(log.created_at), 'dd/MM/yy HH:mm') : '-'}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function HistoryEditTable({ logs, users }: { logs: HistoryEditProject[], users: AppUser[] }) {
+  if (!logs || logs.length === 0) {
+    return <div className="text-center py-10 text-slate-500 font-bold uppercase text-[10px] tracking-widest border border-dashed border-slate-800 rounded-2xl">No user edits recorded</div>;
+  }
+  return (
+    <div className="overflow-hidden bg-slate-900/50 rounded-2xl border border-white/5 shadow-2xl">
+      <div className="w-full overflow-x-auto">
+        <table className="w-full text-left border-collapse min-w-[800px]">
+          <thead className="bg-slate-950/80 sticky top-0 z-10 border-b border-white/5">
+            <tr>
+              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest w-[150px]">PIC Name</th>
+              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest text-center w-[120px]">Date</th>
+              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest w-[150px]">Field Name</th>
+              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Before</th>
+              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest">After</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/5">
+            {logs.map((log) => {
+              const actorName = users.find(u => u.email === log.pic_name)?.name || log.pic_name;
+              
+              return (
+                <tr key={log.id} className="hover:bg-indigo-500/5 transition-colors group">
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20">
+                        <UserIcon className="w-3 h-3 text-indigo-400" />
+                      </div>
+                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-tight">{actorName}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 text-center">
+                    <span className="text-[9px] font-mono text-slate-500 font-bold">
+                      {log.created_at ? format(new Date(log.created_at), 'dd/MM/yy') : '-'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-3">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{log.field_name}</span>
+                  </td>
+                  <td className="px-6 py-3">
+                    <div className="max-w-[200px] truncate text-[10px] text-rose-400/60 line-through italic">
+                       {log.before_value}
+                    </div>
+                  </td>
+                  <td className="px-6 py-3">
+                    <div className="max-w-[200px] truncate text-[10px] text-emerald-400 font-bold italic">
+                       {log.after_value}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 function AuditLogTable({ logs }: { logs: ProjectRescheduleLog[] }) {
   if (logs.length === 0) {
     return (
@@ -6807,17 +7098,25 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
     const isProject = !!task.isProject;
     const health = getTaskHealth(task);
     const proj = projects.find((p: any) => p.id === task.project_id) || (isProject ? task : null);
+    
+    // OWNERSHIP LOCK LOGIC
+    const currentUser = user?.name?.toLowerCase();
+    const projectPic = proj?.pic_name?.toLowerCase();
+    const isAdmin = user?.access_level?.toLowerCase() === 'admin' || user?.access_level?.toLowerCase() === 'superadmin';
+    const isOwner = currentUser === projectPic;
+    const hasControl = isOwner || isAdmin;
 
     return (
       <React.Fragment key={`${task.custom_id || task.id}-${index}`}>
         <tr 
           onClick={() => !isProject && children.length > 0 && onToggleExpand(task.id)}
           className={cn(
-            "border-b border-white/5 transition-all group cursor-pointer hover:bg-white/5",
+            "border-b border-white/5 transition-all group cursor-pointer hover:bg-white/5 relative",
             level === 0 ? "bg-slate-900/40" : "bg-slate-800/10",
             level === 1 && isExpanded ? "bg-slate-800/60" : "hover:bg-white/10",
             health === 'OVERDUE' && "border-l-4 border-l-rose-500 bg-rose-500/10",
-            health === 'OVER SLA' && "border-l-4 border-l-amber-500 bg-amber-500/10"
+            health === 'OVER SLA' && "border-l-4 border-l-amber-500 bg-amber-500/10",
+            !hasControl && "hover:bg-amber-500/5 transition-colors"
           )}
         >
           {/* Node Selector / Title */}
@@ -6826,6 +7125,11 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               "flex items-center gap-3",
               level === 1 ? "pl-10" : level > 1 ? "pl-16" : "pl-0"
             )}>
+              {!hasControl && (
+                <div className="absolute left-1 top-1/2 -translate-y-1/2 text-amber-500/40 group-hover:text-amber-500 transition-colors" title={`Milik PIC ${proj?.pic_name}`}>
+                  <ShieldAlert className="w-3 h-3" />
+                </div>
+              )}
               {(isProject || children.length > 0) && (
                 <span className="text-cyan-400 font-mono w-4 flex items-center justify-center" onClick={() => onToggleExpand(task.id)}>
                   {isExpanded ? "▼" : "▶"}
@@ -6936,12 +7240,11 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
 
           {/* Realized Finish Date */}
           <td className="px-4 py-4 bg-indigo-500/5" onClick={e => e.stopPropagation()}>
-            <input 
-              type="date"
-              value={task.realized_finish_date ? format(new Date(task.realized_finish_date), 'yyyy-MM-dd') : ''}
-              min={task.start_time ? format(new Date(task.start_time), 'yyyy-MM-dd') : undefined}
-              onChange={(e) => {
-                const val = e.target.value ? new Date(`${e.target.value}T17:00:00`).toISOString() : null;
+            <CustomDatePicker 
+              selectedDate={task.realized_finish_date ? format(new Date(task.realized_finish_date), 'yyyy-MM-dd') : ''}
+              minDate={task.start_time ? new Date(task.start_time) : undefined}
+              onChange={(date) => {
+                const val = date ? new Date(`${date}T17:00:00`).toISOString() : null;
                 
                 // Manual validation check for older browsers or manual typing
                 if (val && task.start_time && new Date(val) < new Date(task.start_time)) {
@@ -6988,22 +7291,16 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
             onClick={(e) => { 
               if (disabled) return;
               e.stopPropagation(); 
-              const input = e.currentTarget.querySelector('input');
-              if (input) {
-                try { input.showPicker(); } catch(err) { input.focus(); }
-              }
             }}
           >
             <div className="flex flex-col items-center">
-              <input 
-                type="date" 
-                value={task.start_time ? format(new Date(task.start_time), "yyyy-MM-dd") : ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  onUpdateTask(task.id, 'start_time', val ? new Date(val).toISOString() : null);
+              <CustomDatePicker 
+                selectedDate={task.start_time ? format(new Date(task.start_time), "yyyy-MM-dd") : ''}
+                onChange={(date) => {
+                  onUpdateTask(task.id, 'start_time', date ? new Date(date).toISOString() : null);
                 }}
-                min={proj?.start_date ? format(new Date(proj.start_date), "yyyy-MM-dd") : ''}
-                max={task.end_time ? format(new Date(task.end_time), "yyyy-MM-dd") : (parentTask?.end_time ? format(new Date(parentTask.end_time), "yyyy-MM-dd") : (proj?.end_date ? format(new Date(proj.end_date), "yyyy-MM-dd") : ''))}
+                minDate={proj?.start_date ? new Date(proj.start_date) : undefined}
+                maxDate={task.end_time ? new Date(task.end_time) : (parentTask?.end_time ? new Date(parentTask.end_time) : (proj?.end_date ? new Date(proj.end_date) : undefined))}
                 className="bg-slate-900 border border-slate-700 text-[10px] text-white font-mono focus:text-indigo-400 outline-none w-full text-center cursor-pointer font-bold rounded px-1 py-0.5"
                 disabled={disabled}
               />
@@ -7016,22 +7313,16 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
             onClick={(e) => { 
               if (disabled) return;
               e.stopPropagation(); 
-              const input = e.currentTarget.querySelector('input');
-              if (input) {
-                try { input.showPicker(); } catch(err) { input.focus(); }
-              }
             }}
           >
             <div className="flex flex-col items-center">
-              <input 
-                type="date" 
-                value={task.end_time ? format(new Date(task.end_time), "yyyy-MM-dd") : ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  onUpdateTask(task.id, 'end_time', val ? new Date(val).toISOString() : null);
+              <CustomDatePicker 
+                selectedDate={task.end_time ? format(new Date(task.end_time), "yyyy-MM-dd") : ''}
+                onChange={(date) => {
+                  onUpdateTask(task.id, 'end_time', date ? new Date(date).toISOString() : null);
                 }}
-                min={task.start_time ? format(new Date(task.start_time), "yyyy-MM-dd") : (proj?.start_date ? format(new Date(proj.start_date), "yyyy-MM-dd") : '')}
-                max={parentTask?.end_time ? format(new Date(parentTask.end_time), "yyyy-MM-dd") : (proj?.end_date ? format(new Date(proj.end_date), "yyyy-MM-dd") : '')}
+                minDate={task.start_time ? new Date(task.start_time) : (proj?.start_date ? new Date(proj.start_date) : undefined)}
+                maxDate={parentTask?.end_time ? new Date(parentTask.end_time) : (proj?.end_date ? new Date(proj.end_date) : undefined)}
                 className="bg-slate-900 border border-slate-700 text-[10px] text-white font-mono focus:text-indigo-400 outline-none w-full text-center cursor-pointer font-bold rounded px-1 py-0.5"
                 disabled={disabled}
               />
@@ -7420,20 +7711,16 @@ function MobileTaskEditModal({ task, onClose, onUpdate }: { task: Task, onClose:
           <div className="grid grid-cols-2 gap-6">
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Start Date</label>
-              <input 
-                type="date"
-                value={formData.start_time}
-                onChange={e => setFormData(p => ({ ...p, start_time: e.target.value }))}
-                className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-all"
+              <CustomDatePicker 
+                selectedDate={formData.start_time}
+                onChange={date => setFormData(p => ({ ...p, start_time: date || '' }))}
               />
             </div>
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">End Date</label>
-              <input 
-                type="date"
-                value={formData.end_time}
-                onChange={e => setFormData(p => ({ ...p, end_time: e.target.value }))}
-                className="w-full bg-slate-900 border border-slate-800 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-all"
+              <CustomDatePicker 
+                selectedDate={formData.end_time}
+                onChange={date => setFormData(p => ({ ...p, end_time: date || '' }))}
               />
             </div>
           </div>
@@ -7454,17 +7741,15 @@ function MobileTaskEditModal({ task, onClose, onUpdate }: { task: Task, onClose:
 
           <div className="space-y-3">
             <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Realized Finish Date (Optional)</label>
-            <input 
-              type="date"
-              value={formData.realized_finish_date}
-              min={formData.start_time || undefined}
-              onChange={e => {
-                const newVal = e.target.value;
-                if (newVal && formData.start_time && newVal < formData.start_time) {
+            <CustomDatePicker 
+              selectedDate={formData.realized_finish_date}
+              minDate={formData.start_time ? new Date(formData.start_time) : undefined}
+              onChange={date => {
+                if (date && formData.start_time && date < formData.start_time) {
                   alert(`VALIDATION ERROR: Realized Finish tidak boleh mendahului Plan Start (${formData.start_time})`);
                   return;
                 }
-                setFormData(p => ({ ...p, realized_finish_date: newVal }));
+                setFormData(p => ({ ...p, realized_finish_date: date || '' }));
               }}
               className="w-full bg-slate-900 border border-indigo-500/30 rounded-2xl px-4 py-4 text-white font-bold outline-none focus:border-indigo-500 transition-all font-mono"
             />

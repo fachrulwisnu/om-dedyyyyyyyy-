@@ -35,6 +35,7 @@ export interface Project {
   div_owner?: string;
   start_date?: string;
   end_date?: string;
+  project_diajukan?: string;
   created_at: string;
   updated_at: string;
 }
@@ -89,6 +90,9 @@ export interface AuditLog {
   user_id?: string;
   actor: string;
   action: string;
+  authorized_by?: string;
+  log_type?: string;
+  reason_justification?: string;
   old_payload: any;
   new_payload: any;
   created_at: string;
@@ -113,6 +117,7 @@ export interface KaldevProject {
   is_asap: boolean | null;
   leader_name: string | null;
   client_name: string | null;
+  project_diajukan?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -230,5 +235,16 @@ export interface MasterProjectAuditLog {
   action: 'IMPORT' | 'CREATE' | 'UPDATE' | 'DELETE';
   note: string;
   changed_fields?: string;
+  created_at: string;
+}
+
+export interface HistoryEditProject {
+  id: string;
+  project_id: string;
+  task_id?: string | null;
+  pic_name: string;
+  field_name: string;
+  before_value: string | null;
+  after_value: string | null;
   created_at: string;
 }

@@ -13,7 +13,8 @@ import {
   RefreshCw,
   Search,
   Settings,
-  ShieldCheck
+  ShieldCheck,
+  FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -305,6 +306,19 @@ export function TorMonitor({ user }: { user: any }) {
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Project Diajukan Section */}
+                <div className="mt-3 pt-3 border-t border-slate-800">
+                  <div className="flex items-start gap-2 text-[11px]">
+                    <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="text-slate-500 font-semibold uppercase text-[9px]">Project Diajukan</span>
+                      <span className="text-slate-300 line-clamp-2 italic" title={project.project_diajukan || "Belum ada informasi"}>
+                        {project.project_diajukan || "-"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
