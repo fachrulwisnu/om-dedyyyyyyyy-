@@ -575,6 +575,7 @@ export const taskService = {
     if (fetchError) throw fetchError;
 
     const finalUpdates: any = { 
+      id,
       ...updates, 
       updated_at: new Date().toISOString() 
     };
@@ -584,8 +585,7 @@ export const taskService = {
 
     const { data: updated, error: updateError } = await supabase
       .from('tasks')
-      .update(finalUpdates)
-      .eq('id', id)
+      .upsert(finalUpdates)
       .select()
       .single();
 

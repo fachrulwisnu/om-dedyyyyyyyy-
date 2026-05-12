@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Project, ProjectStatus, AuditLog, HistoryEditProject } from '../types';
 import { cn } from '../lib/utils';
+import { canEditTask } from '../utils/permissionHelper';
 import { CustomDatePicker } from './ui/CustomDatePicker';
 import { taskService } from '../services/taskService';
 import { format } from 'date-fns';
@@ -39,7 +40,7 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
   const [historyEditLogs, setHistoryEditLogs] = useState<HistoryEditProject[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
 
-  const isOwner = user?.name?.toLowerCase() === project?.pic_name?.toLowerCase();
+  const isOwner = canEditTask(user?.name || '', project?.pic_name || '');
   const isAdmin = user?.access_level?.toLowerCase() === 'admin' || user?.access_level?.toLowerCase() === 'superadmin';
   const hasEditControl = isOwner || isAdmin;
 

@@ -88,6 +88,7 @@ import {
   isWeekend
 } from 'date-fns';
 import { calculateTimelineRange, calculateBarCoordinates, sanitizeDate, normalizeDate, calculateParentRange } from './utils/timelineEngine';
+import { canEditTask } from './utils/permissionHelper';
 import { Task, ViewScale, TaskStatus, ProjectStatus, Project, AppUser, AppView, AuditLog, Schedule, ProjectRescheduleLog, RescheduleRequest, MasterProject, MasterProjectAuditLog, HistoryEditProject } from './types';
 import { cn } from './lib/utils';
 import { getSafeKey } from './utils/keyHelper';
@@ -981,6 +982,7 @@ export default function App() {
     }
   };
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
+  const [isEditWBSModalOpen, setIsEditWBSModalOpen] = useState(false);
   const [isProjectDetailOpen, setIsProjectDetailOpen] = useState(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [reschedulingProject, setReschedulingProject] = useState<Project | null>(null);
@@ -1175,7 +1177,7 @@ export default function App() {
     const projectPic = project?.pic_name || task.assignee || 'PIC';
 
     // Ownership check: If current user name doesn't match Project PIC Name, show warning
-    const isOwner = user?.name?.toLowerCase() === projectPic?.toLowerCase();
+    const isOwner = canEditTask(user?.name || '', projectPic);
     
     if (user && !isOwner && !isAdmin && !isSuperadmin) {
       setOwnershipModal({
@@ -1300,7 +1302,24 @@ export default function App() {
          ? sanitizeDate(value) 
          : value;
 
-       // --- PHASE LOGIC ENFORCEMENT (Om Dedy TOR Monitor requirements) ---
+       // --- FIX L2 MAN-HOUR VALIDATION LEAK ---
+       if (field === 'man_hours' && task.parent_id) {
+          const phase = tasks.find(t => t.id === task.parent_id);
+          if (phase) {
+             const phaseLimit = Number(phase.man_hours || 0);
+             const otherSubtasksSum = tasks
+                .filter(t => t.parent_id === task.parent_id && t.id !== id)
+                .reduce((sum, t) => sum + Number(t.man_hours || 0), 0);
+             
+             const newTotal = otherSubtasksSum + Number(sanitizedVal || 0);
+             if (newTotal > phaseLimit) {
+                alert(`Validation Error: Total Man-Hours L2 (${newTotal} Jam) melebihi batas Phase L1 (${phaseLimit} Jam).`);
+                return; // Block submission
+             }
+          }
+       }
+
+       // --- PHASE LOGIC ENFORCEMENT ---
        if (field === 'status' && sanitizedVal === TaskStatus.DONE) {
           if (!task.realized_finish_date) {
              alert("VALIDATION ERROR: Status 'Done' wajib mengisi 'Realized Finish Date'.");
@@ -1586,7 +1605,7 @@ export default function App() {
     const project = projects.find(p => p.id === id);
     if (!project) return;
 
-    const isOwner = user?.name?.toLowerCase() === project.pic_name?.toLowerCase();
+    const isOwner = canEditTask(user?.name || '', project.pic_name || '');
     const bypassWarning = options?.bypassWarning;
     const onRevert = options?.onRevert;
 
@@ -1752,6 +1771,7 @@ export default function App() {
     setScale,
     onReschedule: handleOpenReschedule,
     onNotif: setNotif,
+    setIsEditWBSModalOpen,
     setTasks,
     auditLogs: allAuditLogs,
     historyEditLogs: allHistoryEditLogs,
@@ -2205,6 +2225,25 @@ export default function App() {
                 fetchData();
                 setNotif("Project Created Successfully!");
               }} 
+            />
+          </ErrorBoundary>
+        )}
+
+        {isEditWBSModalOpen && currentProject && user && (
+          <ErrorBoundary key="edit-project-wbs-error-boundary">
+            <EditProjectWBSModal 
+              key="edit-project-wbs-modal"
+              project={currentProject}
+              tasks={tasks.filter(t => t.project_id === currentProject.id)}
+              user={user}
+              users={users}
+              isMobile={isMobile}
+              onClose={() => setIsEditWBSModalOpen(false)}
+              onSuccess={() => {
+                setRefreshKey(prev => prev + 1);
+                fetchData();
+                setNotif("Project Timeline Updated Successfully!");
+              }}
             />
           </ErrorBoundary>
         )}
@@ -2696,13 +2735,15 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
     end_date: '',
     duration_hours: 0,
     man_hours: 0,
-    keterangan: '',
+    detail_task: '',
     subtasks: [{ 
       id: createPersistentId(), 
       custom_id: `#TS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       title: '', 
       assignee: user?.name || user?.email || '',
-      keterangan: '',
+      task_type: 'New Feature' as const,
+      components: [] as string[],
+      detail_task: '',
       start_date: '',
       end_date: '',
       duration_hours: 0,
@@ -2715,9 +2756,9 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
     setIsSyncing(true);
     setTicketId(master.ticket_id);
     setTitle(master.project_name);
-    setPic(master.pic_name);
-    setOwnerName(master.owner_name);
-    setDivOwner(master.div_owner);
+    setPic(master.pic_name?.trim() || '');
+    setOwnerName(master.owner_name?.trim() || '');
+    setDivOwner(master.div_owner?.trim() || '');
     setTimeout(() => setIsSyncing(false), 500);
   };
 
@@ -2771,7 +2812,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
       custom_id: `#PH-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       title: PHASE_L1_OPTIONS[0], 
       assignee: pic || user?.name || user?.email || '',
-      keterangan: '',
+      detail_task: '',
       start_date: '',
       end_date: '',
       duration_hours: 0,
@@ -2781,7 +2822,9 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         custom_id: `#TS-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
         title: '', 
         assignee: pic || user?.name || user?.email || '',
-        keterangan: '',
+        task_type: 'New Feature' as const,
+        components: [] as string[],
+        detail_task: '',
         start_date: '',
         end_date: '',
         duration_hours: 0,
@@ -2799,7 +2842,9 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         custom_id: `#TS-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
         title: '', 
         assignee: pic || user?.name || user?.email || '',
-        keterangan: '',
+        task_type: 'New Feature' as const,
+        components: [] as string[],
+        detail_task: '',
         start_date: '',
         end_date: '',
         duration_hours: 0,
@@ -2814,7 +2859,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
     if (!title || isAnyOverAllocated) return;
     setLoading(true);
     try {
-      const finalPic = pic || user?.name || user?.email || 'Administrator';
+      const finalPic = (pic || user?.name || user?.email || 'Administrator').trim();
       const actorName = user?.name || 'Fachrul Wisnu Novianto';
       const actorEmail = user?.email || 'Administrator';
 
@@ -2829,17 +2874,31 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         });
       });
 
-      const pStart = allDates.length > 0 ? format(new Date(Math.min(...allDates)), 'yyyy-MM-dd') : null;
-      const pEnd = allDates.length > 0 ? format(new Date(Math.max(...allDates)), 'yyyy-MM-dd') : null;
+      const pStart = allDates.length > 0 ? format(new Date(Math.min(...allDates)), 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd');
+      const pEnd = allDates.length > 0 ? format(new Date(Math.max(...allDates)), 'yyyy-MM-dd') : format(addDays(new Date(), 7), 'yyyy-MM-dd');
+
+      // 🔥 SMART STATUS LOGIC
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const projectStartDate = new Date(`${pStart}T00:00:00`);
+      projectStartDate.setHours(0, 0, 0, 0);
+
+      let initialProjectStatus = ProjectStatus.IN_PROGRESS;
+      let initialTaskStatus = TaskStatus.IN_PROGRESS;
+
+      if (projectStartDate > today) {
+        initialProjectStatus = ProjectStatus.TODO;
+        initialTaskStatus = TaskStatus.TODO;
+      }
       
       const prj = await taskService.createProject({ 
         ticket_id: ticketId,
         name: title, 
-        status: ProjectStatus.IN_PROGRESS,
+        status: initialProjectStatus,
         leader_email: user?.email || null,
         pic_name: finalPic,
-        owner_name: ownerName,
-        div_owner: divOwner,
+        owner_name: ownerName.trim(),
+        div_owner: divOwner.trim(),
         project_diajukan: projectDiajukan,
         start_date: pStart || undefined,
         end_date: pEnd || undefined
@@ -2850,16 +2909,23 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         const m = 0;
         const mH = parseFloat(String(phase.man_hours ?? 0)) || 0;
 
-        const phaseStartStr = phase.start_date || startDate || format(new Date(), 'yyyy-MM-dd');
-        const phaseEndStr = phase.end_date || endDate || format(addDays(new Date(phaseStartStr), 7), 'yyyy-MM-dd');
+        const phaseStartStr = phase.start_date || pStart || format(new Date(), 'yyyy-MM-dd');
+        const phaseEndStr = phase.end_date || pEnd || format(addDays(new Date(phaseStartStr), 7), 'yyyy-MM-dd');
 
         const phaseStart = new Date(`${phaseStartStr}T08:00:00`);
         const phaseEnd = new Date(`${phaseEndStr}T17:00:00`);
+
+        // Smart Status for Phase
+        let phaseInitialStatus = TaskStatus.IN_PROGRESS;
+        const pStartDt = new Date(`${phaseStartStr}T00:00:00`);
+        pStartDt.setHours(0, 0, 0, 0);
+        if (pStartDt > today) phaseInitialStatus = TaskStatus.TODO;
         
         const l1 = await taskService.createTask({
           title: phase.title || 'Untitled Phase',
+          status: phaseInitialStatus,
           custom_id: (phase as any).custom_id,
-          keterangan: phase.keterangan || '',
+          detail_task: (phase as any).detail_task || '',
           project_id: prj.id,
           assignee: (phase as any).assignee || finalPic,
           start_time: phaseStart.toISOString(),
@@ -2877,16 +2943,25 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
           const subM = 0;
           const subMH = parseFloat(String(sub.man_hours ?? 0)) || 0;
 
-          const subStartStr = sub.start_date || phase.start_date || startDate || format(new Date(), 'yyyy-MM-dd');
-          const subEndStr = sub.end_date || sub.start_date || phase.end_date || endDate || format(addDays(new Date(subStartStr), 7), 'yyyy-MM-dd');
+          const subStartStr = sub.start_date || phaseStartStr || pStart || format(new Date(), 'yyyy-MM-dd');
+          const subEndStr = sub.end_date || subStartStr || phaseEndStr || pEnd || format(addDays(new Date(subStartStr), 7), 'yyyy-MM-dd');
 
           const start = new Date(`${subStartStr}T08:00:00`);
           const end = new Date(`${subEndStr}T17:00:00`);
+
+          // Smart Status for Sub-task
+          let subInitialStatus = TaskStatus.IN_PROGRESS;
+          const sStartDt = new Date(`${subStartStr}T00:00:00`);
+          sStartDt.setHours(0, 0, 0, 0);
+          if (sStartDt > today) subInitialStatus = TaskStatus.TODO;
           
           await taskService.createTask({
             title: sub.title || 'Untitled Sub-task',
+            status: subInitialStatus,
             custom_id: (sub as any).custom_id,
-            keterangan: sub.keterangan || '',
+            task_type: (sub as any).task_type || 'New Feature',
+            components: (sub as any).components || [],
+            detail_task: (sub as any).detail_task || '',
             project_id: prj.id,
             parent_id: l1.id,
             assignee: (sub as any).assignee || finalPic,
@@ -3008,17 +3083,18 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
               </div>
             </div>
 
-            {/* Row 4: Project Diajukan (Full Width Textarea) */}
+            {/* Row 4: Project Diajukan */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest px-1">Project Diajukan</label>
+              <label className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest px-1">Project Diajukan (Short Summary)</label>
               <textarea 
-                rows={2}
+                rows={4}
                 value={projectDiajukan}
                 onChange={e => setProjectDiajukan(e.target.value)}
-                placeholder="Detail pengajuan project..."
-                className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--accent)] transition-colors font-bold text-sm resize-none"
+                placeholder="Ringkasan pengajuan project..."
+                className="w-full bg-[#111C44] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-[var(--accent)] transition-colors font-bold text-sm resize-none"
               />
             </div>
+
           </div>
 
           <div className={cn("space-y-6", !isMobile && "min-w-[1100px]")}>
@@ -3070,14 +3146,14 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                       />
                       <textarea 
                         rows={1}
-                        value={phase.keterangan || ''}
+                        value={(phase as any).detail_task || ''}
                         placeholder="Phase Description / Detail Breakdown..."
                         onChange={(e) => {
                           const newPhases = [...phases];
-                          newPhases[pIdx].keterangan = e.target.value;
+                          (newPhases[pIdx] as any).detail_task = e.target.value;
                           setPhases(newPhases);
                         }}
-                        className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-[var(--accent)]/50 transition-all mt-1 resize-none overflow-hidden hover:bg-white/10 focus:bg-white/10"
+                        className="w-full bg-[#111C44] border border-white/10 text-white rounded-lg px-2 py-1.5 text-[10px] outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all mt-1 resize-none overflow-hidden hover:bg-white/10 focus:bg-white/10"
                       />
                     </div>
 
@@ -3191,117 +3267,164 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                       </p>
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-4">
                       {phase.subtasks.map((sub, sIdx) => {
                         return (
-                          <div key={getSafeKey(sub, sIdx, 'wizard-subtask')} className={cn(
-                            "items-center gap-4 group/sub hover:bg-[var(--bg-page)]/30 p-2 rounded-lg transition-colors mx-2",
-                            isMobile ? "flex flex-col border border-[var(--border)] bg-[var(--bg-card)]/40 p-4 mb-4" : "grid grid-cols-[1fr_130px_130px_80px_150px_80px]"
-                          )}>
-                          {/* Col 1 with Indentation Built-in */}
-                          <div className={cn("flex items-center gap-3", !isMobile && "pl-8", isMobile && "w-full")}>
-                            {!isMobile && <span className="text-[var(--accent)]/20 font-black text-xl select-none group-hover/sub:text-[var(--accent)]/40">↳</span>}
-                            <span className="shrink-0 px-2 py-0.5 rounded-full bg-[var(--bg-page)] border border-[var(--accent)]/20 text-[8px] font-bold text-[var(--accent)]/60 font-mono tracking-wider">
-                              {(sub as any).custom_id}
-                            </span>
-                            <LocalInput 
-                              value={sub.title}
-                              placeholder="Enter the task breakdown name..."
-                              onChange={(v) => {
-                                const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].title = v;
-                                setPhases(newPhases);
-                              }}
-                              className="w-full bg-transparent border-b border-[var(--border)] text-xs text-[var(--text-main)] py-1.5 outline-none focus:border-[var(--accent)]/50 transition-all font-bold"
-                            />
+                          <div key={getSafeKey(sub, sIdx, 'wizard-subtask')} className="flex flex-col gap-4 p-4 bg-[#111C44] border border-[#1B254B] rounded-xl mb-4 ml-0 sm:ml-8 transition-all hover:border-[var(--accent)]/30 group/sub">
+                            {/* ROW 1: Basic Info */}
+                            <div className={cn(
+                              "grid items-center gap-4",
+                              isMobile ? "grid-cols-1" : "grid-cols-[1fr_130px_130px_80px_150px_40px]"
+                            )}>
+                              <div className="flex items-center gap-3">
+                                {!isMobile && <span className="text-[var(--accent)]/20 font-black text-xl select-none group-hover/sub:text-[var(--accent)]/40">↳</span>}
+                                <span className="shrink-0 px-2 py-0.5 rounded-full bg-[var(--bg-page)] border border-[var(--accent)]/20 text-[8px] font-bold text-[var(--accent)]/60 font-mono tracking-wider">
+                                  {(sub as any).custom_id}
+                                </span>
+                                <LocalInput 
+                                  value={sub.title}
+                                  placeholder="Enter the task breakdown name..."
+                                  onChange={(v) => {
+                                    const newPhases = [...phases];
+                                    newPhases[pIdx].subtasks[sIdx].title = v;
+                                    setPhases(newPhases);
+                                  }}
+                                  className="w-full bg-transparent border-b border-[var(--border)] text-xs text-[var(--text-main)] py-1.5 outline-none focus:border-[var(--accent)]/10 transition-all font-bold"
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase">From Date</label>}
+                                <CustomDatePicker 
+                                  selectedDate={sub.start_date}
+                                  onChange={date => {
+                                    if (phase.start_date && date && date < phase.start_date) {
+                                      alert("Tanggal mulai child task tidak boleh mendahului tanggal pada task!");
+                                      return;
+                                    }
+                                    const newPhases = [...phases];
+                                    newPhases[pIdx].subtasks[sIdx].start_date = date || '';
+                                    setPhases(newPhases);
+                                  }}
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase">To Date</label>}
+                                <CustomDatePicker 
+                                  selectedDate={sub.end_date}
+                                  onChange={date => {
+                                    if (phase.end_date && date && date > phase.end_date) {
+                                      alert("Tanggal selesai child task tidak boleh melebihi task utama!");
+                                      return;
+                                    }
+                                    const newPhases = [...phases];
+                                    newPhases[pIdx].subtasks[sIdx].end_date = date || '';
+                                    setPhases(newPhases);
+                                  }}
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase">Man-Hours</label>}
+                                <input 
+                                  type="number" min="0" step="0.5"
+                                  value={sub.man_hours}
+                                  onChange={(e) => {
+                                    const newPhases = [...phases];
+                                    newPhases[pIdx].subtasks[sIdx].man_hours = Math.max(0, parseFloat(e.target.value) || 0);
+                                    setPhases(newPhases);
+                                  }}
+                                  className="bg-[#0B1437] border border-[#1B254B] rounded-lg px-2 py-2 text-[10px] text-[var(--accent)] text-center font-black outline-none focus:border-[var(--accent)]"
+                                />
+                              </div>
+
+                              <div className="flex flex-col gap-1">
+                                {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase">Assignee</label>}
+                                <LocalInput 
+                                  value={(sub as any).assignee}
+                                  onChange={(v) => {
+                                    const newPhases = [...phases];
+                                    (newPhases[pIdx].subtasks[sIdx] as any).assignee = v;
+                                    setPhases(newPhases);
+                                  }}
+                                  placeholder="Assignee"
+                                  className="w-full bg-[#0B1437] border border-[#1B254B] rounded px-2 py-2 text-[10px] text-white/70 outline-none focus:border-[var(--accent)]"
+                                />
+                              </div>
+
+                              <button 
+                                onClick={() => {
+                                  const newPhases = [...phases];
+                                  newPhases[pIdx].subtasks.splice(sIdx, 1);
+                                  setPhases(newPhases);
+                                }}
+                                className="p-2 hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 rounded-lg transition-all flex items-center justify-center"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+
+                            {/* ROW 2: Metadata (Type & Components) */}
+                            <div className="grid grid-cols-1 sm:grid-cols-[150px_1fr] gap-4">
+                              <select 
+                                value={(sub as any).task_type || 'New Feature'}
+                                onChange={(e) => {
+                                  const newPhases = [...phases];
+                                  (newPhases[pIdx].subtasks[sIdx] as any).task_type = e.target.value;
+                                  setPhases(newPhases);
+                                }}
+                                className="bg-[#0B1437] border border-[#1B254B] text-[10px] text-white font-black uppercase tracking-widest rounded-lg px-3 py-1.5 outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                              >
+                                <option value="New Feature">New Feature</option>
+                                <option value="Improvement">Improvement</option>
+                              </select>
+
+                              <div className="flex flex-wrap gap-2 p-1.5 bg-[#0B1437] border border-[#1B254B] rounded-lg">
+                                {['Web', 'Android', 'API', 'Desktop', 'Database', 'Report'].map(comp => {
+                                  const currentComps = (sub as any).components || [];
+                                  const isSelected = currentComps.includes(comp);
+                                  return (
+                                    <button 
+                                      key={comp}
+                                      type="button"
+                                      onClick={() => {
+                                        const newPhases = [...phases];
+                                        const nextComps = isSelected 
+                                          ? currentComps.filter((c: string) => c !== comp)
+                                          : [...currentComps, comp];
+                                        (newPhases[pIdx].subtasks[sIdx] as any).components = nextComps;
+                                        setPhases(newPhases);
+                                      }}
+                                      className={cn(
+                                        "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter transition-all border",
+                                        isSelected 
+                                          ? "bg-[var(--accent)] border-[var(--accent)] text-white" 
+                                          : "bg-white/5 border-white/5 text-white/30 hover:text-white"
+                                      )}
+                                    >
+                                      {comp}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+
+                            {/* ROW 3: Detail Task */}
                             <textarea 
-                              rows={1}
-                              value={sub.keterangan || ''}
-                              placeholder="Keterangan / Detail Breakdown..."
+                              rows={3}
+                              value={(sub as any).detail_task || ''}
+                              placeholder="Detail pengajuan task / Keterangan breakdown..."
                               onChange={(e) => {
                                 const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].keterangan = e.target.value;
+                                (newPhases[pIdx].subtasks[sIdx] as any).detail_task = e.target.value;
                                 setPhases(newPhases);
                               }}
-                              className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-[var(--accent)]/50 transition-all mt-1 resize-none overflow-hidden hover:bg-white/10 focus:bg-white/10"
+                              className="w-full bg-[#0B1437] border border-[#1B254B] text-gray-300 rounded-lg p-3 text-[10px] font-medium leading-relaxed focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all resize-none"
                             />
                           </div>
-
-                          <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">From Date</label>}
-                            <CustomDatePicker 
-                              selectedDate={sub.start_date}
-                              onChange={date => {
-                                if (phase.start_date && date && date < phase.start_date) {
-                                  alert("Tanggal mulai child task tidak boleh mendahului tanggal pada task!");
-                                  return;
-                                }
-                                const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].start_date = date || '';
-                                setPhases(newPhases);
-                              }}
-                            />
-                          </div>
-
-                          <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">To Date</label>}
-                            <CustomDatePicker 
-                              selectedDate={sub.end_date}
-                              onChange={date => {
-                                if (phase.end_date && date && date > phase.end_date) {
-                                  alert("Tanggal selesai child task tidak boleh melebihi task utama!");
-                                  return;
-                                }
-                                const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].end_date = date || '';
-                                setPhases(newPhases);
-                              }}
-                            />
-                          </div>
-
-                          <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">Man-Hours</label>}
-                            <input 
-                              type="number" min="0" step="0.5"
-                              value={sub.man_hours}
-                              onChange={(e) => {
-                                const newPhases = [...phases];
-                                newPhases[pIdx].subtasks[sIdx].man_hours = Math.max(0, parseFloat(e.target.value) || 0);
-                                setPhases(newPhases);
-                              }}
-                              className={cn("bg-[var(--bg-page)] border border-[var(--border)] rounded-md px-2 py-1.5 text-[10px] text-[var(--accent)]/80 text-center outline-none focus:border-[var(--accent)]/50 font-black", isMobile ? "w-full" : "w-16")}
-                            />
-                          </div>
-
-                          <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">Assignee</label>}
-                            <LocalInput 
-                              value={(sub as any).assignee}
-                              onChange={(v) => {
-                                const newPhases = [...phases];
-                                (newPhases[pIdx].subtasks[sIdx] as any).assignee = v;
-                                setPhases(newPhases);
-                              }}
-                              placeholder="Assignee"
-                              className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded px-2 py-2 text-[10px] text-[var(--text-sub)] text-center outline-none focus:border-[var(--accent)]/50"
-                            />
-                          </div>
-
-                          <div className={cn("flex justify-center", isMobile && "w-full")}>
-                            <button 
-                              onClick={() => {
-                                const newPhases = [...phases];
-                                newPhases[pIdx].subtasks.splice(sIdx, 1);
-                                setPhases(newPhases);
-                              }}
-                              className={cn("p-1.5 transition-all", isMobile ? "w-full border border-[var(--danger)]/10 bg-[var(--danger)]/10 text-[var(--danger)] py-3 mt-2 flex items-center justify-center gap-2 rounded-xl" : "opacity-0 group-hover/sub:opacity-100 hover:bg-[var(--bg-page)] text-[var(--text-sub)] hover:text-[var(--danger)] rounded")}
-                            >
-                              {isMobile ? <><Trash2 className="w-4 h-4" /><span className="text-[10px] font-black uppercase">Remove Activity</span></> : <Trash2 className="w-4 h-4" />}
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -3346,6 +3469,595 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                   Spawn Infrastructure
                 </>
               )}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function EditProjectWBSModal({ project, tasks, onClose, onSuccess, user, users, isMobile }: { project: Project, tasks: Task[], onClose: () => void, onSuccess: () => void, user: any, users: AppUser[], isMobile?: boolean }) {
+  const [title, setTitle] = useState(project.name);
+  const [pic, setPic] = useState(project.pic_name || '');
+  const [ticketId, setTicketId] = useState(project.ticket_id || '');
+  const [ownerName, setOwnerName] = useState(project.owner_name || '');
+  const [divOwner, setDivOwner] = useState(project.div_owner || '');
+  const [startDate, setStartDate] = useState(project.start_date || '');
+  const [endDate, setEndDate] = useState(project.end_date || '');
+  const [projectDiajukan, setProjectDiajukan] = useState(project.project_diajukan || '');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [deletedTaskIds, setDeletedTaskIds] = useState<string[]>([]);
+  
+  const [phases, setPhases] = useState<any[]>(() => {
+    const l1s = tasks.filter(t => !t.parent_id).sort((a,b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+    return l1s.map(l1 => ({
+      ...l1,
+      start_date: l1.start_time ? format(new Date(l1.start_time), 'yyyy-MM-dd') : '',
+      end_date: l1.end_time ? format(new Date(l1.end_time), 'yyyy-MM-dd') : '',
+      subtasks: tasks.filter(t => t.parent_id === l1.id).sort((a,b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()).map(s => ({
+        ...s,
+        start_date: s.start_time ? format(new Date(s.start_time), 'yyyy-MM-dd') : '',
+        end_date: s.end_time ? format(new Date(s.end_time), 'yyyy-MM-dd') : '',
+      }))
+    }));
+  });
+
+  const selectMasterProject = (master: MasterProject) => {
+    setIsSyncing(true);
+    setTicketId(master.ticket_id);
+    setTitle(master.project_name);
+    setPic(master.pic_name?.trim() || '');
+    setOwnerName(master.owner_name?.trim() || '');
+    setDivOwner(master.div_owner?.trim() || '');
+    setTimeout(() => setIsSyncing(false), 500);
+  };
+
+  useEffect(() => {
+    const validFromDates = phases.map(p => {
+      const dates = [p.start_date, ...(p.subtasks?.map((s: any) => s.start_date) || [])].filter(Boolean);
+      return dates.length > 0 ? dates.reduce((a, b) => a < b ? a : b) : '';
+    }).filter(Boolean);
+
+    const validToDates = phases.map(p => {
+      const dates = [p.end_date, ...(p.subtasks?.map((s: any) => s.end_date) || [])].filter(Boolean);
+      return dates.length > 0 ? dates.reduce((a, b) => a > b ? a : b) : '';
+    }).filter(Boolean);
+
+    if (validFromDates.length > 0) {
+       const minDate = validFromDates.reduce((a, b) => a < b ? a : b);
+       setStartDate(minDate);
+    }
+    if (validToDates.length > 0) {
+       const maxDate = validToDates.reduce((a, b) => a > b ? a : b);
+       setEndDate(maxDate);
+    }
+  }, [phases]);
+
+  const allocationStats = useMemo(() => {
+    return phases.map(phase => {
+      const capacity = phase.man_hours || 0;
+      const used = phase.subtasks.reduce((sum: number, sub: any) => sum + (sub.man_hours || 0), 0);
+      return { 
+        capacity, 
+        used, 
+        isOver: used > capacity, 
+        isUnder: used < capacity,
+        isPerfect: Math.abs(used - capacity) < 0.01 && capacity > 0,
+        remaining: capacity - used
+      };
+    });
+  }, [phases]);
+
+  const totalManHours = useMemo(() => {
+    return phases.reduce((acc, phase) => acc + (phase.man_hours || 0), 0);
+  }, [phases]);
+
+  const isAnyOverAllocated = allocationStats.some(s => s.isOver);
+
+  const addPhase = () => {
+    setPhases([...phases, { 
+      id: `temp-PH-${Math.random().toString(36).substring(2, 6)}`,
+      custom_id: `#PH-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+      title: PHASE_L1_OPTIONS[0], 
+      assignee: pic || user?.name || user?.email || '',
+      start_date: '',
+      end_date: '',
+      man_hours: 0,
+      subtasks: []
+    }]);
+  };
+
+  const addSubtask = (phaseIndex: number) => {
+    setPhases(prev => {
+      const next = [...prev];
+      const phase = { ...next[phaseIndex] };
+      phase.subtasks = [...phase.subtasks, { 
+        id: `temp-TS-${Math.random().toString(36).substring(2, 6)}`, 
+        custom_id: `#TS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+        title: '', 
+        assignee: pic || user?.name || user?.email || '',
+        task_type: 'New Feature',
+        components: [],
+        detail_task: '',
+        start_date: '',
+        end_date: '',
+        man_hours: 0
+      }];
+      next[phaseIndex] = phase;
+      return next;
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!title || isAnyOverAllocated) return;
+    setLoading(true);
+    try {
+      const actorEmail = user?.email || 'Administrator';
+
+      // 1. Update Project Header
+      await taskService.updateProject(project.id, {
+        ticket_id: ticketId,
+        name: title,
+        pic_name: pic.trim(),
+        owner_name: ownerName.trim(),
+        div_owner: divOwner.trim(),
+        project_diajukan: projectDiajukan,
+        start_date: startDate || undefined,
+        end_date: endDate || undefined
+      }, actorEmail);
+
+      // 2. Identify and execute deletes
+      if (deletedTaskIds.length > 0) {
+        for (const id of deletedTaskIds) {
+          if (!id.startsWith('temp-')) {
+            await supabase.from('tasks').delete().eq('id', id);
+            await taskService.logAudit({ 
+              task_id: id, 
+              actor: actorEmail, 
+              action: 'DELETED' 
+            });
+          }
+        }
+      }
+
+      // 3. Update or Create Phases and Subtasks
+      for (const phase of phases) {
+        const mH = parseFloat(String(phase.man_hours ?? 0)) || 0;
+        const phaseData: any = {
+          title: phase.title,
+          custom_id: phase.custom_id,
+          detail_task: phase.detail_task || '',
+          project_id: project.id,
+          assignee: phase.assignee || pic,
+          start_time: phase.start_date ? new Date(`${phase.start_date}T08:00:00`).toISOString() : phase.start_time,
+          end_time: phase.end_date ? new Date(`${phase.end_date}T17:00:00`).toISOString() : phase.end_time,
+          duration_hours: mH,
+          man_hours: mH,
+          updated_at: new Date().toISOString()
+        };
+
+        let l1;
+        if (phase.id.startsWith('temp-')) {
+          l1 = await taskService.createTask({
+            ...phaseData,
+            status: TaskStatus.TODO,
+            parent_id: null,
+            start_hour: 8,
+            start_minute: 0,
+            duration_minutes: 0,
+            created_by_name: user?.name || 'Administrator'
+          }, actorEmail);
+        } else {
+          l1 = await taskService.updateTask(phase.id, phaseData, actorEmail);
+        }
+
+        for (const sub of phase.subtasks) {
+          const subMH = parseFloat(String(sub.man_hours ?? 0)) || 0;
+          const subData: any = {
+            title: sub.title,
+            custom_id: sub.custom_id,
+            task_type: sub.task_type || 'New Feature',
+            components: sub.components || [],
+            detail_task: sub.detail_task || '',
+            project_id: project.id,
+            parent_id: l1.id,
+            assignee: sub.assignee || pic,
+            start_time: sub.start_date ? new Date(`${sub.start_date}T08:00:00`).toISOString() : sub.start_time,
+            end_time: sub.end_date ? new Date(`${sub.end_date}T17:00:00`).toISOString() : sub.end_time,
+            duration_hours: subMH,
+            man_hours: subMH,
+            updated_at: new Date().toISOString()
+          };
+
+          if (sub.id.startsWith('temp-')) {
+            await taskService.createTask({
+              ...subData,
+              status: TaskStatus.TODO,
+              start_hour: 8,
+              start_minute: 0,
+              duration_minutes: 0,
+              created_by_name: user?.name || 'Administrator'
+            }, actorEmail);
+          } else {
+            await taskService.updateTask(sub.id, subData, actorEmail);
+          }
+        }
+      }
+
+      onSuccess();
+      onClose();
+    } catch (err) {
+      console.error("Project Update failed:", err);
+      alert("Failed to update project breakdown.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl w-full max-w-7xl max-h-[95vh] overflow-hidden shadow-[0_0_50px_rgba(37,99,235,0.2)] flex flex-col"
+      >
+        <div className="p-6 border-b border-[var(--border)] bg-blue-600/5 flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-black text-[var(--text-main)] tracking-tighter uppercase italic">
+              Edit Breakdown <span className="text-blue-500">Timeline</span>
+            </h2>
+            <p className="text-[10px] text-[var(--text-sub)] mt-1 font-bold uppercase tracking-widest">{project.ticket_id} • {project.name}</p>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-page)] rounded-full transition-colors">
+            <Plus className="w-5 h-5 text-[var(--text-sub)] rotate-45" />
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-8 flex-1 overflow-x-auto overflow-y-auto space-y-8 scrollbar-hide">
+          <div className="max-w-6xl mx-auto space-y-6">
+            {/* Header Fields (Clone of Create) */}
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
+              <div className="space-y-2 relative">
+                <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest px-1">Ticket ID</label>
+                <TicketSelector 
+                  value={ticketId}
+                  onChange={(val) => setTicketId(val)}
+                  onSelectMaster={selectMasterProject}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Lead PIC</label>
+                <LocalInput 
+                  value={pic}
+                  onChange={v => setPic(v)}
+                  placeholder="Lead PIC Name..."
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-bold"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Start Date</label>
+                <CustomDatePicker 
+                  selectedDate={startDate}
+                  onChange={setStartDate}
+                  className="!min-w-[160px]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">End Date</label>
+                <CustomDatePicker 
+                  selectedDate={endDate}
+                  onChange={setEndDate}
+                  className="!min-w-[160px]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Project Name</label>
+              <textarea 
+                rows={2}
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] outline-none focus:border-blue-500 transition-all font-bold text-sm resize-none"
+              />
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Owner Name</label>
+                <LocalInput 
+                  value={ownerName}
+                  onChange={v => setOwnerName(v)}
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-4 text-sm text-[var(--text-main)] outline-none focus:border-blue-500 font-bold"
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Division</label>
+                <LocalInput 
+                  value={divOwner}
+                  onChange={v => setDivOwner(v)}
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-4 text-sm text-[var(--text-main)] outline-none focus:border-blue-500 font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-black text-blue-500 uppercase tracking-widest px-1">Project Diajukan (Short Summary)</label>
+              <textarea 
+                rows={4}
+                value={projectDiajukan}
+                onChange={e => setProjectDiajukan(e.target.value)}
+                className="w-full bg-[#111C44] border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:ring-blue-500 transition-all font-bold text-sm resize-none"
+              />
+            </div>
+
+            <div className="flex justify-between items-center pt-8 border-t border-[var(--border)]">
+              <label className="text-sm font-black text-blue-500 uppercase tracking-widest">Work Breakdown Structure (WBS)</label>
+              <button 
+                onClick={addPhase}
+                className="text-[9px] font-black uppercase text-blue-400 hover:text-blue-300 transition-colors bg-blue-500/10 px-4 py-2 rounded-lg border border-blue-500/20"
+              >
+                + Add Phase (L1)
+              </button>
+            </div>
+
+            {phases.map((phase, pIdx) => {
+              const stats = allocationStats[pIdx];
+              return (
+                <div key={phase.id} className="bg-[var(--bg-page)]/40 border border-[var(--border)] rounded-2xl p-6 space-y-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-blue-500/30 group-hover:bg-blue-500 transition-colors" />
+                  
+                  <div className={cn(
+                    "items-center gap-4 bg-[var(--bg-card)]/50 p-4 rounded-xl border border-[var(--border)] shadow-sm transition-all hover:bg-[var(--bg-card)]/70",
+                    isMobile ? "flex flex-col" : "grid grid-cols-[1fr_130px_130px_80px_150px_80px]"
+                  )}>
+                    <div className="flex items-center gap-2 w-full">
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-[var(--bg-page)] border border-blue-500/30 text-[8px] font-black text-blue-400 font-mono tracking-wider">
+                        {phase.custom_id}
+                      </span>
+                      <L1PhaseSelector 
+                        value={phase.title}
+                        onChange={(v) => {
+                          const newPhases = [...phases];
+                          newPhases[pIdx].title = v;
+                          setPhases(newPhases);
+                        }}
+                        className="w-full"
+                      />
+                    </div>
+
+                    <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
+                      <CustomDatePicker 
+                        selectedDate={phase.start_date}
+                        onChange={date => {
+                          const newPhases = [...phases];
+                          newPhases[pIdx].start_date = date || '';
+                          setPhases(newPhases);
+                        }}
+                      />
+                    </div>
+
+                    <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
+                      <CustomDatePicker 
+                        selectedDate={phase.end_date}
+                        onChange={date => {
+                          const newPhases = [...phases];
+                          newPhases[pIdx].end_date = date || '';
+                          setPhases(newPhases);
+                        }}
+                      />
+                    </div>
+
+                    <div className={cn("flex flex-col items-center gap-1", isMobile && "w-full")}>
+                      <input 
+                        type="number" min="0" step="0.5"
+                        value={phase.man_hours}
+                        onChange={(e) => {
+                          const newPhases = [...phases];
+                          newPhases[pIdx].man_hours = Math.max(0, parseFloat(e.target.value) || 0);
+                          setPhases(newPhases);
+                        }}
+                        className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-2 py-2.5 text-xs text-blue-400 text-center font-black outline-none focus:border-blue-500"
+                      />
+                    </div>
+
+                    <div className={cn("flex flex-col", isMobile && "w-full")}>
+                      <LocalInput 
+                        value={phase.assignee}
+                        onChange={(v) => {
+                          const newPhases = [...phases];
+                          newPhases[pIdx].assignee = v;
+                          setPhases(newPhases);
+                        }}
+                        className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[10px] text-[var(--text-sub)] text-center outline-none"
+                      />
+                    </div>
+
+                    <div className={cn("flex justify-center gap-4", isMobile && "w-full pt-4 border-t border-[var(--border)]")}>
+                      <button 
+                        onClick={() => addSubtask(pIdx)}
+                        className="p-2.5 hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-500 rounded-xl transition-all"
+                      >
+                        <Plus className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setDeletedTaskIds([...deletedTaskIds, phase.id, ...phase.subtasks.map((s: any) => s.id)]);
+                          const newPhases = [...phases];
+                          newPhases.splice(pIdx, 1);
+                          setPhases(newPhases);
+                        }}
+                        className="p-2.5 hover:bg-rose-500/10 text-[var(--text-sub)] hover:text-rose-500 rounded-xl transition-all"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Validation Msg */}
+                  <div className="px-4">
+                    {stats.isOver && <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest bg-rose-500/10 py-2 px-3 rounded-lg border border-rose-500/20 flex items-center gap-2">⚠️ Over-Allocated: Breakdown melebihi L1!</p>}
+                    {stats.isUnder && <p className="text-[10px] font-black text-amber-500 uppercase tracking-widest bg-amber-500/10 py-2 px-3 rounded-lg border border-amber-500/20 flex items-center gap-2">⚠️ Under-Allocated: {formatWorkday(stats.remaining)} Sisa</p>}
+                    {stats.isPerfect && <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest bg-emerald-500/5 py-2 px-3 rounded-lg border border-emerald-500/20 flex items-center gap-2">✅ Alokasi Pas</p>}
+                  </div>
+
+                  <div className="space-y-4">
+                    {phase.subtasks.map((sub: any, sIdx: number) => (
+                      <div key={sub.id} className="relative ml-0 sm:ml-8 p-6 bg-[#111C44] border border-[#1B254B] rounded-2xl group/sub hover:border-blue-500/40 transition-all space-y-4 shadow-xl">
+                        <div className="absolute top-4 right-4 group-hover/sub:opacity-100 opacity-30 transition-opacity">
+                          <button 
+                            onClick={() => {
+                              setDeletedTaskIds([...deletedTaskIds, sub.id]);
+                              const newPhases = [...phases];
+                              newPhases[pIdx].subtasks.splice(sIdx, 1);
+                              setPhases(newPhases);
+                            }}
+                            className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        {/* LINE 1: Title, Dates, Hours, PIC */}
+                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_130px_130px_80px_180px] gap-4 items-center">
+                          <div className="flex items-center gap-3">
+                            <span className="shrink-0 px-2 py-0.5 rounded-full bg-slate-900 border border-blue-500/20 text-[8px] font-bold text-blue-400 font-mono uppercase">
+                              {sub.custom_id}
+                            </span>
+                            <LocalInput 
+                              value={sub.title}
+                              onChange={v => {
+                                const next = [...phases];
+                                next[pIdx].subtasks[sIdx].title = v;
+                                setPhases(next);
+                              }}
+                              placeholder="Sub-task Title..."
+                              className="bg-transparent border-b border-white/10 text-sm text-white font-bold py-1 w-full outline-none focus:border-blue-500"
+                            />
+                          </div>
+                          <CustomDatePicker selectedDate={sub.start_date} onChange={d => {
+                            const next = [...phases];
+                            next[pIdx].subtasks[sIdx].start_date = d || '';
+                            setPhases(next);
+                          }} />
+                          <CustomDatePicker selectedDate={sub.end_date} onChange={d => {
+                            const next = [...phases];
+                            next[pIdx].subtasks[sIdx].end_date = d || '';
+                            setPhases(next);
+                          }} />
+                          <input 
+                            type="number" step="0.5" value={sub.man_hours}
+                            onChange={e => {
+                              const next = [...phases];
+                              next[pIdx].subtasks[sIdx].man_hours = parseFloat(e.target.value) || 0;
+                              setPhases(next);
+                            }}
+                            className="bg-[#0B1437] border border-white/5 rounded-lg py-2 text-xs text-blue-400 font-black text-center outline-none focus:border-blue-500"
+                          />
+                          <LocalInput 
+                            value={sub.assignee}
+                            onChange={v => {
+                              const next = [...phases];
+                              next[pIdx].subtasks[sIdx].assignee = v;
+                              setPhases(next);
+                            }}
+                            placeholder="PIC Name"
+                            className="bg-[#0B1437] border border-white/5 rounded-lg py-2 px-3 text-xs text-indigo-100 font-bold outline-none"
+                          />
+                        </div>
+
+                        {/* LINE 2: Type & Components */}
+                        <div className="grid grid-cols-1 sm:grid-cols-[200px_1fr] gap-6">
+                           <div className="space-y-1.5">
+                             <label className="text-[8px] font-black text-[var(--text-sub)] uppercase tracking-widest ml-1">Project Type</label>
+                             <select 
+                                value={sub.task_type || 'New Feature'}
+                                onChange={e => {
+                                  const next = [...phases];
+                                  next[pIdx].subtasks[sIdx].task_type = e.target.value;
+                                  setPhases(next);
+                                }}
+                                className="w-full bg-[#0B1437] border border-white/10 text-[10px] text-white font-black uppercase tracking-widest rounded-xl px-4 py-3 outline-none focus:ring-1 focus:ring-blue-500"
+                             >
+                                <option value="New Feature">New Feature</option>
+                                <option value="Improvement">Improvement</option>
+                                <option value="Bug Fix">Bug Fix</option>
+                             </select>
+                           </div>
+                           <div className="space-y-1.5">
+                             <label className="text-[8px] font-black text-[var(--text-sub)] uppercase tracking-widest ml-1">Infrastructure Components</label>
+                             <div className="flex flex-wrap gap-2 p-2 bg-[#0B1437] border border-white/10 rounded-xl min-h-[46px]">
+                               {['Web', 'Android', 'API', 'Desktop', 'Database', 'Report', 'Infrastructure', 'Security'].map(c => {
+                                 const selected = (sub.components || []).includes(c);
+                                 return (
+                                   <button 
+                                     key={c}
+                                     onClick={() => {
+                                       const next = [...phases];
+                                       const current = sub.components || [];
+                                       next[pIdx].subtasks[sIdx].components = selected ? current.filter((x: string) => x !== c) : [...current, c];
+                                       setPhases(next);
+                                     }}
+                                     className={cn(
+                                       "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-tighter border transition-all",
+                                       selected ? "bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-600/20" : "bg-white/5 border-white/5 text-white/40 hover:text-white"
+                                     )}
+                                   >
+                                     {c}
+                                   </button>
+                                 );
+                               })}
+                             </div>
+                           </div>
+                        </div>
+
+                        {/* LINE 3: Detail Task */}
+                        <div className="space-y-1.5">
+                          <label className="text-[8px] font-black text-blue-400 uppercase tracking-widest ml-1">Detail Task Breakdown & Technical Specification</label>
+                          <textarea 
+                            rows={4}
+                            value={sub.detail_task || ''}
+                            onChange={e => {
+                              const next = [...phases];
+                              next[pIdx].subtasks[sIdx].detail_task = e.target.value;
+                              setPhases(next);
+                            }}
+                            className="w-full bg-[#0B1437] border border-white/10 rounded-xl p-4 text-xs text-slate-300 font-medium leading-relaxed outline-none focus:ring-1 focus:ring-blue-500/50 resize-none transition-all"
+                            placeholder="Describe technical implementation detail here..."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="p-8 border-t border-[var(--border)] bg-[var(--bg-card)]/50 flex justify-between items-center px-10">
+          <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-[0.2em] flex items-center gap-6">
+            <span className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />
+              {phases.length} Phases Active
+            </span>
+            <span className="text-blue-400 font-black">Total: {(totalManHours || 0).toFixed(1)} Jam ({formatWorkday(totalManHours)})</span>
+            {isAnyOverAllocated && <span className="text-rose-500 font-black animate-bounce">⚠️ Validation Error: Over-Allocation</span>}
+          </p>
+          <div className="flex gap-4">
+            <button onClick={onClose} disabled={loading} className="px-8 py-3 bg-[var(--bg-page)] text-[var(--text-sub)] font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-[var(--bg-card)] transition-all">Cancel</button>
+            <button 
+              onClick={handleUpdate} 
+              disabled={loading || !title || isAnyOverAllocated} 
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-30 text-white px-10 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-blue-600/20 flex items-center gap-3"
+            >
+              {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              Update Timeline
             </button>
           </div>
         </div>
@@ -5451,7 +6163,7 @@ const ProjectRedirect = () => {
 function GanttDetailView({ 
   user, users, projectId: propsProjectId, setFocusedProjectId, projects, setProjects, tasks, hierarchicalTasks, expandedRows, scale, revertCount,
   setRefreshKey, handleToggleExpand, handleUpdateTask, handleUpdateProject, handleOpenAudit, handleDeleteTask, 
-  setScale, setTasks, onReschedule, onNotif, auditLogs, historyEditLogs, isAdmin, isSuperadmin, isMobile, authLoading
+  setScale, setTasks, setIsEditWBSModalOpen, onReschedule, onNotif, auditLogs, historyEditLogs, isAdmin, isSuperadmin, isMobile, authLoading
 }: any) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -5873,7 +6585,7 @@ function GanttDetailView({
        >
           {/* TOP: Task Manager (Only in Detail View) */}
           {!isGlobalView && (
-            <div className="h-auto max-h-[480px] flex flex-col bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800/60 rounded-2xl overflow-y-auto shadow-xl dark:shadow-2xl shrink-0 scrollbar-hide transition-colors">
+            <div className="h-auto max-h-[650px] 2xl:max-h-[70vh] flex flex-col bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800/60 rounded-2xl overflow-y-auto shadow-xl dark:shadow-2xl shrink-0 scrollbar-hide transition-colors">
       <div className={cn("p-4 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between bg-[#111b43] gap-4", isMobile && "px-4")}>
                 <div className="flex items-center gap-6">
                   <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-white/5">
@@ -6023,31 +6735,36 @@ function GanttDetailView({
                 </div>
                 
                 {activeView === 'INFRASTRUCTURE' && user && (
-                  <button 
-                    onClick={handleAddInlineL1}
-                    className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all active:scale-95 flex items-center gap-2 border border-indigo-400/30"
-                  >
-                    <Plus className="w-4 h-4" />
-                    + Add New Phase (L1)
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button 
+                      onClick={() => setIsEditWBSModalOpen(true)}
+                      className="bg-[#2563EB] hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-600/20 transition-all active:scale-95 flex items-center gap-2 border border-blue-400/30"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      Edit Breakdown Timeline
+                    </button>
+                    <button 
+                      onClick={handleAddInlineL1}
+                      className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-indigo-600/20 transition-all active:scale-95 flex items-center gap-2 border border-indigo-400/30"
+                    >
+                      <Plus className="w-4 h-4" />
+                      + Add New Phase (L1)
+                    </button>
+                  </div>
                 )}
               </div>
               
               {!isGlobalView && currentProject && (
-                <div className="px-5 py-4 bg-slate-100 dark:bg-black/60 border-b border-slate-200 dark:border-white/5 transition-colors">
+                <div className="px-5 py-4 bg-white/5 dark:bg-black/40 border-b border-slate-200 dark:border-white/5 transition-colors mb-4">
                   <div className="flex items-center gap-2 mb-3">
-                    <FileText className="w-3.5 h-3.5 text-indigo-400" />
+                    <FileText className="w-3.5 h-3.5 text-blue-400" />
                     <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-                      Detail Pengajuan Project (Project Diajukan)
+                      Detail Pengajuan Project (Summary)
                     </span>
                   </div>
-                  <textarea 
-                    value={currentProject.project_diajukan || ''}
-                    onChange={(e) => handleUpdateProject(currentProject.id, { project_diajukan: e.target.value })}
-                    className="w-full bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-xl p-4 text-slate-800 dark:text-slate-300 text-xs font-medium italic leading-relaxed focus:ring-1 focus:ring-indigo-500/30 outline-none transition-all resize-none min-h-[80px]"
-                    placeholder="Belum ada detail pengajuan untuk project ini..."
-                    disabled={!user}
-                  />
+                  <div className="w-full bg-[#0B1437] border border-white/10 rounded-xl p-4 min-h-[60px] flex items-start text-xs text-gray-300 font-medium italic leading-relaxed">
+                    {currentProject.project_diajukan || "Belum ada detail pengajuan..."}
+                  </div>
                 </div>
               )}
               
@@ -6087,7 +6804,7 @@ function GanttDetailView({
                           onOpenAudit={handleOpenAudit}
                           onDeleteTask={handleDeleteTask}
                           onAddSubTask={handleAddInlineL2}
-                          disabled={!user}
+                          disabled={true}
                           isMobile={isMobile}
                         />
                       </div>
@@ -7157,10 +7874,10 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
     const proj = projects.find((p: any) => p.id === task.project_id) || (isProject ? task : null);
     
     // OWNERSHIP LOCK LOGIC
-    const currentUser = user?.name?.toLowerCase();
-    const projectPic = proj?.pic_name?.toLowerCase();
+    const currentUser = user?.name || '';
+    const projectPic = proj?.pic_name || '';
     const isAdmin = user?.access_level?.toLowerCase() === 'admin' || user?.access_level?.toLowerCase() === 'superadmin';
-    const isOwner = currentUser === projectPic;
+    const isOwner = canEditTask(currentUser, projectPic);
     const hasControl = isOwner || isAdmin;
 
     return (
@@ -7231,8 +7948,29 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                   )}
                   <HealthBadge health={health} />
                   
-                  {/* Keterangan Field: Icon Info with Expansion */}
-                  {task.keterangan && (
+                  {/* Task Metadata Pills */}
+                  {task.task_type && (
+                    <span className={cn(
+                      "px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border",
+                      task.task_type === 'Improvement' 
+                        ? "bg-amber-500/10 border-amber-500/20 text-amber-500" 
+                        : "bg-indigo-500/10 border-indigo-500/20 text-indigo-400"
+                    )}>
+                      {task.task_type}
+                    </span>
+                  )}
+                  {task.components && task.components.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {task.components.map((c: string) => (
+                        <span key={c} className="px-1.5 py-0.5 bg-slate-800 text-slate-400 text-[7px] font-black uppercase tracking-widest rounded border border-white/5">
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Technical Detail: Icon Info with Expansion */}
+                  {task.detail_task && (
                     <div className="relative group/info">
                       <button 
                         onClick={(e) => {
@@ -7242,7 +7980,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                         className={cn(
                           "p-1 rounded-full transition-all flex items-center justify-center",
                           expandedRows.has(`info-${task.id}`) 
-                            ? "bg-indigo-500 text-white" 
+                            ? "bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]" 
                             : "bg-slate-800 text-indigo-400 hover:bg-indigo-500 hover:text-white"
                         )}
                       >
@@ -7250,7 +7988,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                       </button>
                       
                       <div className="absolute bottom-full mb-2 hidden group-hover/info:block w-max max-w-xs bg-slate-900 border border-indigo-500/30 text-indigo-100 text-[10px] rounded p-2 z-[100] shadow-xl font-medium tracking-tight">
-                        Click to view Detail Breakdown
+                        Click to view Full Technical Detail & Breakdown
                       </div>
                     </div>
                   )}
@@ -7484,7 +8222,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
           </td>
         </tr>
         
-        {/* Keterangan Expansion Row */}
+        {/* Keterangan & Technical Detail Expansion Row */}
         <AnimatePresence>
           {expandedRows.has(`info-${task.id}`) && (
             <motion.tr 
@@ -7493,17 +8231,17 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               exit={{ opacity: 0, height: 0 }}
               className="bg-indigo-500/5 border-b border-indigo-500/10"
             >
-              <td colSpan={12} className="px-12 py-4">
-                <div className="flex flex-col gap-2">
+              <td colSpan={12} className="px-12 py-6">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-widest">
-                    <FileText className="w-3.5 h-3.5" />
-                    Detail Breakdown / Keterangan
+                    <Database className="w-3.5 h-3.5" />
+                    Full Technical Detail & Execution Breakdown
                   </div>
                   <DeferredTextarea 
-                    value={task.keterangan || ''}
-                    onSave={(v) => onUpdateTask(task.id, 'keterangan', v)}
-                    className="w-full bg-slate-900/50 border border-indigo-500/20 rounded-xl p-4 text-xs text-slate-300 outline-none focus:border-indigo-500/50 transition-all font-medium leading-relaxed min-h-[80px]"
-                    placeholder="Enter full technical detail or breakdown description..."
+                    value={task.detail_task || ''}
+                    onSave={(v) => onUpdateTask(task.id, 'detail_task', v)}
+                    className="w-full bg-slate-900/50 border border-indigo-500/20 rounded-xl p-4 text-xs text-slate-300 outline-none focus:border-indigo-500/50 transition-all font-medium leading-relaxed min-h-[120px]"
+                    placeholder="Masukkan detail teknis pengerjaan atau breakdown di sini..."
                   />
                 </div>
               </td>
@@ -8015,9 +8753,20 @@ function TemporalVisualizer({ user, scale, tasks, projectId, hierarchicalTasks, 
     try {
       return intervals.map((date, i) => {
         const nextDate = intervals[i + 1] || gridEnd;
-        let label = '';
+        let label: React.ReactNode = '';
         if (scale === 'MONTH') label = format(date, 'MMMM');
-        else if (scale === 'WEEK') label = `WEEK ${format(date, 'w')}`;
+        else if (scale === 'WEEK') {
+          const weekStart = startOfWeek(date, { weekStartsOn: 1 });
+          const weekEnd = endOfWeek(date, { weekStartsOn: 1 });
+          label = (
+            <span className="flex items-center gap-1">
+              <span>Week {format(date, 'w')}</span>
+              <span className="text-[8px] text-slate-500 lowercase font-medium tracking-tight">
+                ({format(weekStart, 'dd MMM')} - {format(weekEnd, 'dd MMM yyyy')})
+              </span>
+            </span>
+          );
+        }
         else if (scale === 'DAY') label = format(date, 'dd');
 
         return {
@@ -8028,6 +8777,14 @@ function TemporalVisualizer({ user, scale, tasks, projectId, hierarchicalTasks, 
       });
     } catch (e) { return []; }
   }, [intervals, gridEnd, totalDuration, scale]);
+
+  // RED NEEDLE: Precision Today Indicator
+  const todayPos = useMemo(() => {
+    const now = new Date();
+    const startMs = gridStart.getTime();
+    if (now.getTime() < startMs || now.getTime() > gridEnd.getTime()) return null;
+    return ((now.getTime() - startMs) / totalDuration) * 100;
+  }, [gridStart, gridEnd, totalDuration]);
 
   if (isMobile) {
     return (
@@ -8044,14 +8801,6 @@ function TemporalVisualizer({ user, scale, tasks, projectId, hierarchicalTasks, 
       />
     );
   }
-
-  // RED NEEDLE: Precision Today Indicator
-  const todayPos = useMemo(() => {
-    const now = new Date();
-    const startMs = gridStart.getTime();
-    if (now.getTime() < startMs || now.getTime() > gridEnd.getTime()) return null;
-    return ((now.getTime() - startMs) / totalDuration) * 100;
-  }, [gridStart, gridEnd, totalDuration]);
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-slate-950 font-sans">
@@ -8316,7 +9065,10 @@ function GanttBar({ user, task, tasks, projects, setTasks, scale, gridStart, gri
   }, [task.end_time, (task as any).to_date, (task as any).end_date]);
 
   const left = fromMs !== null ? ((fromMs - viewStartMs) / totalViewRangeMs) * 100 : 0;
-  const width = (fromMs !== null && toMs !== null) ? ((toMs - fromMs) / totalViewRangeMs) * 100 : 0;
+  
+  // 🔥 THE FIX: Inclusive End-Date (Always add 1 day to the span so it covers the final day fully)
+  const dayInMs = 86400000;
+  const width = (fromMs !== null && toMs !== null) ? ((toMs - fromMs + dayInMs) / totalViewRangeMs) * 100 : 0;
 
   const isVisible = (fromMs !== null && toMs !== null) && 
                     (toMs >= viewStartMs) && 

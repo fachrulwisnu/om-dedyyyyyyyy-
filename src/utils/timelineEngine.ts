@@ -227,7 +227,8 @@ export const calculateBarCoordinates = (
   // OR we calculate absolute pixels. 
   // Percentages are fine if the parent container is correctly sized to gridWidth.
   const leftPercent = ((taskStartMs - gridStartMs) / timelineRange.totalDuration) * 100;
-  const widthPercent = ((taskEndMs - taskStartMs) / timelineRange.totalDuration) * 100;
+  // 🔥 THE FIX: Inclusive End-Date (Always add 1 day to the span so it covers the final day fully)
+  const widthPercent = ((taskEndMs - taskStartMs + 86400000) / timelineRange.totalDuration) * 100;
 
   let left = leftPercent;
   let width = widthPercent;
