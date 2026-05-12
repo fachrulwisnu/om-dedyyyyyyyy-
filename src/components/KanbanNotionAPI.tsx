@@ -45,13 +45,15 @@ export default function KanbanNotionAPI() {
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
   const { session, currentUser, loading: authLoading } = useAuth();
-  const isPublicView = !session && !currentUser;
+  
+  // 🔥 THE FIX: Core visibility logic
+  const isLoggedIn = !!(session || currentUser);
+  const isPublicView = !isLoggedIn;
 
   useEffect(() => {
-    const isLoggedIn = !isPublicView;
-    const userIdentifier = session?.user?.email || currentUser?.email || "Unknown";
-    console.log("Current Auth State:", isLoggedIn ? `Logged in as ${userIdentifier}` : "Not Logged In");
-  }, [session, currentUser, isPublicView]);
+    const userIdentifier = session?.user?.email || currentUser?.email || "Anonymous";
+    console.log("KanbanNotionAPI Auth:", isLoggedIn ? `Logged in as ${userIdentifier}` : "Public View");
+  }, [isLoggedIn, session, currentUser]);
 
   const fetchSyncedData = async () => {
     setLoading(true);
@@ -145,20 +147,20 @@ export default function KanbanNotionAPI() {
           return (
             <div key={status} className="flex-shrink-0 w-80">
               <div className={cn(
-                "p-4 rounded-t-2xl border-x border-t border-white/5 flex items-center justify-between sticky top-0 z-10 bg-[#0a0f1d]",
+                "p-4 rounded-t-2xl border-x border-t border-[var(--border)] flex items-center justify-between sticky top-0 z-10 bg-[var(--bg-card)] shadow-sm",
                 "before:absolute before:bottom-0 before:left-0 before:right-0 before:h-0.5",
                 colorClass.split(' ')[0]
               )}>
-                <h3 className="text-[11px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-[11px] font-black text-[var(--text-main)] uppercase tracking-widest flex items-center gap-2">
                   <div className={cn("w-2 h-2 rounded-full animate-pulse", colorClass.split(' ')[0])} />
                   {status}
                 </h3>
-                <span className="px-2 py-0.5 rounded bg-black/40 border border-white/5 text-[10px] font-black text-slate-400">
+                <span className="px-2 py-0.5 rounded bg-[var(--bg-page)] border border-[var(--border)] text-[10px] font-black text-[var(--text-sub)]">
                   {statusProjects.length}
                 </span>
               </div>
               
-              <div className="bg-[#1a1f30]/40 border-x border-b border-white/5 rounded-b-2xl p-3 min-h-[500px] flex flex-col gap-3">
+              <div className="bg-[var(--bg-card)]/30 border-x border-b border-[var(--border)] rounded-b-2xl p-3 min-h-[500px] flex flex-col gap-3 backdrop-blur-sm">
                 <AnimatePresence mode="popLayout">
                   {statusProjects.length > 0 ? (
                     statusProjects.map((project) => {
@@ -187,43 +189,43 @@ export default function KanbanNotionAPI() {
                           exit={{ opacity: 0, scale: 0.9 }}
                           whileHover={{ y: -2 }}
                           onClick={() => handleCardClick(project)}
-                          className="bg-[#1a1f30] border border-white/10 p-4 rounded-2xl cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-600/5 transition-all shadow-xl group relative overflow-hidden flex flex-col h-full max-h-[340px]"
+                          className="bg-[var(--bg-card)] border border-[var(--border)] p-4 rounded-2xl cursor-pointer hover:border-[var(--accent)] hover:bg-[var(--accent)]/5 transition-all shadow-sm group relative overflow-hidden flex flex-col h-full max-h-[340px]"
                         >
                           <div className="relative z-10 flex flex-col h-full">
                             <div className="flex justify-between items-start mb-1">
-                              <span className="text-[10px] text-slate-500 font-mono bg-black/20 px-2 py-0.5 rounded">#{ticketId}</span>
-                              <span className="text-[10px] text-slate-500 font-bold">{raw["Kuartal"] || ""}</span>
+                              <span className="text-[10px] text-[var(--text-sub)] font-mono bg-[var(--bg-page)] border border-[var(--border)] px-2 py-0.5 rounded">#{ticketId}</span>
+                              <span className="text-[10px] text-[var(--text-sub)] font-bold">{raw["Kuartal"] || ""}</span>
                             </div>
-                            <h3 className="font-bold text-sm text-white line-clamp-2 leading-tight group-hover:text-indigo-400 transition-colors">
+                            <h3 className="font-bold text-sm text-[var(--text-main)] line-clamp-2 leading-tight group-hover:text-[var(--accent)] transition-colors">
                               {projectName}
                             </h3>
                             
-                            <div className="mt-2 text-[10px] text-slate-400 space-y-0.5">
-                              <p className="truncate"><span className="text-indigo-400/80 font-bold">PIC:</span> {picName}</p>
-                              <p className="truncate"><span className="text-indigo-400/80 font-bold">OWNER:</span> {ownerName} • {ownerDiv}</p>
+                            <div className="mt-2 text-[10px] text-[var(--text-sub)] space-y-0.5">
+                              <p className="truncate"><span className="text-[var(--accent)] font-bold">PIC:</span> {picName}</p>
+                              <p className="truncate"><span className="text-[var(--accent)] font-bold">OWNER:</span> {ownerName} • {ownerDiv}</p>
                             </div>
                             
-                            <div className="border-t border-white/5 my-3"></div>
+                            <div className="border-t border-[var(--border)] my-3 opacity-50"></div>
                             
-                            <div className="grid grid-cols-[40px_1fr] gap-y-2.5 text-[11px] text-slate-300 mt-3 bg-black/40 p-2.5 rounded-xl border border-white/5">
-                              <span className="font-bold text-sky-400 uppercase text-[9px] tracking-widest mt-[2px]">FPS:</span>
-                              <span className="line-clamp-2 leading-snug">{fpsApproved}</span>
+                            <div className="grid grid-cols-[40px_1fr] gap-y-2.5 text-[11px] text-[var(--text-main)] mt-3 bg-[var(--bg-page)]/50 p-2.5 rounded-xl border border-[var(--border)] shadow-inner">
+                              <span className="font-black text-sky-500 uppercase text-[9px] tracking-widest mt-[2px]">FPS:</span>
+                              <span className="line-clamp-2 leading-snug font-medium">{fpsApproved}</span>
                               
-                              <span className="font-bold text-purple-400 uppercase text-[9px] tracking-widest mt-[2px]">FSD:</span>
-                              <span className="line-clamp-2 leading-snug">Plan: {fsdPlan} | {fsdStatus}</span>
+                              <span className="font-black text-purple-500 uppercase text-[9px] tracking-widest mt-[2px]">FSD:</span>
+                              <span className="line-clamp-2 leading-snug font-medium">Plan: {fsdPlan} | {fsdStatus}</span>
                               
-                              <span className="font-bold text-orange-400 uppercase text-[9px] tracking-widest mt-[2px]">DEV:</span>
-                              <span className="line-clamp-2 leading-snug">Plan: {devPlan} | Real: {devReal}</span>
+                              <span className="font-black text-orange-500 uppercase text-[9px] tracking-widest mt-[2px]">DEV:</span>
+                              <span className="line-clamp-2 leading-snug font-medium">Plan: {devPlan} | Real: {devReal}</span>
                               
-                              <span className="font-bold text-pink-400 uppercase text-[9px] tracking-widest mt-[2px]">UAT:</span>
-                              <span className="line-clamp-2 leading-snug">Batch: {uatBatch} | Late: {uatLate}</span>
+                              <span className="font-black text-pink-500 uppercase text-[9px] tracking-widest mt-[2px]">UAT:</span>
+                              <span className="line-clamp-2 leading-snug font-medium">Batch: {uatBatch} | Late: {uatLate}</span>
                               
-                              <span className="font-bold text-emerald-400 uppercase text-[9px] tracking-widest mt-[2px]">LIVE:</span>
-                              <span className="line-clamp-2 leading-snug">{liveRealized}</span>
+                              <span className="font-black text-emerald-500 uppercase text-[9px] tracking-widest mt-[2px]">LIVE:</span>
+                              <span className="line-clamp-2 leading-snug font-medium">{liveRealized}</span>
                             </div>
                           </div>
                           
-                          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -translate-y-16 translate-x-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/5 rounded-full -translate-y-16 translate-x-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                         </motion.div>
                       );
                     })
@@ -232,10 +234,10 @@ export default function KanbanNotionAPI() {
                       layout
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 0.3 }}
-                      className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-white/5 rounded-2xl"
+                      className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-[var(--border)] rounded-2xl"
                     >
-                      <Database className="w-8 h-8 mb-2 text-slate-700" />
-                      <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest text-center">
+                      <Database className="w-8 h-8 mb-2 text-[var(--text-sub)]" />
+                      <p className="text-[8px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">
                         NO PROJECTS IN<br/>THIS LANE
                       </p>
                     </motion.div>
@@ -281,10 +283,10 @@ export default function KanbanNotionAPI() {
 
   if (loading || authLoading) {
     return (
-      <div className="h-screen bg-[#0a0f1d] flex items-center justify-center">
+      <div className="h-screen bg-[var(--bg-page)] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-          <p className="text-slate-500 font-bold uppercase tracking-widest animate-pulse">
+          <Loader2 className="w-10 h-10 text-[var(--accent)] animate-spin" />
+          <p className="text-[var(--text-sub)] font-bold uppercase tracking-widest animate-pulse">
             {authLoading ? "Verifying Session..." : "Initializing Data Stream..."}
           </p>
         </div>
@@ -293,18 +295,18 @@ export default function KanbanNotionAPI() {
   }
 
   return (
-    <div className="p-6 bg-[#0a0f1d] min-h-screen text-slate-300">
+    <div className="p-6 bg-[var(--bg-page)] min-h-screen text-[var(--text-main)]">
        {/* Header */}
        <div className="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-indigo-400 border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+          <div className="w-12 h-12 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-[var(--accent)] border border-[var(--border)] shadow-lg shadow-indigo-500/5">
             <LayoutGrid className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="text-3xl font-black text-white uppercase italic tracking-tighter">
-              Kanban <span className="text-indigo-500">Notion API</span>
+            <h1 className="text-3xl font-black text-[var(--text-main)] uppercase italic tracking-tighter">
+              Kanban <span className="text-[var(--accent)]">Notion API</span>
             </h1>
-            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+            <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-widest mt-1">
               Synchronized Data Repository • API Execution Output
             </p>
           </div>
@@ -314,7 +316,7 @@ export default function KanbanNotionAPI() {
           onClick={handleSync}
           disabled={syncing}
           className={cn(
-            "px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2",
+            "px-6 py-3 rounded-xl bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-[var(--accent)]/20 flex items-center gap-2",
             syncing && "opacity-70 cursor-not-allowed"
           )}
         >
@@ -338,16 +340,16 @@ export default function KanbanNotionAPI() {
           onClick={() => setSelectedStatuses(MIGRATION_STATUSES)}
           className={cn(
              "p-3 rounded-xl border text-left transition flex flex-col justify-between h-24 relative overflow-hidden group",
-            selectedStatuses.length === MIGRATION_STATUSES.length ? "bg-indigo-600/40 border-indigo-500 ring-1 ring-indigo-500 shadow-xl shadow-indigo-600/20" : "bg-[#1a1f30] border-gray-700 hover:border-gray-500"
+            selectedStatuses.length === MIGRATION_STATUSES.length ? "bg-[var(--accent)]/40 border-[var(--accent)] ring-1 ring-[var(--accent)] shadow-xl shadow-[var(--accent)]/20 text-[var(--text-main)]" : "bg-[var(--bg-card)] border-[var(--border)] hover:border-[var(--accent)]/30"
           )}
         >
-          <div className={cn("text-[10px] font-black uppercase tracking-widest", selectedStatuses.length === MIGRATION_STATUSES.length ? "text-white/60" : "text-slate-500")}>TOTAL PROJECTS</div>
-          <div className="text-2xl font-black text-white">{filteredData.length}</div>
-          {selectedStatuses.length === MIGRATION_STATUSES.length && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+          <div className={cn("text-[10px] font-black uppercase tracking-widest", selectedStatuses.length === MIGRATION_STATUSES.length ? "text-[var(--text-main)]/60" : "text-[var(--text-sub)]")}>TOTAL PROJECTS</div>
+          <div className="text-2xl font-black">{filteredData.length}</div>
+          {selectedStatuses.length === MIGRATION_STATUSES.length && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--text-main)] animate-pulse" />}
         </button>
 
         {MIGRATION_STATUSES.filter(s => {
-          if (isPublicView && s.toUpperCase() === 'CANCELED') return false;
+          if (isPublicView && s.toLowerCase() === 'canceled') return false;
           return true;
         }).map((status) => {
           const count = statusCounts[status] || 0;
@@ -358,33 +360,33 @@ export default function KanbanNotionAPI() {
               onClick={() => toggleStatusFilter(status)}
               className={cn(
                 "p-3 rounded-xl border text-left transition flex flex-col justify-between h-24 relative group",
-                isActive ? "bg-indigo-600/40 border-indigo-500 ring-1 ring-indigo-500 shadow-xl shadow-indigo-600/40" : "bg-[#1a1f30] border-white/5 hover:border-white/10"
+                isActive ? "bg-[var(--accent)]/40 border-[var(--accent)] ring-1 ring-[var(--accent)] shadow-xl shadow-[var(--accent)]/40 text-[var(--text-main)]" : "bg-[var(--bg-card)] border-[var(--border)] hover:border-[var(--accent)]/10"
               )}
             >
-              <div className={cn("text-[10px] font-black uppercase tracking-widest line-clamp-2 leading-tight min-h-[24px]", isActive ? "text-white/60" : "text-slate-500")}>
+              <div className={cn("text-[10px] font-black uppercase tracking-widest line-clamp-2 leading-tight min-h-[24px]", isActive ? "text-[var(--text-main)]/60" : "text-[var(--text-sub)]")}>
                 {status}
               </div>
-              <div className="text-2xl font-black text-white">{count}</div>
-              {isActive && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+              <div className="text-2xl font-black">{count}</div>
+              {isActive && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--text-main)] animate-pulse" />}
             </button>
           );
         })}
       </div>
 
       {/* Control Bar */}
-      <div className="bg-[#1a1f30] border border-white/5 rounded-2xl p-4 mb-6 flex flex-col md:flex-row gap-4">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-4 mb-6 flex flex-col md:flex-row gap-4 shadow-sm">
         <div className="flex-1 relative group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-400 transition-colors" />
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)] group-focus-within:text-[var(--accent)] transition-colors" />
           <input 
             type="text"
             placeholder="Search Project Name or Ticket ID..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-black/20 border border-white/5 rounded-xl py-3 pl-12 pr-4 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500 transition-all font-medium"
+            className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl py-3 pl-12 pr-4 text-sm text-[var(--text-main)] placeholder:text-[var(--text-sub)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all font-medium"
           />
         </div>
         <div className="md:w-64">
-           <div className="h-full flex items-center px-4 bg-black/10 rounded-xl border border-white/5 text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
+           <div className="h-full flex items-center px-4 bg-[var(--bg-page)] rounded-xl border border-[var(--border)] text-[10px] font-black uppercase tracking-widest text-[var(--text-sub)] italic">
              {selectedStatuses.length} Statuses Active In Board
            </div>
         </div>
@@ -405,29 +407,29 @@ export default function KanbanNotionAPI() {
           const isExpanded = expandedCategories[category];
           
           return (
-            <div key={category} className="bg-[#121520] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+            <div key={category} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl overflow-hidden shadow-sm">
               {/* Accordion Header */}
               <button 
                 onClick={() => toggleCategory(category)}
-                className="w-full flex items-center justify-between p-5 bg-[#16192B] hover:bg-[#1E2238] transition-all text-left group"
+                className="w-full flex items-center justify-between p-5 bg-[var(--bg-card)] hover:bg-[var(--bg-page)] transition-all text-left group"
               >
                 <div className="flex items-center gap-4">
                   <div className={cn(
                     "w-8 h-8 rounded-lg flex items-center justify-center transition-transform duration-300",
-                    isExpanded ? "bg-indigo-600 text-white rotate-90" : "bg-white/5 text-slate-500"
+                    isExpanded ? "bg-[var(--accent)] text-white rotate-90 shadow-lg shadow-indigo-600/20" : "bg-[var(--bg-page)] text-[var(--text-sub)]"
                   )}>
                     <ChevronRight className="w-4 h-4" />
                   </div>
                   <div>
-                    <span className="font-black text-white tracking-widest uppercase italic text-sm">{category}</span>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">
+                    <span className="font-black text-[var(--text-main)] tracking-widest uppercase italic text-sm">{category}</span>
+                    <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-wider mt-0.5">
                       Operational Category Stream
                     </p>
                   </div>
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <span className="bg-indigo-600/10 text-indigo-400 text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/20 uppercase tracking-widest">
+                  <span className="bg-indigo-600/10 text-[var(--accent)] text-[10px] font-black px-3 py-1 rounded-full border border-indigo-500/20 uppercase tracking-widest">
                     {categoryProjects.length} PROJECTS
                   </span>
                 </div>
@@ -442,7 +444,7 @@ export default function KanbanNotionAPI() {
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.3, ease: 'easeInOut' }}
                   >
-                    <div className="p-6 bg-[#0a0f1d] overflow-x-auto border-t border-white/5">
+                    <div className="p-6 bg-[var(--bg-page)]/30 overflow-x-auto border-t border-[var(--border)]">
                       <KanbanBoardRenderer projects={categoryProjects} />
                     </div>
                   </motion.div>

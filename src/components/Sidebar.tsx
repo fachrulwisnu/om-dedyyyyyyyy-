@@ -164,8 +164,8 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isProjectMenuActive 
-                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
-                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
             )}
           >
             <div className="flex items-center">
@@ -194,8 +194,8 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isNotionMenuActive 
-                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
-                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
             )}
           >
             <div className="flex items-center">
@@ -224,8 +224,8 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isExternalMenuActive 
-                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
-                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
             )}
           >
             <div className="flex items-center">
@@ -254,8 +254,8 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isAdminMenuActive 
-                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
-                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
             )}
           >
             <div className="flex items-center">

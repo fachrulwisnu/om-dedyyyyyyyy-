@@ -114,16 +114,16 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
           className={cn(
-            "relative w-full bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] shadow-2xl shadow-[var(--shadow-float)] overflow-hidden flex flex-col",
+            "relative w-full bg-[var(--bg-card)]/80 backdrop-blur-2xl rounded-[2.5rem] border border-[var(--border)] shadow-2xl overflow-hidden flex flex-col",
             isMobile ? "h-[90vh]" : "max-w-3xl max-h-[85vh]"
           )}
         >
           {/* Header */}
-          <div className="px-8 pt-6 pb-2 border-b border-[var(--border)] bg-[var(--bg-card)]/50">
+          <div className="px-8 pt-6 pb-2 border-b border-[var(--border)] bg-transparent">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center text-[var(--accent)]">
-                  <ShieldCheck className="w-6 h-6" />
+                  <ShieldCheck className="w-6 h-6 shadow-[0_0_15px_rgba(37,99,235,0.2)]" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-[var(--text-main)] uppercase italic tracking-tighter leading-tight">
@@ -136,21 +136,21 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
               </div>
               <button 
                 onClick={onClose}
-                className="p-3 hover:bg-[var(--bg-page)] rounded-xl text-[var(--text-sub)] hover:text-[var(--text-main)] transition-all"
+                className="p-3 hover:bg-[var(--bg-page)] rounded-xl text-[var(--text-sub)] hover:text-[var(--text-main)] transition-all underline-offset-4"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Segment Switcher - Pill Shaped */}
-            <div className="flex items-center bg-[var(--bg-page)] rounded-full p-1 border border-[var(--border)] w-fit mb-4">
+            <div className="flex items-center bg-[var(--bg-page)]/50 rounded-full p-1 border border-[var(--border)] w-fit mb-4">
               <button
                 onClick={() => setActiveSegment('DETAILS')}
                 className={cn(
                   "px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all duration-300",
                   activeSegment === 'DETAILS' 
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[var(--accent)] text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
+                    : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
                 )}
               >
                 INFRASTRUCTURE BREAKDOWN
@@ -160,8 +160,8 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                 className={cn(
                   "px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all duration-300",
                   activeSegment === 'SYSTEM_LOG' 
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[var(--accent)] text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
+                    : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
                 )}
               >
                 SYSTEM LOG
@@ -171,8 +171,8 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                 className={cn(
                   "px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-full transition-all duration-300",
                   activeSegment === 'HISTORY_EDIT' 
-                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20" 
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[var(--accent)] text-white shadow-[0_0_15px_rgba(37,99,235,0.4)]" 
+                    : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
                 )}
               >
                 HISTORY EDIT
@@ -180,46 +180,47 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
             </div>
           </div>
 
+
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-[var(--bg-page)]">
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar bg-transparent">
             {activeSegment === 'DETAILS' ? (
               <div className="space-y-8 animate-in fade-in duration-300">
                 <div className="space-y-6">
-                  <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                  <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                     <FieldLabel>Project Name</FieldLabel>
                     <textarea
                       rows={2}
                       value={editedProject.name || ''}
                       onChange={(e) => handleChange('name', e.target.value)}
-                      className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all resize-none"
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all resize-none"
                       placeholder="Enter project title..."
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                       <FieldLabel>Division / Department</FieldLabel>
                       <input
                         type="text"
                         value={editedProject.div_owner || ''}
                         onChange={(e) => handleChange('div_owner', e.target.value)}
-                        className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all"
+                        className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all"
                         placeholder="e.g. IT Digital"
                       />
                     </div>
-                    <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                       <FieldLabel>Project Owner</FieldLabel>
                       <input
                         type="text"
                         value={editedProject.owner_name || ''}
                         onChange={(e) => handleChange('owner_name', e.target.value)}
-                        className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all"
+                        className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all"
                         placeholder="Full name of owner"
                       />
                     </div>
                   </div>
 
-                  <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                  <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                     <div className="flex items-center gap-2 mb-2">
                        <FileText className="w-3.5 h-3.5 text-[var(--accent)]" />
                        <FieldLabel>Project Diajukan (Detail Pengajuan)</FieldLabel>
@@ -228,13 +229,13 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                       rows={4}
                       value={editedProject.project_diajukan || ''}
                       onChange={(e) => handleChange('project_diajukan', e.target.value)}
-                      className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-medium text-sm leading-relaxed focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all resize-none"
-                      placeholder="Describe the project background and requirements..."
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] font-medium text-sm leading-relaxed focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all resize-none placeholder:text-[var(--text-sub)]/50"
+                      placeholder="Belum ada detail pengajuan project..."
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                       <FieldLabel>Lead PIC Name</FieldLabel>
                       <div className="relative">
                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)]" />
@@ -242,20 +243,20 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                           type="text"
                           value={editedProject.pic_name || ''}
                           onChange={(e) => handleChange('pic_name', e.target.value)}
-                          className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl pl-11 pr-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all"
+                          className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl pl-11 pr-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all"
                           placeholder="Enter PIC name..."
                         />
                       </div>
                     </div>
 
-                    <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                       <FieldLabel>Project Status</FieldLabel>
                       <div className="relative">
                         <Activity className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)] px-0.5" />
                         <select
                           value={editedProject.status || ''}
                           onChange={(e) => handleChange('status', e.target.value)}
-                          className="w-full bg-[var(--bg-card)] border border-[var(--border)] rounded-xl pl-11 pr-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all appearance-none cursor-pointer"
+                          className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl pl-11 pr-4 py-3 text-[var(--text-main)] font-bold text-sm focus:ring-2 focus:ring-[var(--accent)]/50 outline-none transition-all appearance-none cursor-pointer"
                         >
                           {STATUS_OPTIONS.map(status => (
                             <option key={status} value={status}>{status}</option>
@@ -264,23 +265,27 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                       </div>
                     </div>
 
-                    <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                       <FieldLabel>Start Date</FieldLabel>
                       <CustomDatePicker
                         selectedDate={editedProject.start_date || ''}
                         onChange={(val) => handleChange('start_date', val)}
+                        className="bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-main)]"
                       />
                     </div>
 
-                    <div className="p-4 bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="p-4 bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                       <FieldLabel>End Date</FieldLabel>
                       <CustomDatePicker
                         selectedDate={editedProject.end_date || ''}
                         onChange={(val) => handleChange('end_date', val)}
+                        className="bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-main)]"
                       />
                     </div>
                   </div>
                 </div>
+
+
 
                 {/* Warning Section */}
                 <div className="flex items-start gap-3 p-4 bg-[var(--warning)]/5 border border-[var(--warning)]/10 rounded-2xl">
@@ -313,9 +318,9 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
 
                     if (activeSegment === 'HISTORY_EDIT') {
                       return (
-                        <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                        <div className="overflow-x-auto bg-[var(--bg-page)]/30 backdrop-blur-lg border border-[var(--border)] rounded-2xl shadow-sm">
                           <table className="w-full text-left text-[10px] text-[var(--text-main)]">
-                            <thead className="bg-[var(--bg-page)] text-[var(--text-main)] uppercase font-black tracking-widest text-[9px] border-b border-[var(--border)]">
+                            <thead className="bg-[var(--bg-page)]/50 text-[var(--text-sub)] uppercase font-black tracking-widest text-[9px] border-b border-[var(--border)]">
                               <tr>
                                 <th className="px-6 py-4">PIC Name</th>
                                 <th className="px-6 py-4">Date</th>
@@ -334,9 +339,9 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                               ) : (
                                 historyEditLogs.map((log) => {
                                   return (
-                                    <tr key={log.id} className="hover:bg-[var(--bg-page)] transition-colors">
+                                    <tr key={log.id} className="bg-[var(--bg-card)]/30 hover:bg-[var(--bg-card)]/50 transition-colors">
                                       <td className="px-6 py-4">
-                                        <span className="font-black text-[var(--accent)] whitespace-nowrap">{log.pic_name || "Unknown PIC"}</span>
+                                        <span className="font-black text-blue-400 whitespace-nowrap">{log.pic_name || "Unknown PIC"}</span>
                                       </td>
                                       <td className="px-6 py-4">
                                         <span className="text-[var(--text-sub)] whitespace-nowrap font-mono">{log.created_at ? format(new Date(log.created_at), 'dd/MM/yy') : '-'}</span>
@@ -345,12 +350,12 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                                         <span className="font-bold text-[var(--text-sub)] uppercase tracking-tight">{log.field_name}</span>
                                       </td>
                                       <td className="px-6 py-4">
-                                        <div className="max-w-[120px] truncate text-[var(--danger)] line-through opacity-50 italic">
+                                        <div className="max-w-[120px] truncate text-rose-500/50 line-through italic">
                                           {log.before_value || "-"}
                                         </div>
                                       </td>
                                       <td className="px-6 py-4">
-                                        <div className="max-w-[120px] truncate text-[var(--success)] font-black italic">
+                                        <div className="max-w-[120px] truncate text-emerald-400 font-black italic">
                                           {log.after_value || "-"}
                                         </div>
                                       </td>
@@ -410,10 +415,10 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
           </div>
 
           {/* Footer */}
-          <div className="px-8 py-6 border-t border-[var(--border)] bg-[var(--bg-card)]/50 flex items-center justify-between gap-4">
+          <div className="px-8 py-6 border-t border-[var(--border)] bg-transparent flex items-center justify-between gap-4">
             <div className="flex-1">
               {!hasEditControl && (
-                <div className="flex items-center gap-2 text-[var(--warning)]">
+                <div className="flex items-center gap-2 text-amber-500">
                    <AlertCircle className="w-4 h-4 animate-pulse" />
                    <span className="text-[10px] font-black uppercase tracking-widest italic">Editing PIC {project.pic_name}'s Territory</span>
                 </div>
@@ -423,7 +428,7 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
               <button 
                 onClick={onClose}
                 disabled={isSaving}
-                className="px-6 py-3 bg-[var(--bg-page)] hover:bg-[var(--border)] text-[var(--text-main)] text-xs font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50"
+                className="px-6 py-3 bg-[var(--bg-page)] hover:bg-[var(--bg-page)]/80 text-[var(--text-sub)] text-xs font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -433,8 +438,8 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
                 className={cn(
                   "px-8 py-3 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all shadow-lg active:scale-95 flex items-center gap-2 disabled:opacity-50",
                   hasEditControl 
-                    ? "bg-blue-600 hover:bg-blue-700 shadow-blue-500/20" 
-                    : "bg-[var(--warning)] hover:bg-[var(--warning)]/90 shadow-[var(--warning)]/20"
+                    ? "bg-[var(--accent)] shadow-blue-500/20" 
+                    : "bg-amber-600 hover:bg-amber-700 shadow-amber-500/20"
                 )}
               >
                 {isSaving ? (
@@ -451,6 +456,7 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
               </button>
             </div>
           </div>
+
         </motion.div>
       </div>
     </AnimatePresence>

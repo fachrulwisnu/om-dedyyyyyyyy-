@@ -43,8 +43,8 @@ export function SidebarItem({
       className={({ isActive: navActive }) => cn(
         "w-full flex items-center py-3 px-4 transition-all relative group overflow-hidden",
         (navActive || isActive)
-          ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
-          : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
+          ? "text-[var(--accent)] font-bold bg-[var(--accent)]/10" 
+          : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-[var(--bg-page)]"
       )}
     >
       <Icon className={cn(

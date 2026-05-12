@@ -254,33 +254,37 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 }
 
 const StatusBadge = ({ status, type = 'task' }: { status: string, type?: 'project' | 'task' }) => {
+  const isOverdue = status.toLowerCase().includes('overdue');
+  const isDone = status.toLowerCase() === 'done' || status.toLowerCase() === 'live';
+  const isCancel = status.toLowerCase() === 'cancel' || status.toLowerCase() === 'canceled';
+
   const styles: Record<string, string> = {
     // Task Status (Antigravity Soft Ghost Style)
-    'To Do': 'bg-slate-50 text-slate-500 border-slate-200',
-    'In Progress': 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    'On Review': 'bg-amber-50 text-amber-600 border-amber-100',
-    'Done': 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    'Overdue': 'bg-rose-50 text-rose-600 border-rose-100',
-    'Early': 'bg-lime-50 text-lime-600 border-lime-100',
-    'Hold': 'bg-purple-50 text-purple-600 border-purple-100',
-    'Cancel': 'bg-zinc-50 text-zinc-500 border-zinc-200',
+    'To Do': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+    'In Progress': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    'On Review': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+    'Done': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+    'Overdue': 'bg-red-500/10 text-red-500 border-red-500/20 px-3 py-1 animate-pulse',
+    'Early': 'bg-lime-500/10 text-lime-500 border-lime-500/20',
+    'Hold': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+    'Cancel': 'bg-zinc-500/10 text-zinc-400 border-zinc-500/20',
     
     // Project Status
-    'FSD On Progress': 'bg-blue-50 text-blue-600 border-blue-100',
-    'Development On Progress': 'bg-blue-50 text-blue-600 border-blue-100',
-    'LIVE': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    'FSD On Progress': 'bg-blue-500/10 text-blue-400 border-blue-100',
+    'Development On Progress': 'bg-blue-500/10 text-blue-400 border-blue-100',
+    'LIVE': 'bg-emerald-500/10 text-emerald-500 border-emerald-100',
   };
 
   // Add logic for dynamic overdue labels like "Overdue 5 days"
   let appliedStyle = styles[status];
   if (!appliedStyle) {
-    if (status.toLowerCase().includes('overdue')) appliedStyle = styles['Overdue'];
+    if (isOverdue) appliedStyle = styles['Overdue'];
     if (status.toLowerCase().includes('early')) appliedStyle = styles['Early'];
   }
 
   return (
     <span className={cn(
-      "px-2 py-0.5 rounded-full text-[9px] font-black border uppercase tracking-wider whitespace-nowrap",
+      "px-2 py-0.5 rounded-full text-[10px] font-black border uppercase tracking-widest whitespace-nowrap",
       appliedStyle || 'bg-slate-500/10 text-slate-400 border-slate-500/20'
     )}>
       {status || 'Unknown'}
@@ -306,14 +310,14 @@ const TaskStatusSelector = ({ status, onUpdate, disabled }: { status: any, onUpd
       onChange={(e) => onUpdate(e.target.value)}
       disabled={disabled}
       className={cn(
-        "bg-slate-900 border border-slate-800 rounded px-2 py-1 text-[9px] font-black uppercase outline-none transition-all cursor-pointer",
+        "bg-[var(--bg-page)] border border-[var(--border)] rounded px-2 py-1 text-[9px] font-black uppercase outline-none transition-all cursor-pointer",
         status === TaskStatus.DONE ? "text-emerald-400" : 
         (status === TaskStatus.HOLD) ? "text-purple-400" :
-        (status === TaskStatus.CANCEL) ? "text-slate-500" :
+        (status === TaskStatus.CANCEL) ? "text-[var(--text-sub)]" :
         (status === TaskStatus.OVERDUE) ? "text-rose-400" : 
         (status === TaskStatus.ON_REVIEW) ? "text-amber-400" :
         (status === TaskStatus.IN_PROGRESS) ? "text-blue-400" :
-        "text-slate-400"
+        "text-[var(--text-sub)]"
       )}
     >
       {options.map((opt, i) => <option key={getSafeKey({id: opt}, i, 'task-status-opt')} value={opt}>{opt}</option>)}
@@ -358,7 +362,7 @@ const ApprovalBadge = ({ value, label, onUpdate, disabled }: { value: string | n
   const options = ['Pending', 'Revise', 'OK'];
   const safeValue = options.includes(value || '') ? (value || 'Pending') : 'Pending';
 
-  if (disabled) return <span className="text-[9px] font-black uppercase text-slate-500">{safeValue}</span>;
+  if (disabled) return <span className="text-[9px] font-black uppercase text-[var(--text-sub)]">{safeValue}</span>;
 
   return (
     <div className="flex flex-col gap-1 w-full max-w-[80px]">
@@ -367,17 +371,17 @@ const ApprovalBadge = ({ value, label, onUpdate, disabled }: { value: string | n
         onChange={(e) => onUpdate(e.target.value)}
         disabled={disabled}
         className={cn(
-          "bg-slate-900 border border-slate-800 rounded px-1.5 py-1 text-[9px] font-black uppercase tracking-tighter outline-none focus:ring-1 focus:ring-indigo-500/50 transition-all cursor-pointer w-full",
+          "bg-[var(--bg-page)] border border-[var(--border)] rounded px-1.5 py-1 text-[9px] font-black uppercase tracking-tighter outline-none focus:ring-1 focus:ring-[var(--accent)]/50 transition-all cursor-pointer w-full",
           safeValue === 'OK' ? "text-emerald-400 border-emerald-500/30" :
           safeValue === 'Revise' ? "text-rose-400 border-rose-500/30" :
-          "text-slate-500"
+          "text-[var(--text-sub)]"
         )}
       >
         {options.map((opt, i) => (
           <option 
             key={getSafeKey({id: opt}, i, 'approval-opt')} 
             value={opt} 
-            className="bg-slate-900"
+            className="bg-[var(--bg-page)]"
           >
             {opt}
           </option>
@@ -1054,7 +1058,14 @@ export default function App() {
 
     const channel = supabase
       .channel('portfolio_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public' }, () => setRefreshKey(prev => prev + 1))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'projects' }, () => {
+        console.log('Realtime update: projects table changed');
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+        console.log('Realtime update: tasks table changed');
+        fetchData();
+      })
       .subscribe();
 
     const requestChannel = supabase.channel('reschedule_realtime')
@@ -1754,19 +1765,19 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-200 flex flex-col lg:flex-row overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-main)] flex flex-col lg:flex-row overflow-hidden transition-colors duration-300">
       {/* Mobile Top Header */}
       {isMobile && (
-        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 shrink-0 z-50 transition-colors duration-300">
+        <header className="h-16 bg-[var(--bg-card)] border-b border-[var(--border)] flex items-center justify-between px-4 shrink-0 z-50 transition-colors duration-300">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-500/20">
               <span className="text-sm font-black text-white">OD</span>
             </div>
-            <h1 className="font-black text-slate-900 dark:text-white uppercase italic tracking-tighter text-lg leading-none transition-colors">OM <span className="text-indigo-500">DEDY</span></h1>
+            <h1 className="font-black text-[var(--text-main)] uppercase italic tracking-tighter text-lg leading-none transition-colors">OM <span className="text-indigo-500">DEDY</span></h1>
           </div>
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
-            className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+            className="p-2 text-[var(--text-sub)] hover:text-indigo-600 transition-colors"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -1781,18 +1792,18 @@ export default function App() {
             animate={{ x: 0 }}
             exit={{ x: '-100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-0 bg-white dark:bg-slate-900 z-[100] flex flex-col transition-colors duration-300"
+            className="fixed inset-0 bg-[var(--bg-card)] z-[100] flex flex-col transition-colors duration-300"
           >
-            <div className="h-16 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+            <div className="h-16 flex items-center justify-between px-4 border-b border-[var(--border)] transition-colors duration-300">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                   <span className="text-sm font-black text-white">OD</span>
                 </div>
-                <h1 className="font-black text-slate-900 dark:text-white uppercase italic tracking-tighter text-lg transition-colors">OM <span className="text-indigo-500">DEDY</span></h1>
+                <h1 className="font-black text-[var(--text-main)] uppercase italic tracking-tighter text-lg transition-colors">OM <span className="text-indigo-500">DEDY</span></h1>
               </div>
               <button 
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                className="p-2 text-[var(--text-sub)] hover:text-indigo-600 transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -1811,24 +1822,24 @@ export default function App() {
                   className={cn(
                     "w-full flex items-center justify-between py-4 px-6 transition-all",
                     (activeView === 'PROJECTS' || activeView === 'TIMELINE' || activeView === 'GANTT_DETAIL' || activeView === 'TOR_MONITOR')
-                      ? "text-indigo-600 dark:text-white bg-indigo-600/10 border-r-4 border-indigo-500" 
-                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                      ? "text-indigo-600 bg-indigo-600/10 border-r-4 border-indigo-500" 
+                      : "text-[var(--text-sub)] hover:bg-[var(--bg-page)]"
                   )}
                 >
                   <div className="flex items-center">
-                    <LayoutDashboard className={cn("w-6 h-6 shrink-0", (activeView === 'PROJECTS') ? "text-indigo-400" : "text-slate-500")} />
+                    <LayoutDashboard className={cn("w-6 h-6 shrink-0", (activeView === 'PROJECTS') ? "text-indigo-400" : "text-[var(--text-sub)]")} />
                     <span className="ml-4 font-bold text-sm uppercase tracking-widest text-left">Project List</span>
                   </div>
-                  <ChevronDown className={cn("w-5 h-5 text-slate-500 transition-transform", !isProjectsMobileExpanded && "-rotate-90")} />
+                  <ChevronDown className={cn("w-5 h-5 text-[var(--text-sub)] transition-transform", !isProjectsMobileExpanded && "-rotate-90")} />
                 </button>
 
                 {isProjectsMobileExpanded && (
-                  <div className="mt-1 ml-6 border-l border-slate-200 dark:border-slate-800 space-y-1">
+                  <div className="mt-1 ml-6 border-l border-[var(--border)] space-y-1">
                     <button
                       onClick={() => { setActiveView('TIMELINE'); setSelectedProjectId(null); setIsMobileMenuOpen(false); }}
                       className={cn(
                         "w-full flex items-center py-3 px-6 transition-all text-[11px] font-bold uppercase tracking-widest",
-                        activeView === 'TIMELINE' ? "text-indigo-500" : "text-slate-500"
+                        activeView === 'TIMELINE' ? "text-indigo-500" : "text-[var(--text-sub)]"
                       )}
                     >
                       <BarChart3 className="w-4 h-4 mr-3" />
@@ -1839,7 +1850,7 @@ export default function App() {
                         onClick={() => { setIsMobileMenuOpen(false); navigate(`/detail-timeline/${selectedProjectId}`); }}
                         className={cn(
                           "w-full flex items-center py-3 px-6 transition-all text-[11px] font-bold uppercase tracking-widest",
-                          activeView === 'GANTT_DETAIL' ? "text-indigo-500" : "text-slate-500"
+                          activeView === 'GANTT_DETAIL' ? "text-indigo-500" : "text-[var(--text-sub)]"
                         )}
                       >
                         <Activity className="w-4 h-4 mr-3" />
@@ -1851,7 +1862,7 @@ export default function App() {
                         onClick={() => { setActiveView('TOR_MONITOR'); setIsMobileMenuOpen(false); }}
                         className={cn(
                           "w-full flex items-center py-3 px-6 transition-all text-[11px] font-bold uppercase tracking-widest",
-                          activeView === 'TOR_MONITOR' ? "text-indigo-500" : "text-slate-500"
+                          activeView === 'TOR_MONITOR' ? "text-indigo-500" : "text-[var(--text-sub)]"
                         )}
                       >
                         <ShieldCheck className="w-4 h-4 mr-3" />
@@ -1874,11 +1885,11 @@ export default function App() {
                   className={cn(
                     "w-full flex items-center py-4 px-6 transition-all",
                     (activeView === item.id && !selectedProjectId)
-                      ? "text-indigo-600 dark:text-white bg-indigo-600/10 border-r-4 border-indigo-500" 
-                      : "text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5"
+                      ? "text-indigo-600 bg-indigo-600/10 border-r-4 border-indigo-500" 
+                      : "text-[var(--text-sub)] hover:bg-[var(--bg-page)]"
                   )}
                 >
-                  <item.icon className={cn("w-6 h-6 shrink-0", (activeView === item.id && !selectedProjectId) ? "text-indigo-400" : "text-slate-500")} />
+                  <item.icon className={cn("w-6 h-6 shrink-0", (activeView === item.id && !selectedProjectId) ? "text-indigo-400" : "text-[var(--text-sub)]")} />
                   <span className="ml-4 font-bold text-sm uppercase tracking-widest">{item.label}</span>
                   {item.id === 'RESCHEDULE' && pendingRescheduleCount > 0 && (
                     <span className="ml-auto bg-rose-500 text-white text-[10px] font-black rounded-full w-5 h-5 flex items-center justify-center">
@@ -1889,21 +1900,21 @@ export default function App() {
               ))}
             </nav>
 
-            <div className="p-6 border-t border-slate-200 dark:border-slate-800 mt-8 shrink-0">
+            <div className="p-6 border-t border-[var(--border)] mt-8 shrink-0">
               {user ? (
                 <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 bg-white dark:bg-slate-950/50 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 border border-indigo-500/30 flex items-center justify-center">
+                  <div className="flex items-center gap-4 p-4 bg-[var(--bg-page)]/50 rounded-2xl border border-[var(--border)] shadow-sm">
+                    <div className="w-10 h-10 rounded-full bg-[var(--bg-card)] border border-indigo-500/30 flex items-center justify-center">
                       <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 uppercase">{user.email?.charAt(0) || '?'}</span>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-900 dark:text-white">{user.email}</p>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{user.access_level || 'PIC'}</p>
+                      <p className="text-xs font-bold text-[var(--text-main)] italic">{user.email}</p>
+                      <p className="text-[10px] text-[var(--text-sub)] uppercase tracking-widest font-bold">{user.access_level || 'PIC'}</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => { signOut(); setIsMobileMenuOpen(false); }}
-                    className="w-full py-4 bg-slate-100 dark:bg-slate-800 text-rose-500 dark:text-rose-400 font-bold uppercase text-xs tracking-widest rounded-xl border border-slate-200 dark:border-transparent"
+                    className="w-full py-4 bg-[var(--bg-page)] text-rose-500 font-bold uppercase text-xs tracking-widest rounded-xl border border-[var(--border)]"
                   >
                     Log Out
                   </button>
@@ -1935,14 +1946,14 @@ export default function App() {
       )}
 
       {/* Content Area */}
-      <main className="flex-1 flex flex-col overflow-hidden relative bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
+      <main className="flex-1 flex flex-col overflow-hidden relative bg-[var(--bg-page)] transition-colors duration-300">
         {loading && (
           <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-[4px] z-[100] flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
               <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin shadow-[0_0_20px_rgba(99,102,241,0.3)]" />
               <div className="text-center">
                 <span className="text-[10px] font-black uppercase tracking-[0.3em] text-indigo-500">Syncing Node</span>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">Operational Monitoring Active</p>
+                <p className="text-[9px] text-[var(--text-sub)] font-bold uppercase tracking-widest mt-1">Operational Monitoring Active</p>
               </div>
             </div>
           </div>
@@ -2232,19 +2243,19 @@ export default function App() {
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
-              className="fixed top-0 right-0 bottom-0 w-[450px] bg-slate-900 border-l border-slate-800 shadow-2xl z-50 overflow-y-auto"
+              className="fixed top-0 right-0 bottom-0 w-[450px] bg-[var(--bg-card)] border-l border-[var(--border)] shadow-2xl z-50 overflow-y-auto"
             >
               <div className="p-0 flex flex-col h-full">
-                <div className="p-6 pb-4 border-b border-white/5">
+                <div className="p-6 pb-4 border-b border-[var(--border)]">
                   <div className="flex items-center justify-between mb-6">
                     <div>
-                      <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                        <History className="w-5 h-5 text-indigo-500" />
+                      <h2 className="text-xl font-bold text-[var(--text-main)] flex items-center gap-2">
+                        <History className="w-5 h-5 text-[var(--accent)]" />
                         Audit Trail
                       </h2>
-                      <p className="text-xs text-slate-500 mt-1">Governance Layer for {selectedTask.title}</p>
+                      <p className="text-xs text-[var(--text-sub)] mt-1">Governance Layer for {selectedTask.title}</p>
                     </div>
-                    <button onClick={() => setShowAuditLog(false)} className="text-slate-400 hover:text-white transition-colors">
+                    <button onClick={() => setShowAuditLog(false)} className="text-[var(--text-sub)] hover:text-[var(--text-main)] transition-colors">
                       <Plus className="w-6 h-6 rotate-45" />
                     </button>
                   </div>
@@ -2256,8 +2267,8 @@ export default function App() {
                       className={cn(
                         "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-md",
                         activeAuditTab === 'LOG_SYSTEM' 
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
-                          : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                          ? "bg-[var(--accent)] text-white shadow-lg shadow-indigo-600/20" 
+                          : "bg-[var(--bg-page)] text-[var(--text-sub)] hover:bg-[var(--bg-page)]/80"
                       )}
                     >
                       LOG SYSTEM
@@ -2267,8 +2278,8 @@ export default function App() {
                       className={cn(
                         "px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all rounded-md",
                         activeAuditTab === 'HISTORY_EDIT' 
-                          ? "bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" 
-                          : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+                          ? "bg-[var(--accent)] text-white shadow-lg shadow-indigo-600/20" 
+                          : "bg-[var(--bg-page)] text-[var(--text-sub)] hover:bg-[var(--bg-page)]/80"
                       )}
                     >
                       HISTORY EDIT
@@ -2291,9 +2302,9 @@ export default function App() {
 
                     if (activeAuditTab === 'HISTORY_EDIT') {
                       return (
-                        <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] shadow-sm">
-                          <table className="w-full text-left text-[10px] text-[var(--text-primary)]">
-                            <thead className="bg-[var(--bg-main)] text-[var(--text-secondary)] uppercase font-black tracking-widest border-b border-[var(--border-color)]">
+                        <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] shadow-sm">
+                          <table className="w-full text-left text-[10px] text-[var(--text-main)]">
+                            <thead className="bg-[var(--bg-page)] text-[var(--text-sub)] uppercase font-black tracking-widest border-b border-[var(--border)]">
                               <tr>
                                 <th className="px-4 py-3">PIC Name</th>
                                 <th className="px-4 py-3">Date Editing</th>
@@ -2302,20 +2313,20 @@ export default function App() {
                                 <th className="px-4 py-3">After</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-[var(--border-color)]">
+                            <tbody className="divide-y divide-[var(--border)]">
                               {taskHistoryLogs.length === 0 ? (
                                 <tr>
-                                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500 italic">
+                                  <td colSpan={5} className="px-4 py-12 text-center text-[var(--text-sub)] italic">
                                     Belum ada riwayat edit dari PIC untuk task ini.
                                   </td>
                                 </tr>
                               ) : (
                                 taskHistoryLogs.map((log, i) => (
-                                  <tr key={log.id || i} className="hover:bg-white/5 transition-colors group">
+                                  <tr key={log.id || i} className="hover:bg-[var(--bg-page)] transition-colors group">
                                     <td className="px-4 py-3 text-indigo-400 font-bold">{log.pic_name}</td>
-                                    <td className="px-4 py-3 font-mono text-slate-500">{new Date(log.created_at).toLocaleString()}</td>
-                                    <td className="px-4 py-3 text-slate-400">{log.field_name}</td>
-                                    <td className="px-4 py-3 line-through text-red-500/70">{log.before_value}</td>
+                                    <td className="px-4 py-3 font-mono text-[var(--text-sub)]">{new Date(log.created_at).toLocaleString()}</td>
+                                    <td className="px-4 py-3 text-[var(--text-sub)]">{log.field_name}</td>
+                                    <td className="px-4 py-3 line-through text-rose-500/70">{log.before_value}</td>
                                     <td className="px-4 py-3 text-emerald-400">{log.after_value}</td>
                                   </tr>
                                 ))
@@ -2330,8 +2341,8 @@ export default function App() {
                     if (systemLogs.length === 0) {
                       return (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
-                          <History className="w-12 h-12 text-slate-800 mb-4" />
-                          <p className="text-slate-500 text-sm italic">Belum ada riwayat aktivitas sistem.</p>
+                          <History className="w-12 h-12 text-[var(--text-sub)] opacity-20 mb-4" />
+                          <p className="text-[var(--text-sub)] text-sm italic">Belum ada riwayat aktivitas sistem.</p>
                         </div>
                       );
                     }
@@ -2343,22 +2354,22 @@ export default function App() {
                           return (
                             <div key={logId} className="relative pl-8 pb-6 group">
                               {i !== systemLogs.length - 1 && (
-                                <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-slate-800 group-last:hidden" />
+                                <div className="absolute left-[11px] top-6 bottom-0 w-[2px] bg-[var(--border)] group-last:hidden" />
                               )}
-                              <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center z-10 transition-colors group-hover:border-indigo-500/50">
-                                <div className="w-2 h-2 rounded-full bg-indigo-500 group-hover:scale-125 transition-transform" />
+                              <div className="absolute left-0 top-1 w-6 h-6 rounded-full bg-[var(--bg-page)] border-2 border-[var(--border)] flex items-center justify-center z-10 transition-colors group-hover:border-[var(--accent)]/50">
+                                <div className="w-2 h-2 rounded-full bg-[var(--accent)] group-hover:scale-125 transition-transform" />
                               </div>
                               
-                              <div className="bg-slate-800/40 border border-slate-800 p-4 rounded-xl hover:bg-slate-800/60 transition-colors shadow-sm">
+                              <div className="bg-[var(--bg-page)]/50 border border-[var(--border)] p-4 rounded-xl hover:bg-[var(--bg-page)]/80 transition-colors shadow-sm">
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">{log.actor || 'System'}</span>
-                                  <span className="text-[9px] text-slate-500 font-mono">{log.created_at ? format(new Date(log.created_at), 'MM/dd HH:mm:ss') : 'N/A'}</span>
+                                  <span className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest">{log.actor || 'System'}</span>
+                                  <span className="text-[9px] text-[var(--text-sub)] font-mono">{log.created_at ? format(new Date(log.created_at), 'MM/dd HH:mm:ss') : 'N/A'}</span>
                                 </div>
-                                <p className="text-xs font-bold text-slate-200 mb-2">{log.action || 'Unknown Action'}</p>
+                                <p className="text-xs font-bold text-[var(--text-main)] mb-2">{log.action || 'Unknown Action'}</p>
                                 
                                 {log.old_payload && log.new_payload && (
-                                  <div className="mt-4 space-y-2 border-t border-slate-700/50 pt-4">
-                                    <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-2 opacity-50">Auto-Log Details</p>
+                                  <div className="mt-4 space-y-2 border-t border-[var(--border)] pt-4">
+                                    <p className="text-[9px] text-[var(--text-sub)] font-bold uppercase tracking-widest mb-2 opacity-50">Auto-Log Details</p>
                                     {(() => {
                                       const oldP = log.old_payload as any;
                                       const newP = log.new_payload as any;
@@ -2370,13 +2381,13 @@ export default function App() {
                                         
                                         const diffKey = getSafeKey({id: key}, ki, 'payload-diff');
                                         return (
-                                          <div key={diffKey} className="flex flex-col gap-1 pb-1 border-b border-white/5 last:border-0">
+                                          <div key={diffKey} className="flex flex-col gap-1 pb-1 border-b border-[var(--border)] last:border-0">
                                             <span className="text-[9px] font-mono text-indigo-400/70">{key}</span>
                                             <div className="grid grid-cols-[1fr,auto,1fr] items-center gap-2">
                                               <div className="text-[8px] text-rose-400 truncate opacity-60">
                                                 {String(oldP[key] ?? 'null')}
                                               </div>
-                                              <ArrowRight className="w-2 h-2 text-slate-600" />
+                                              <ArrowRight className="w-2 h-2 text-[var(--text-sub)]" />
                                               <div className="text-[8px] text-emerald-400 font-bold italic truncate">
                                                 {String(newP[key] ?? 'null')}
                                               </div>
@@ -2463,7 +2474,7 @@ function OwnershipWarningModal({ picName, itemName, type, onConfirm, onCancel }:
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-slate-900 border border-amber-500/30 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative overflow-hidden"
+        className="bg-[var(--bg-card)] border border-amber-500/30 rounded-[2.5rem] w-full max-w-md shadow-2xl p-8 relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
@@ -2472,9 +2483,9 @@ function OwnershipWarningModal({ picName, itemName, type, onConfirm, onCancel }:
             <AlertCircle className="w-8 h-8 text-amber-500" />
           </div>
           
-          <h2 className="text-2xl font-black text-white italic tracking-tighter uppercase mb-4">⚠️ Peringatan Kepemilikan</h2>
+          <h2 className="text-2xl font-black text-[var(--text-main)] italic tracking-tighter uppercase mb-4">⚠️ Peringatan Kepemilikan</h2>
           
-          <p className="text-slate-300 text-sm leading-relaxed mb-8 text-center px-4">
+          <p className="text-[var(--text-sub)] text-sm leading-relaxed mb-8 text-center px-4">
             Anda sedang mengedit {getEntityLabel()} milik <span className="text-amber-400 font-bold">{picName}</span>. 
             Tindakan ini akan dicatat dalam <span className="text-indigo-400 font-bold underline decoration-indigo-500/30">Audit Log</span> sebagai bukti (evidence) untuk akuntabilitas.
             <br/><br/>
@@ -2484,7 +2495,7 @@ function OwnershipWarningModal({ picName, itemName, type, onConfirm, onCancel }:
           <div className="flex gap-4">
             <button 
               onClick={onCancel}
-              className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border border-slate-700"
+              className="flex-1 bg-[var(--bg-page)] hover:bg-[var(--bg-page)]/80 text-[var(--text-sub)] py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 border border-[var(--border)]"
             >
               Batal
             </button>
@@ -2652,7 +2663,7 @@ function L1PhaseSelector({ value, onChange, className, disabled }: { value: stri
       onChange={(e) => onChange(e.target.value)}
       disabled={disabled}
       className={cn(
-        "bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm text-white focus:border-indigo-500 outline-none transition-all font-bold appearance-none",
+        "bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-4 py-2.5 text-sm text-[var(--text-main)] focus:border-[var(--accent)] outline-none transition-all font-bold appearance-none",
         className
       )}
     >
@@ -2898,17 +2909,17 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-7xl max-h-[95vh] overflow-hidden shadow-[0_0_50px_rgba(79,70,229,0.2)] flex flex-col"
+        className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl w-full max-w-7xl max-h-[95vh] overflow-hidden shadow-[0_0_50px_rgba(67,24,255,0.2)] flex flex-col"
       >
-        <div className="p-6 border-b border-slate-800 bg-indigo-600/5 flex justify-between items-center">
+        <div className="p-6 border-b border-[var(--border)] bg-[var(--accent)]/5 flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-black text-white tracking-tighter uppercase italic">
-              Project <span className="text-indigo-500">Wizard</span>
+            <h2 className="text-xl font-black text-[var(--text-main)] tracking-tighter uppercase italic">
+              Project <span className="text-[var(--accent)]">Wizard</span>
             </h2>
-            <p className="text-[10px] text-slate-500 mt-1 font-bold uppercase tracking-widest">Multi-Level Batch Provisioning</p>
+            <p className="text-[10px] text-[var(--text-sub)] mt-1 font-bold uppercase tracking-widest">Multi-Level Batch Provisioning</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full transition-colors">
-            <Plus className="w-5 h-5 text-slate-500 rotate-45" />
+          <button onClick={onClose} className="p-2 hover:bg-[var(--bg-page)] rounded-full transition-colors">
+            <Plus className="w-5 h-5 text-[var(--text-sub)] rotate-45" />
           </button>
         </div>
 
@@ -2917,7 +2928,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
             {/* Row 1: Ticket ID, Lead PIC, Start Date, End Date */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 sm:gap-6">
               <div className="space-y-2 relative">
-                <label className="text-[10px] font-black text-indigo-500 uppercase tracking-widest px-1">Ticket ID</label>
+                <label className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest px-1">Ticket ID</label>
                 <TicketSelector 
                   value={ticketId}
                   onChange={(val) => setTicketId(val)}
@@ -2926,17 +2937,17 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Lead PIC</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Lead PIC</label>
                 <LocalInput 
                   value={pic}
                   onChange={v => setPic(v)}
                   placeholder="Lead PIC Name..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold"
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--accent)] transition-colors font-bold"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Start Date</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Start Date</label>
                 <CustomDatePicker 
                   selectedDate={startDate}
                   onChange={setStartDate}
@@ -2945,7 +2956,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">End Date</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">End Date</label>
                 <CustomDatePicker 
                   selectedDate={endDate}
                   onChange={setEndDate}
@@ -2956,58 +2967,58 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
 
             {/* Row 2: Project Name (Full Width Textarea) */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Project Name</label>
+              <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Project Name</label>
               <textarea 
                 rows={2}
                 autoFocus={!ticketId}
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Ex Detail: Pengembangan Fitur Automated Reporting..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold text-sm resize-none"
+                className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--accent)] transition-colors font-bold text-sm resize-none"
               />
             </div>
             
             {/* Row 3: Owner Name & Division */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Owner Name</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Owner Name</label>
                 <LocalInput 
                   value={ownerName}
                   onChange={v => setOwnerName(v)}
                   placeholder="Enter Owner Name..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 text-sm text-slate-200 outline-none focus:border-indigo-500 font-bold"
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-4 text-sm text-[var(--text-main)] outline-none focus:border-[var(--accent)] font-bold"
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Division</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Division</label>
                 <LocalInput 
                   value={divOwner}
                   onChange={v => setDivOwner(v)}
                   placeholder="Enter Division Name..."
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 text-sm text-slate-200 outline-none focus:border-indigo-500 font-bold"
+                  className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-4 text-sm text-[var(--text-main)] outline-none focus:border-[var(--accent)] font-bold"
                 />
               </div>
             </div>
 
             {/* Row 4: Project Diajukan (Full Width Textarea) */}
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-indigo-400 uppercase tracking-widest px-1">Project Diajukan</label>
+              <label className="text-[10px] font-black text-[var(--accent)] uppercase tracking-widest px-1">Project Diajukan</label>
               <textarea 
                 rows={2}
                 value={projectDiajukan}
                 onChange={e => setProjectDiajukan(e.target.value)}
                 placeholder="Detail pengajuan project..."
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-slate-200 outline-none focus:border-indigo-500 transition-colors font-bold text-sm resize-none"
+                className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-xl px-4 py-3 text-[var(--text-main)] outline-none focus:border-[var(--accent)] transition-colors font-bold text-sm resize-none"
               />
             </div>
           </div>
 
           <div className={cn("space-y-6", !isMobile && "min-w-[1100px]")}>
             <div className="flex justify-between items-center px-1">
-              <label className="text-[11px] font-black text-indigo-500 uppercase tracking-widest">Work Breakdown Structure (WBS)</label>
+              <label className="text-[11px] font-black text-[var(--accent)] uppercase tracking-widest">Work Breakdown Structure (WBS)</label>
               <button 
                 onClick={addPhase}
-                className="text-[9px] font-black uppercase text-indigo-400 hover:text-indigo-300 transition-colors bg-indigo-500/10 px-4 py-2 rounded-lg border border-indigo-500/20"
+                className="text-[9px] font-black uppercase text-[var(--accent)] hover:text-[var(--accent)] transition-colors bg-[var(--accent)]/10 px-4 py-2 rounded-lg border border-[var(--accent)]/20"
               >
                 + Add Phase (L1)
               </button>
@@ -3016,28 +3027,28 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
             {/* Header Labels (Desktop Only) */}
             {!isMobile && (
               <div className="grid grid-cols-[1fr_130px_130px_80px_150px_80px] gap-4 px-6 mb-[-16px]">
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-2">Phase / Task Name</label>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">From Date</label>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">To Date</label>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Man-Hours</label>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">PIC</label>
-                <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Actions</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest pl-2">Phase / Task Name</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">From Date</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">To Date</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">Man-Hours</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">PIC</label>
+                <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">Actions</label>
               </div>
             )}
 
             {phases.map((phase, pIdx) => {
               const stats = allocationStats[pIdx];
               return (
-                <div key={getSafeKey(phase, pIdx, 'wizard-phase')} className="bg-slate-950/40 border border-slate-800/60 rounded-2xl p-6 space-y-4 relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-1.5 h-full bg-indigo-600/30 group-hover:bg-indigo-500 transition-colors" />
+                <div key={getSafeKey(phase, pIdx, 'wizard-phase')} className="bg-[var(--bg-page)]/40 border border-[var(--border)] rounded-2xl p-6 space-y-4 relative overflow-hidden group">
+                  <div className="absolute top-0 left-0 w-1.5 h-full bg-[var(--accent)]/30 group-hover:bg-[var(--accent)] transition-colors" />
                   
                   {/* L1 Header & Inputs */}
                   <div className={cn(
-                    "items-center gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800/50 shadow-sm transition-all hover:bg-slate-900/70",
+                    "items-center gap-4 bg-[var(--bg-card)]/50 p-4 rounded-xl border border-[var(--border)] shadow-sm transition-all hover:bg-[var(--bg-card)]/70",
                     isMobile ? "flex flex-col" : "grid grid-cols-[1fr_130px_130px_80px_150px_80px]"
                   )}>
                     <div className="flex items-center gap-2 w-full">
-                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-slate-800 border border-indigo-500/30 text-[8px] font-black text-indigo-400 font-mono tracking-wider shadow-inner">
+                      <span className="shrink-0 px-2 py-0.5 rounded-full bg-[var(--bg-page)] border border-[var(--accent)]/30 text-[8px] font-black text-[var(--accent)] font-mono tracking-wider shadow-inner">
                         {phase.custom_id}
                       </span>
                       <L1PhaseSelector 
@@ -3052,7 +3063,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                     </div>
 
                     <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
-                      {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">From Date</label>}
+                      {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">From Date</label>}
                       <CustomDatePicker 
                         selectedDate={phase.start_date}
                         onChange={date => {
@@ -3064,7 +3075,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                     </div>
 
                     <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
-                      {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">To Date</label>}
+                      {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">To Date</label>}
                       <CustomDatePicker 
                         selectedDate={phase.end_date}
                         onChange={date => {
@@ -3076,7 +3087,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                     </div>
 
                     <div className={cn("flex flex-col items-center gap-1", isMobile && "w-full")}>
-                      {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1 w-full text-left">Man-Hours</label>}
+                      {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1 w-full text-left">Man-Hours</label>}
                       <input 
                         type="number" min="0" step="0.5"
                         value={phase.man_hours}
@@ -3085,15 +3096,15 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                           newPhases[pIdx].man_hours = Math.max(0, parseFloat(e.target.value) || 0);
                           setPhases(newPhases);
                         }}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-2.5 text-xs text-indigo-400 text-center font-black outline-none focus:border-indigo-500"
+                        className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-2 py-2.5 text-xs text-[var(--accent)] text-center font-black outline-none focus:border-[var(--accent)]"
                       />
-                      <span className="text-[8px] font-black text-slate-600 uppercase tracking-tight h-3">
+                      <span className="text-[8px] font-black text-[var(--text-sub)] uppercase tracking-tight h-3">
                          {phase.man_hours > 0 ? `≈ ${formatWorkday(phase.man_hours)}` : ''}
                       </span>
                     </div>
 
                     <div className={cn("flex flex-col", isMobile && "w-full")}>
-                      {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1 block mb-1">PIC Name</label>}
+                      {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1 block mb-1">PIC Name</label>}
                       <LocalInput 
                         value={(phase as any).assignee}
                         onChange={(v) => {
@@ -3101,15 +3112,15 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                           (newPhases[pIdx] as any).assignee = v;
                           setPhases(newPhases);
                         }}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2.5 text-[10px] text-slate-300 text-center outline-none focus:border-indigo-500"
+                        className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[10px] text-[var(--text-sub)] text-center outline-none focus:border-[var(--accent)]"
                         placeholder="PIC Name"
                       />
                     </div>
 
-                    <div className={cn("flex justify-center gap-4", isMobile && "w-full pt-4 border-t border-slate-800/50")}>
+                    <div className={cn("flex justify-center gap-4", isMobile && "w-full pt-4 border-t border-[var(--border)]")}>
                       <button 
                         onClick={() => addSubtask(pIdx)}
-                        className={cn("p-2.5 hover:bg-indigo-500/10 text-indigo-500/40 hover:text-indigo-400 rounded-xl transition-all", isMobile && "flex-1 border border-indigo-500/20 bg-indigo-500/5")}
+                        className={cn("p-2.5 hover:bg-[var(--accent)]/10 text-[var(--accent)]/40 hover:text-[var(--accent)] rounded-xl transition-all", isMobile && "flex-1 border border-[var(--accent)]/20 bg-[var(--accent)]/5")}
                         title="Add Breakdown"
                       >
                         {isMobile ? <span className="flex items-center justify-center gap-2 text-[10px] font-black uppercase"><Plus className="w-4 h-4" /> Add Sub-task</span> : <Plus className="w-5 h-5" />}
@@ -3120,7 +3131,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                           newPhases.splice(pIdx, 1);
                           setPhases(newPhases);
                         }}
-                        className={cn("p-2.5 hover:bg-rose-500/10 text-slate-700 hover:text-rose-500 rounded-xl transition-all", isMobile && "flex-1 border border-rose-500/20 bg-rose-500/5")}
+                        className={cn("p-2.5 hover:bg-[var(--danger)]/10 text-[var(--text-sub)] hover:text-[var(--danger)] rounded-xl transition-all", isMobile && "flex-1 border border-[var(--danger)]/20 bg-[var(--danger)]/5")}
                         title="Delete Phase"
                       >
                         {isMobile ? <span className="flex items-center justify-center gap-2 text-[10px] font-black uppercase"><Trash2 className="w-4 h-4" /> Delete</span> : <Trash2 className="w-5 h-5" />}
@@ -3155,8 +3166,8 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
 
                   <div className="space-y-3">
                     <div className="flex justify-between items-center px-4">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500/50" />
+                      <p className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]/50" />
                         Execution Breakdown
                       </p>
                     </div>
@@ -3165,13 +3176,13 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                       {phase.subtasks.map((sub, sIdx) => {
                         return (
                           <div key={getSafeKey(sub, sIdx, 'wizard-subtask')} className={cn(
-                            "items-center gap-4 group/sub hover:bg-slate-900/30 p-2 rounded-lg transition-colors mx-2",
-                            isMobile ? "flex flex-col border border-slate-800/40 bg-slate-900/40 p-4 mb-4" : "grid grid-cols-[1fr_130px_130px_80px_150px_80px]"
+                            "items-center gap-4 group/sub hover:bg-[var(--bg-page)]/30 p-2 rounded-lg transition-colors mx-2",
+                            isMobile ? "flex flex-col border border-[var(--border)] bg-[var(--bg-card)]/40 p-4 mb-4" : "grid grid-cols-[1fr_130px_130px_80px_150px_80px]"
                           )}>
                           {/* Col 1 with Indentation Built-in */}
                           <div className={cn("flex items-center gap-3", !isMobile && "pl-8", isMobile && "w-full")}>
-                            {!isMobile && <span className="text-indigo-500/20 font-black text-xl select-none group-hover/sub:text-indigo-500/40">↳</span>}
-                            <span className="shrink-0 px-2 py-0.5 rounded-full bg-slate-950 border border-indigo-500/20 text-[8px] font-bold text-indigo-500/60 font-mono tracking-wider">
+                            {!isMobile && <span className="text-[var(--accent)]/20 font-black text-xl select-none group-hover/sub:text-[var(--accent)]/40">↳</span>}
+                            <span className="shrink-0 px-2 py-0.5 rounded-full bg-[var(--bg-page)] border border-[var(--accent)]/20 text-[8px] font-bold text-[var(--accent)]/60 font-mono tracking-wider">
                               {(sub as any).custom_id}
                             </span>
                             <LocalInput 
@@ -3182,12 +3193,12 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                                 newPhases[pIdx].subtasks[sIdx].title = v;
                                 setPhases(newPhases);
                               }}
-                              className="w-full bg-transparent border-b border-white/5 text-xs text-slate-400 py-1.5 outline-none focus:border-indigo-500/50 transition-all font-medium"
+                              className="w-full bg-transparent border-b border-[var(--border)] text-xs text-[var(--text-sub)] py-1.5 outline-none focus:border-[var(--accent)]/50 transition-all font-medium"
                             />
                           </div>
 
                           <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">From Date</label>}
+                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">From Date</label>}
                             <CustomDatePicker 
                               selectedDate={sub.start_date}
                               onChange={date => {
@@ -3203,7 +3214,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                           </div>
 
                           <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">To Date</label>}
+                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">To Date</label>}
                             <CustomDatePicker 
                               selectedDate={sub.end_date}
                               onChange={date => {
@@ -3219,7 +3230,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                           </div>
 
                           <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">Man-Hours</label>}
+                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">Man-Hours</label>}
                             <input 
                               type="number" min="0" step="0.5"
                               value={sub.man_hours}
@@ -3228,12 +3239,12 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                                 newPhases[pIdx].subtasks[sIdx].man_hours = Math.max(0, parseFloat(e.target.value) || 0);
                                 setPhases(newPhases);
                               }}
-                              className={cn("bg-slate-900 border border-slate-700 rounded-md px-2 py-1.5 text-[10px] text-indigo-400/80 text-center outline-none focus:border-indigo-500/50 font-black", isMobile ? "w-full" : "w-16")}
+                              className={cn("bg-[var(--bg-page)] border border-[var(--border)] rounded-md px-2 py-1.5 text-[10px] text-[var(--accent)]/80 text-center outline-none focus:border-[var(--accent)]/50 font-black", isMobile ? "w-full" : "w-16")}
                             />
                           </div>
 
                           <div className={cn("flex justify-center", isMobile && "w-full flex-col gap-1")}>
-                            {isMobile && <label className="text-[8px] font-black text-slate-500 uppercase ml-1">Assignee</label>}
+                            {isMobile && <label className="text-[8px] font-black text-[var(--text-sub)] uppercase ml-1">Assignee</label>}
                             <LocalInput 
                               value={(sub as any).assignee}
                               onChange={(v) => {
@@ -3242,7 +3253,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                                 setPhases(newPhases);
                               }}
                               placeholder="Assignee"
-                              className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-2 text-[10px] text-slate-500 text-center outline-none focus:border-indigo-500/50"
+                              className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded px-2 py-2 text-[10px] text-[var(--text-sub)] text-center outline-none focus:border-[var(--accent)]/50"
                             />
                           </div>
 
@@ -3253,7 +3264,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                                 newPhases[pIdx].subtasks.splice(sIdx, 1);
                                 setPhases(newPhases);
                               }}
-                              className={cn("p-1.5 transition-all", isMobile ? "w-full border border-rose-500/10 bg-rose-500/10 text-rose-500 py-3 mt-2 flex items-center justify-center gap-2 rounded-xl" : "opacity-0 group-hover/sub:opacity-100 hover:bg-rose-500/10 text-slate-700 hover:text-rose-500 rounded")}
+                              className={cn("p-1.5 transition-all", isMobile ? "w-full border border-[var(--danger)]/10 bg-[var(--danger)]/10 text-[var(--danger)] py-3 mt-2 flex items-center justify-center gap-2 rounded-xl" : "opacity-0 group-hover/sub:opacity-100 hover:bg-[var(--bg-page)] text-[var(--text-sub)] hover:text-[var(--danger)] rounded")}
                             >
                               {isMobile ? <><Trash2 className="w-4 h-4" /><span className="text-[10px] font-black uppercase">Remove Activity</span></> : <Trash2 className="w-4 h-4" />}
                             </button>
@@ -3269,33 +3280,33 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
           </div>
         </div>
 
-        <div className="p-8 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center px-10">
-          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] flex items-center gap-6">
+        <div className="p-8 border-t border-[var(--border)] bg-[var(--bg-card)]/50 flex justify-between items-center px-10">
+          <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-[0.2em] flex items-center gap-6">
             <span key="wizard-stat-phases" className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse outline outline-offset-2 outline-indigo-500/20" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[var(--accent)] animate-pulse outline outline-offset-2 outline-[var(--accent)]/20" />
               {phases.length} Phases
             </span>
             <span key="wizard-stat-hours" className="flex items-center gap-2">
-               <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-               <span className="text-indigo-400 font-black">Total Man-Hours: {(totalManHours || 0).toFixed(1)} Jam</span>
-               <span className="text-slate-600 font-medium ml-1">{totalManHours > 0 ? `≈ ${formatWorkday(totalManHours)}` : ''}</span>
+               <span className="w-2.5 h-2.5 rounded-full bg-[var(--bg-page)]" />
+               <span className="text-[var(--accent)] font-black">Total Man-Hours: {(totalManHours || 0).toFixed(1)} Jam</span>
+               <span className="text-[var(--text-sub)] font-medium ml-1">{totalManHours > 0 ? `≈ ${formatWorkday(totalManHours)}` : ''}</span>
             </span>
             {isAnyOverAllocated && (
-               <span key="wizard-stat-error" className="text-rose-500 font-black animate-pulse">⚠️ Resolusi Over-Alokasi diperlukan</span>
+               <span key="wizard-stat-error" className="text-[var(--danger)] font-black animate-pulse">⚠️ Resolusi Over-Alokasi diperlukan</span>
             )}
           </p>
           <div className="flex gap-4">
             <button 
               disabled={loading}
               onClick={onClose}
-              className="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-slate-500 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
+              className="px-8 py-3 bg-[var(--bg-page)] hover:bg-[var(--bg-card)] text-[var(--text-sub)] font-black uppercase text-[10px] tracking-widest rounded-xl transition-all"
             >
               Cancel
             </button>
             <button 
               disabled={loading || !title || isAnyOverAllocated}
               onClick={handleCreate}
-              className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:grayscale text-white px-10 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_10px_30px_rgba(79,70,229,0.3)] hover:shadow-[0_15px_40px_rgba(79,70,229,0.4)] flex items-center gap-3 disabled:cursor-not-allowed"
+              className="bg-[var(--accent)] hover:bg-[var(--accent)]/90 disabled:opacity-30 disabled:grayscale text-white px-10 py-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-[0_10px_30px_rgba(67,24,255,0.3)] hover:shadow-[0_15px_40px_rgba(67,24,255,0.4)] flex items-center gap-3 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
@@ -3385,16 +3396,16 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
       <motion.div 
         initial={{ opacity: 0, scale: 0.95, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="relative w-full max-w-4xl bg-slate-900 border border-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
+        className="relative w-full max-w-4xl bg-[var(--bg-card)] border border-[var(--border)] rounded-[2.5rem] shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
       >
-        <div className="p-8 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 backdrop-blur-md">
+        <div className="p-8 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-card)]/50 backdrop-blur-md">
           <div>
-            <h2 className="text-3xl font-black text-white italic tracking-tighter uppercase leading-none">Batch Manual Entry</h2>
-            <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] mt-3 flex items-center gap-2">
-              <Copy className="w-3 h-3 text-indigo-500" /> Massive Schedule Update
+            <h2 className="text-3xl font-black text-[var(--text-main)] italic tracking-tighter uppercase leading-none">Batch Manual Entry</h2>
+            <p className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.4em] mt-3 flex items-center gap-2">
+              <Copy className="w-3 h-3 text-[var(--accent)]" /> Massive Schedule Update
             </p>
           </div>
-          <button onClick={onClose} className="p-3 hover:bg-slate-800 rounded-2xl text-slate-400 transition-all">
+          <button onClick={onClose} className="p-3 hover:bg-[var(--bg-page)] rounded-2xl text-[var(--text-sub)] transition-all">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -3402,17 +3413,17 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
         <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
           {/* Paste Area */}
           <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Paste from Excel (Tab-Separated: Name \t Status \t Date)</label>
+            <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Paste from Excel (Tab-Separated: Name \t Status \t Date)</label>
             <div className="flex gap-4">
               <textarea 
                 value={pasteData}
                 onChange={(e) => setPasteData(e.target.value)}
                 placeholder="Paste multi-line data here..."
-                className="flex-1 bg-slate-950/50 border border-slate-800 rounded-2xl p-4 text-xs font-mono text-slate-300 min-h-[100px] outline-none focus:border-indigo-500/50 transition-all"
+                className="flex-1 bg-[var(--bg-page)]/50 border border-[var(--border)] rounded-2xl p-4 text-xs font-mono text-[var(--text-main)] min-h-[100px] outline-none focus:border-[var(--accent)]/50 transition-all"
               />
               <button 
                 onClick={handlePaste}
-                className="px-6 bg-slate-800 hover:bg-slate-700 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
+                className="px-6 bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all"
               >
                 Parse Paste
               </button>
@@ -3422,15 +3433,15 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
           {/* Manual Table */}
           <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
-              <h3 className="text-sm font-black text-white uppercase tracking-widest">Entry Items</h3>
-              <button onClick={addRow} className="flex items-center gap-2 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest rounded-lg border border-indigo-500/20 transition-all">
+              <h3 className="text-sm font-black text-[var(--text-main)] uppercase tracking-widest">Entry Items</h3>
+              <button onClick={addRow} className="flex items-center gap-2 px-3 py-1.5 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] text-[10px] font-black uppercase tracking-widest rounded-lg border border-[var(--accent)]/20 transition-all">
                 <Plus className="w-3 h-3" /> Tambah Baris
               </button>
             </div>
 
             <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {rows.map((row, idx) => (
-                <div key={getSafeKey(row, idx, 'entry-row')} className="grid grid-cols-[1fr_150px_180px_50px] gap-3 items-center bg-slate-950/30 p-2 rounded-xl border border-white/[0.02]">
+                <div key={getSafeKey(row, idx, 'entry-row')} className="grid grid-cols-[1fr_150px_180px_50px] gap-3 items-center bg-[var(--bg-page)]/30 p-2 rounded-xl border border-[var(--border)]">
                   <div className="relative group">
                     <select 
                       value={row.pic_name}
@@ -3439,7 +3450,7 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
                         newRows[idx].pic_name = e.target.value;
                         setRows(newRows);
                       }}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500/50 outline-none"
+                      className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] focus:border-[var(--accent)]/50 outline-none"
                     >
                       <option value="">Select PIC</option>
                       {users.map((u, i) => <option key={getSafeKey(u, i, 'user-opt')} value={u.name}>{u.name}</option>)}
@@ -3452,7 +3463,7 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
                       newRows[idx].status = e.target.value;
                       setRows(newRows);
                     }}
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-indigo-500/50 outline-none font-bold"
+                    className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] focus:border-[var(--accent)]/50 outline-none font-bold"
                   >
                     <option value="WFO">WFO</option>
                     <option value="WFH">WFH</option>
@@ -3469,7 +3480,7 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
                   />
                   <button 
                     onClick={() => setRows(rows.filter((_, i) => i !== idx))}
-                    className="text-slate-600 hover:text-rose-500 p-2"
+                    className="text-[var(--text-sub)] hover:text-[var(--danger)] p-2"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -3479,8 +3490,8 @@ function BatchManualEntryModal({ onClose, onSuccess, users }: { onClose: () => v
           </div>
         </div>
 
-        <div className="p-8 border-t border-slate-800 bg-slate-900 flex items-center justify-end gap-4">
-          <button onClick={onClose} className="px-6 py-3 bg-slate-800 text-slate-400 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">Cancel</button>
+        <div className="p-8 border-t border-[var(--border)] bg-[var(--bg-card)] flex items-center justify-end gap-4">
+          <button onClick={onClose} className="px-6 py-3 bg-[var(--bg-page)] text-[var(--text-sub)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">Cancel</button>
           <button 
             onClick={handleSave}
             disabled={loading || rows.length === 0}
@@ -3516,15 +3527,15 @@ function DashboardStats({ tasks, projects }: { tasks: Task[], projects: Project[
     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
       {[
         { label: 'Total Project', value: stats.totalProjects, icon: FolderKanban, color: 'emerald' },
-        { label: 'Total Task', value: stats.totalTasks, icon: Layers, color: 'sky' },
-        { label: 'Total Child Task', value: stats.totalChildTasks, icon: Activity, color: 'indigo' },
-        { label: 'Total Man Hour', value: Number(stats.totalManHours).toFixed(1), icon: Clock, color: 'amber' },
+        { label: 'Total All Task', value: stats.totalTasks, icon: Layers, color: 'sky' },
+        { label: 'Total Breakdown Task', value: stats.totalChildTasks, icon: Activity, color: 'indigo' },
+        { label: 'Total All Man Hours Project', value: Number(stats.totalManHours).toFixed(1), icon: Clock, color: 'amber' },
       ].map((stat, i) => (
-        <div key={getSafeKey({id: stat.label}, i, 'stat')} className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-white/5 p-5 rounded-2xl relative overflow-hidden group hover:border-indigo-600/30 dark:hover:border-indigo-500/30 transition-all shadow-lg dark:shadow-2xl">
+        <div key={getSafeKey({id: stat.label}, i, 'stat')} className="bg-[var(--bg-card)]/60 backdrop-blur-xl border border-[var(--border)] p-5 rounded-2xl relative overflow-hidden group hover:border-[var(--accent)]/30 transition-all shadow-lg">
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{stat.label}</p>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white italic tracking-tighter transition-colors">{stat.value}</h3>
+              <p className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest mb-1">{stat.label}</p>
+              <h3 className="text-2xl font-black text-[var(--text-main)] italic tracking-tighter transition-colors">{stat.value}</h3>
             </div>
             <div className={cn(
               "w-10 h-10 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110",
@@ -5010,19 +5021,19 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-8">
         <div className="flex gap-4 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)]" />
             <input 
               type="text"
               placeholder="Search PIC or Email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:border-indigo-500 outline-none transition-all"
+              className="w-full bg-[var(--bg-page)]/50 border border-[var(--border)] rounded-xl pl-10 pr-4 py-2 text-xs text-[var(--text-main)] focus:border-[var(--accent)] outline-none transition-all"
             />
           </div>
           <select 
             value={accessFilter}
             onChange={(e) => setAccessFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-400 focus:border-indigo-500 outline-none"
+            className="bg-[var(--bg-page)]/50 border border-[var(--border)] rounded-xl px-4 py-2 text-xs text-[var(--text-sub)] focus:border-[var(--accent)] outline-none"
           >
             <option value="all">All Access Levels</option>
             <option value="Superadmin">Superadmin</option>
@@ -5042,7 +5053,7 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
         )}
       </div>
 
-      <div className={cn("bg-slate-900/50 border border-slate-800/60 rounded-2xl overflow-hidden shadow-2xl", isMobile && "bg-transparent border-none shadow-none")}>
+      <div className={cn("bg-[var(--bg-card)]/50 border border-[var(--border)] rounded-2xl overflow-hidden shadow-2xl", isMobile && "bg-transparent border-none shadow-none")}>
         {isMobile ? (
           <div className="space-y-4">
             {filteredUsers.map((u, i) => {
@@ -5050,38 +5061,38 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
               return (
                 <div 
                   key={getSafeKey(u, i, 'user-mobile')}
-                  className="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-4"
+                  className="bg-[var(--bg-card)] border border-[var(--border)] p-4 rounded-2xl space-y-4"
                   onClick={() => setSelectedPIC(u)}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-xs text-indigo-400 uppercase">
+                      <div className="w-10 h-10 rounded-full bg-[var(--bg-page)] border border-[var(--border)] flex items-center justify-center font-bold text-xs text-[var(--accent)] uppercase">
                         {u.name?.charAt(0)}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-slate-200">{u.name}</p>
-                        <p className="text-[10px] text-slate-500 font-mono">{u.email}</p>
+                        <p className="text-sm font-bold text-[var(--text-main)]">{u.name}</p>
+                        <p className="text-[10px] text-[var(--text-sub)] font-mono">{u.email}</p>
                       </div>
                     </div>
-                    <span className="px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[8px] font-black uppercase tracking-wider">
+                    <span className="px-2 py-1 rounded bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] text-[8px] font-black uppercase tracking-wider">
                       {u.access_level}
                     </span>
                   </div>
                   
-                  <div className="flex justify-between items-center pt-2 border-t border-slate-800/50">
-                    <span className="font-black text-slate-600 text-[8px] uppercase tracking-widest">{u.role}</span>
+                  <div className="flex justify-between items-center pt-2 border-t border-[var(--border)]">
+                    <span className="font-black text-[var(--text-sub)] text-[8px] uppercase tracking-widest">{u.role}</span>
                     <div className="flex items-center gap-2">
                       {canEdit && (
                         <button 
                           onClick={e => { e.stopPropagation(); startEditing(u); }}
-                          className="p-2 bg-slate-800 rounded-lg text-slate-400"
+                          className="p-2 bg-[var(--bg-page)] rounded-lg text-[var(--text-sub)]"
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
                       )}
                       <button 
                         onClick={e => { e.stopPropagation(); setSelectedPIC(u); }}
-                        className="p-2 bg-slate-800 rounded-lg text-slate-400"
+                        className="p-2 bg-[var(--bg-page)] rounded-lg text-[var(--text-sub)]"
                       >
                         <ExternalLink className="w-4 h-4" />
                       </button>
@@ -5094,16 +5105,16 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-main)]">
-                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Nama PIC</th>
-                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Email PIC</th>
-                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Password</th>
-                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Access Level</th>
-                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Role</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--bg-page)]">
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em]">Nama PIC</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em]">Email PIC</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em]">Password</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em]">Access Level</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em]">Role</th>
                 <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-[var(--border)]">
               {filteredUsers.map((u, i) => {
                 const canEdit = isAdmin || u.email === currentUser?.email;
                 const personnelKey = getSafeKey(u, i, 'user');
@@ -5111,12 +5122,12 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                 return (
                   <tr 
                     key={personnelKey} 
-                    className="hover:bg-[var(--bg-main)] transition-all group cursor-pointer border-b border-[var(--border-subtle)]"
+                    className="hover:bg-[var(--bg-page)]/50 transition-all group cursor-pointer border-b border-[var(--border)]"
                     onClick={() => setSelectedPIC(u)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-[var(--bg-main)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[10px] text-[var(--primary)] uppercase">
+                        <div className="w-8 h-8 rounded-full bg-[var(--bg-page)] border border-[var(--border)] flex items-center justify-center font-bold text-[10px] text-[var(--accent)] uppercase">
                           {u.name?.charAt(0)}
                         </div>
                         <span className="font-bold text-[var(--text-main)]">{u.name}</span>
@@ -5129,7 +5140,7 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                        <span className="text-[11px] text-[var(--text-sub)]/30 font-mono">••••••••</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 rounded bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-[10px] font-black uppercase tracking-wider">
+                      <span className="px-2 py-1 rounded bg-[var(--accent)]/10 border border-[var(--accent)]/20 text-[var(--accent)] text-[10px] font-black uppercase tracking-wider">
                         {u.access_level}
                       </span>
                     </td>
@@ -5141,7 +5152,7 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                         {canEdit && (
                           <button 
                             onClick={e => { e.stopPropagation(); startEditing(u); }}
-                            className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-indigo-400"
+                            className="p-2 hover:bg-[var(--bg-page)] rounded-lg text-[var(--text-sub)] hover:text-[var(--accent)]"
                             title="Edit Personnel"
                           >
                             <Edit3 className="w-4 h-4" />
@@ -5149,7 +5160,7 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                         )}
                         <button 
                           onClick={e => { e.stopPropagation(); setSelectedPIC(u); }}
-                          className="p-2 hover:bg-slate-800 rounded-lg text-slate-500 hover:text-indigo-400"
+                          className="p-2 hover:bg-[var(--bg-page)] rounded-lg text-[var(--text-sub)] hover:text-[var(--accent)]"
                           title="View Info"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -5157,7 +5168,7 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                         {isAdmin && (
                           <button 
                             onClick={e => { e.stopPropagation(); handleDelete(u); }}
-                            className="p-2 hover:bg-rose-500/10 rounded-lg text-slate-500 hover:text-rose-500"
+                            className="p-2 hover:bg-[var(--danger)]/10 rounded-lg text-[var(--text-sub)] hover:text-[var(--danger)]"
                             title="Hapus Personel"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -5181,35 +5192,35 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="w-full max-w-md bg-slate-900 border-l border-slate-800 shadow-2xl flex flex-col"
+              className="w-full max-w-md bg-[var(--bg-card)] border-l border-[var(--border)] shadow-2xl flex flex-col"
             >
-              <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 backdrop-blur-md">
+              <div className="p-6 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-card)]/50 backdrop-blur-md">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-xl font-black text-white italic">
+                  <div className="w-12 h-12 rounded-2xl bg-[var(--accent)] flex items-center justify-center text-xl font-black text-white italic">
                     {selectedPIC.name?.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-black text-white uppercase italic tracking-tighter text-lg">{selectedPIC.name}</h3>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{selectedPIC.email}</p>
+                    <h3 className="font-black text-[var(--text-main)] uppercase italic tracking-tighter text-lg">{selectedPIC.name}</h3>
+                    <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-widest">{selectedPIC.email}</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setSelectedPIC(null)}
-                  className="p-2 hover:bg-slate-800 rounded-xl transition-colors text-slate-500"
+                  className="p-2 hover:bg-[var(--bg-page)] rounded-xl transition-colors text-[var(--text-sub)]"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
               <div className="flex-1 overflow-auto p-6 space-y-6">
                 <div>
-                   <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Credentials</h4>
+                   <h4 className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] mb-4">Credentials</h4>
                    <div className="space-y-4">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] font-bold text-slate-500 uppercase px-1">Crypto-Key (Password)</label>
+                        <label className="text-[9px] font-bold text-[var(--text-sub)] uppercase px-1">Crypto-Key (Password)</label>
                         <input 
                           type="password"
                           defaultValue={selectedPIC.password || ''}
-                          className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300 outline-none focus:border-indigo-500 transition-all font-mono"
+                          className="w-full bg-[var(--bg-page)] border border-[var(--border)] rounded-lg px-3 py-2 text-xs text-[var(--text-main)] outline-none focus:border-[var(--accent)] transition-all font-mono"
                           placeholder="Set password..."
                         />
                       </div>
@@ -5217,15 +5228,15 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                 </div>
 
                 <div>
-                   <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] mb-4">Assigned Projects</h4>
+                   <h4 className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] mb-4">Assigned Projects</h4>
                    <div className="space-y-3">
                       {projects.filter(p => true).map((p, i) => (
-                        <div key={getSafeKey(p, i, 'pic-project')} className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 flex items-center justify-between hover:border-indigo-500/50 transition-all group">
+                        <div key={getSafeKey(p, i, 'pic-project')} className="bg-[var(--bg-page)] border border-[var(--border)] rounded-xl p-4 flex items-center justify-between hover:border-[var(--accent)]/50 transition-all group">
                             <div>
-                              <p className="text-xs font-bold text-slate-200 uppercase">{p.name}</p>
-                              <p className="text-[9px] text-slate-500 font-bold uppercase tracking-tighter mt-1">Status: <span className="text-indigo-400">{p.status}</span></p>
+                              <p className="text-xs font-bold text-[var(--text-main)] uppercase">{p.name}</p>
+                              <p className="text-[9px] text-[var(--text-sub)] font-bold uppercase tracking-tighter mt-1">Status: <span className="text-[var(--accent)]">{p.status}</span></p>
                             </div>
-                            <button className="p-2 bg-slate-800 rounded-lg text-slate-500 hover:text-white transition-opacity opacity-0 group-hover:opacity-100">
+                            <button className="p-2 bg-[var(--bg-card)] rounded-lg text-[var(--text-sub)] hover:text-[var(--text-main)] transition-opacity opacity-0 group-hover:opacity-100">
                               <ArrowRight className="w-4 h-4" />
                             </button>
                           </div>
@@ -5833,7 +5844,7 @@ function GanttDetailView({
           {/* TOP: Task Manager (Only in Detail View) */}
           {!isGlobalView && (
             <div className="h-auto max-h-[480px] flex flex-col bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800/60 rounded-2xl overflow-y-auto shadow-xl dark:shadow-2xl shrink-0 scrollbar-hide transition-colors">
-      <div className={cn("p-4 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between bg-white gap-4", isMobile && "px-4")}>
+      <div className={cn("p-4 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between bg-[#111b43] gap-4", isMobile && "px-4")}>
                 <div className="flex items-center gap-6">
                   <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-white/5">
                     <button 
@@ -7255,7 +7266,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
           </td>
 
           {/* Realized Finish Date */}
-          <td className="px-4 py-4 bg-blue-500/5" onClick={e => e.stopPropagation()}>
+          <td className="px-4 py-4 bg-[var(--accent)]/5" onClick={e => e.stopPropagation()}>
             <CustomDatePicker 
               selectedDate={task.realized_finish_date ? format(new Date(task.realized_finish_date), 'yyyy-MM-dd') : ''}
               minDate={task.start_time ? new Date(task.start_time) : undefined}
@@ -7281,7 +7292,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               <EditableInput 
                 value={task.developer_name || ''} 
                 onSave={(v) => onUpdateTask(task.id, 'developer_name', v)}
-                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] px-1.5 py-1 rounded text-[var(--accent)] text-center hover:border-[var(--accent)]/50 transition-all font-mono w-full"
+                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] px-1.5 py-1 rounded text-[var(--accent)] text-center hover:border-[var(--accent)] transition-all font-mono w-full"
                 placeholder="Dev"
                 disabled={disabled}
               />
@@ -7294,7 +7305,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               <EditableInput 
                 value={task.qa_name || ''} 
                 onSave={(v) => onUpdateTask(task.id, 'qa_name', v)}
-                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] px-1.5 py-1 rounded text-purple-600 dark:text-purple-400 text-center hover:border-purple-500/50 transition-all font-mono w-full"
+                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] px-1.5 py-1 rounded text-purple-400 text-center hover:border-purple-500 transition-all font-mono w-full"
                 placeholder="QA"
                 disabled={disabled}
               />
@@ -7303,7 +7314,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
 
           {/* Dates */}
           <td 
-            className="px-1 py-4 text-center cursor-pointer hover:bg-slate-800/80 transition-all group/date relative" 
+            className="px-1 py-4 text-center cursor-pointer hover:bg-[var(--bg-card)] transition-all group/date relative" 
             onClick={(e) => { 
               if (disabled) return;
               e.stopPropagation(); 
@@ -7317,15 +7328,15 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                 }}
                 minDate={proj?.start_date ? new Date(proj.start_date) : undefined}
                 maxDate={task.end_time ? new Date(task.end_time) : (parentTask?.end_time ? new Date(parentTask.end_time) : (proj?.end_date ? new Date(proj.end_date) : undefined))}
-                className="bg-slate-900 border border-slate-700 text-[10px] text-white font-mono focus:text-indigo-400 outline-none w-full text-center cursor-pointer font-bold rounded px-1 py-0.5"
+                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] text-[var(--text-main)] font-mono focus:text-[var(--accent)] outline-none w-full text-center cursor-pointer font-bold rounded px-1 py-0.5"
                 disabled={disabled}
               />
-              <span className="text-[7px] text-indigo-500/50 font-black uppercase opacity-0 group-hover/date:opacity-100 transition-all absolute -top-1">Start</span>
+              <span className="text-[7px] text-[var(--accent)] font-black uppercase opacity-0 group-hover/date:opacity-100 transition-all absolute -top-1">Start</span>
             </div>
           </td>
 
           <td 
-            className="px-1 py-4 text-center cursor-pointer hover:bg-slate-800/80 transition-all group/date relative" 
+            className="px-1 py-4 text-center cursor-pointer hover:bg-[var(--bg-card)] transition-all group/date relative" 
             onClick={(e) => { 
               if (disabled) return;
               e.stopPropagation(); 
@@ -7339,10 +7350,10 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                 }}
                 minDate={task.start_time ? new Date(task.start_time) : (proj?.start_date ? new Date(proj.start_date) : undefined)}
                 maxDate={parentTask?.end_time ? new Date(parentTask.end_time) : (proj?.end_date ? new Date(proj.end_date) : undefined)}
-                className="bg-slate-900 border border-slate-700 text-[10px] text-white font-mono focus:text-indigo-400 outline-none w-full text-center cursor-pointer font-bold rounded px-1 py-0.5"
+                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] text-[var(--text-main)] font-mono focus:text-[var(--accent)] outline-none w-full text-center cursor-pointer font-bold rounded px-1 py-0.5"
                 disabled={disabled}
               />
-              <span className="text-[7px] text-indigo-500/50 font-black uppercase opacity-0 group-hover/date:opacity-100 transition-all absolute -top-1">End</span>
+              <span className="text-[7px] text-[var(--accent)] font-black uppercase opacity-0 group-hover/date:opacity-100 transition-all absolute -top-1">End</span>
             </div>
           </td>
 
@@ -7359,14 +7370,14 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
 
           {/* Fachrul Feedback */}
           <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
-             <div className="flex items-center gap-1.5 px-2 py-1.5 bg-slate-900/50 rounded-lg border border-slate-800/50 group-hover:border-slate-700/50 transition-colors">
+             <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[var(--bg-page)]/50 rounded-lg border border-[var(--border)] group-hover:border-[var(--accent)]/30 transition-colors">
                 <div className="flex flex-col gap-0.5 min-w-[50px]">
                   <ApprovalBadge value={task.approval_fachrul} label="Fachrul" onUpdate={(v) => onUpdateTask(task.id, 'approval_fachrul', v)} disabled={disabled} />
                 </div>
                 <DeferredTextarea 
                    value={task.suggestion_fachrul || ''}
                    onSave={(v) => onUpdateTask(task.id, 'suggestion_fachrul', v)}
-                   className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[9px] text-slate-200 focus:ring-1 focus:ring-indigo-500/30 outline-none w-full min-h-[32px] max-h-[32px] resize-none scrollbar-hide font-medium"
+                   className="bg-[var(--bg-page)] border border-[var(--border)] rounded px-2 py-1 text-[9px] text-[var(--text-main)] focus:ring-1 focus:ring-[var(--accent)] outline-none w-full min-h-[32px] max-h-[32px] resize-none scrollbar-hide font-medium"
                    placeholder="..."
                    disabled={disabled}
                 />
@@ -7375,14 +7386,14 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
 
           {/* Barra Feedback */}
           <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
-             <div className="flex items-center gap-1.5 px-2 py-1.5 bg-slate-900/50 rounded-lg border border-slate-800/50 group-hover:border-slate-700/50 transition-colors">
+             <div className="flex items-center gap-1.5 px-2 py-1.5 bg-[var(--bg-page)]/50 rounded-lg border border-[var(--border)] group-hover:border-[var(--accent)]/30 transition-colors">
                 <div className="flex flex-col gap-0.5 min-w-[50px]">
                   <ApprovalBadge value={task.approval_barra} label="Barra" onUpdate={(v) => onUpdateTask(task.id, 'approval_barra', v)} disabled={disabled} />
                 </div>
                 <DeferredTextarea 
                    value={task.suggestion_barra || ''}
                    onSave={(v) => onUpdateTask(task.id, 'suggestion_barra', v)}
-                   className="bg-slate-950 border border-slate-800 rounded px-2 py-1 text-[9px] text-slate-200 focus:ring-1 focus:ring-indigo-500/30 outline-none w-full min-h-[32px] max-h-[32px] resize-none scrollbar-hide font-medium"
+                   className="bg-[var(--bg-page)] border border-[var(--border)] rounded px-2 py-1 text-[9px] text-[var(--text-main)] focus:ring-1 focus:ring-[var(--accent)] outline-none w-full min-h-[32px] max-h-[32px] resize-none scrollbar-hide font-medium"
                    placeholder="..."
                    disabled={disabled}
                 />

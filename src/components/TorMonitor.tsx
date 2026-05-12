@@ -161,20 +161,20 @@ export function TorMonitor({ user }: { user: any }) {
         {/* Global Filters */}
         <div className="flex flex-wrap gap-4 items-center">
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)] group-focus-within:text-[var(--accent)] transition-colors" />
             <input 
               type="text"
               placeholder="Project Name / Ticket..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="bg-slate-950 border border-slate-800 rounded-2xl pl-10 pr-4 py-3 text-xs font-bold text-white focus:border-indigo-500 outline-none transition-all w-64 shadow-inner"
+              className="bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl pl-10 pr-4 py-3 text-xs font-bold text-[var(--text-main)] focus:border-[var(--accent)] outline-none transition-all w-64 shadow-inner"
             />
           </div>
 
           <select 
             value={picFilter}
             onChange={(e) => setPicFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-bold text-white focus:border-indigo-500 outline-none shadow-inner min-w-[140px]"
+            className="bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl px-4 py-3 text-xs font-bold text-[var(--text-main)] focus:border-[var(--accent)] outline-none shadow-inner min-w-[140px]"
           >
             <option value="ALL">ALL PIC</option>
             {uniquePICs.map(pic => <option key={pic} value={pic}>{pic}</option>)}
@@ -183,7 +183,7 @@ export function TorMonitor({ user }: { user: any }) {
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-950 border border-slate-800 rounded-2xl px-4 py-3 text-xs font-bold text-white focus:border-indigo-500 outline-none shadow-inner min-w-[140px]"
+            className="bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl px-4 py-3 text-xs font-bold text-[var(--text-main)] focus:border-[var(--accent)] outline-none shadow-inner min-w-[140px]"
           >
             <option value="ALL">ALL STATUS</option>
             <option value="FSD On Progress">FSD</option>
@@ -210,7 +210,7 @@ export function TorMonitor({ user }: { user: any }) {
             transition={{ delay: idx * 0.1 }}
             className={cn(
               "p-6 rounded-[2.5rem] border flex flex-col justify-between h-40 shadow-xl transition-all hover:scale-105",
-              box.color === 'slate' ? "bg-slate-900/50 border-slate-800 shadow-slate-950/50" :
+              box.color === 'slate' ? "bg-[var(--bg-card)] border-[var(--border)] shadow-[var(--shadow-float)]" :
               box.color === 'blue' ? "bg-blue-500/5 border-blue-500/20 shadow-blue-500/10" :
               box.color === 'rose' ? "bg-rose-500/5 border-rose-500/20 shadow-rose-500/10" :
               "bg-emerald-500/5 border-emerald-500/20 shadow-emerald-500/10"
@@ -218,18 +218,18 @@ export function TorMonitor({ user }: { user: any }) {
           >
             <div className="flex items-center justify-between">
               <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", 
-                box.color === 'slate' ? "bg-slate-800 text-slate-400" :
+                box.color === 'slate' ? "bg-[var(--bg-page)] text-[var(--text-sub)]" :
                 box.color === 'blue' ? "bg-blue-500/10 text-blue-500" :
                 box.color === 'rose' ? "bg-rose-500/10 text-rose-500" :
                 "bg-emerald-500/10 text-emerald-500"
               )}>
                 <box.icon className="w-5 h-5" />
               </div>
-              <span className="text-3xl font-black italic tracking-tighter opacity-10">{box.value}</span>
+              <span className="text-3xl font-black italic tracking-tighter opacity-10 text-[var(--text-main)]">{box.value}</span>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">{box.label}</p>
-              <p className="text-4xl font-black text-white leading-none">{box.value.toString().padStart(2, '0')}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1 text-[var(--text-sub)]">{box.label}</p>
+              <p className="text-4xl font-black text-[var(--text-main)] leading-none">{box.value.toString().padStart(2, '0')}</p>
             </div>
           </motion.div>
         ))}
@@ -245,12 +245,12 @@ export function TorMonitor({ user }: { user: any }) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               key={project.id}
-              className="bg-slate-900/50 border border-slate-800 rounded-[2.5rem] p-8 space-y-8 flex flex-col justify-between hover:border-indigo-500/50 transition-all shadow-2xl group relative overflow-hidden"
+              className="bg-[var(--bg-card)] border border-[var(--border)] rounded-[2.5rem] p-8 space-y-8 flex flex-col justify-between hover:border-[var(--accent)]/50 transition-all shadow-2xl group relative overflow-hidden"
             >
               {/* Card Header */}
               <div className="space-y-4 relative z-10">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-black font-mono tracking-widest text-indigo-400 uppercase bg-indigo-500/10 px-3 py-1 rounded-full">
+                  <span className="text-[10px] font-black font-mono tracking-widest text-[var(--accent)] uppercase bg-[var(--accent)]/10 px-3 py-1 rounded-full">
                     {project.ticket_id || 'NO TICKET'}
                   </span>
                   <div className={cn(
@@ -260,7 +260,7 @@ export function TorMonitor({ user }: { user: any }) {
                     {project.globalStatusLabel}
                   </div>
                 </div>
-                <h3 className="text-xl font-black text-white tracking-tight uppercase leading-tight group-hover:text-indigo-400 transition-colors">
+                <h3 className="text-xl font-black text-[var(--text-main)] tracking-tight uppercase leading-tight group-hover:text-[var(--accent)] transition-colors">
                   {project.name}
                 </h3>
               </div>
@@ -268,17 +268,17 @@ export function TorMonitor({ user }: { user: any }) {
               {/* Card Body: Progress & Phases */}
               <div className="space-y-6 relative z-10">
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[var(--text-sub)]">
                     <span>Efficiency Rate</span>
-                    <span className="text-white">{(project as any).progress}%</span>
+                    <span className="text-[var(--text-main)]">{(project as any).progress}%</span>
                   </div>
-                  <div className="h-2 bg-slate-950 rounded-full overflow-hidden shadow-inner border border-slate-800/50">
+                  <div className="h-2 bg-[var(--bg-page)] rounded-full overflow-hidden shadow-inner border border-[var(--border)]/50">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${(project as any).progress}%` }}
                       className={cn(
-                        "h-full rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]",
-                        (project as any).progress === 100 ? "bg-emerald-500 shadow-emerald-500/50" : "bg-indigo-500"
+                        "h-full rounded-full shadow-[0_0_10px_rgba(117,81,255,0.5)]",
+                        (project as any).progress === 100 ? "bg-emerald-500 shadow-emerald-500/50" : "bg-[var(--accent)]"
                       )}
                     />
                   </div>
@@ -298,8 +298,8 @@ export function TorMonitor({ user }: { user: any }) {
                           isDone 
                             ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400" 
                             : l1Phase 
-                              ? "bg-slate-800 border-slate-700 text-slate-500" 
-                              : "bg-slate-950/50 border-slate-900 text-slate-800"
+                              ? "bg-[var(--bg-page)] border-[var(--border)] text-[var(--text-sub)]" 
+                              : "bg-[var(--bg-page)]/50 border-[var(--border)] text-[var(--text-sub)]/30"
                         )}
                       >
                         {phase}
@@ -309,12 +309,12 @@ export function TorMonitor({ user }: { user: any }) {
                 </div>
 
                 {/* Project Diajukan Section */}
-                <div className="mt-3 pt-3 border-t border-slate-800">
+                <div className="mt-3 pt-3 border-t border-[var(--border)]">
                   <div className="flex items-start gap-2 text-[11px]">
                     <FileText className="w-3.5 h-3.5 text-blue-400 shrink-0 mt-0.5" />
                     <div className="flex flex-col">
-                      <span className="text-slate-500 font-semibold uppercase text-[9px]">Project Diajukan</span>
-                      <span className="text-slate-300 line-clamp-2 italic" title={project.project_diajukan || "Belum ada informasi"}>
+                      <span className="text-[var(--text-sub)] font-semibold uppercase text-[9px]">Project Diajukan</span>
+                      <span className="text-[var(--text-main)] line-clamp-2 italic" title={project.project_diajukan || "Belum ada informasi"}>
                         {project.project_diajukan || "-"}
                       </span>
                     </div>
@@ -323,16 +323,16 @@ export function TorMonitor({ user }: { user: any }) {
               </div>
 
               {/* Card Footer */}
-              <div className="pt-8 border-t border-slate-800 flex items-center justify-between relative z-10">
+              <div className="pt-8 border-t border-[var(--border)] flex items-center justify-between relative z-10">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-800 flex items-center justify-center border border-slate-700 overflow-hidden">
-                    <div className="text-xs font-black uppercase text-indigo-500">
+                  <div className="w-10 h-10 rounded-2xl bg-[var(--bg-page)] flex items-center justify-center border border-[var(--border)] overflow-hidden">
+                    <div className="text-xs font-black uppercase text-[var(--accent)]">
                       {project.pic_name?.substring(0, 2) || '??'}
                     </div>
                   </div>
                   <div>
-                    <p className="text-[10px] font-black text-white uppercase tracking-tight leading-none">{project.pic_name}</p>
-                    <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-1">{project.div_owner || 'OM DEDY'}</p>
+                    <p className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-tight leading-none">{project.pic_name}</p>
+                    <p className="text-[8px] text-[var(--text-sub)] font-bold uppercase tracking-widest mt-1">{project.div_owner || 'OM DEDY'}</p>
                   </div>
                 </div>
 
@@ -343,7 +343,7 @@ export function TorMonitor({ user }: { user: any }) {
                     title={project.isAutoStatus ? "Switch to Manual Mode" : "Switch to Auto Status"}
                     className={cn(
                       "p-2 rounded-xl border transition-all",
-                      project.isAutoStatus ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-500" : "bg-slate-800 border-slate-700 text-slate-500"
+                      project.isAutoStatus ? "bg-[var(--accent)]/10 border-[var(--accent)]/30 text-[var(--accent)]" : "bg-[var(--bg-page)] border-[var(--border)] text-[var(--text-sub)]"
                     )}
                   >
                     <Settings className="w-4 h-4" />
@@ -351,15 +351,15 @@ export function TorMonitor({ user }: { user: any }) {
 
                   <button 
                     onClick={() => openAuditLogs(project)}
-                    className="p-3 bg-slate-950 border border-slate-800 rounded-2xl hover:border-indigo-500 transition-all shadow-inner group/btn"
+                    className="p-3 bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl hover:border-[var(--accent)] transition-all shadow-inner group/btn"
                   >
-                    <ChevronRight className="w-4 h-4 text-slate-500 group-hover/btn:text-white group-hover/btn:translate-x-0.5 transition-all" />
+                    <ChevronRight className="w-4 h-4 text-[var(--text-sub)] group-hover/btn:text-[var(--text-main)] group-hover/btn:translate-x-0.5 transition-all" />
                   </button>
                 </div>
               </div>
 
               {/* Background Decoration */}
-              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-indigo-500/5 blur-[100px] rounded-full" />
+              <div className="absolute top-0 right-0 -mr-16 -mt-16 w-48 h-48 bg-[var(--accent)]/5 blur-[100px] rounded-full" />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -374,38 +374,38 @@ export function TorMonitor({ user }: { user: any }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setSelectedProjectLogs(null)}
-              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
             />
             <motion.div 
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+              className="relative w-full max-w-2xl bg-[var(--bg-card)] border border-[var(--border)] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
             >
-              <div className="p-8 border-b border-white/5 flex items-center justify-between">
+              <div className="p-8 border-b border-[var(--border)] flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-black text-white uppercase italic tracking-tight">{selectedProjectLogs.name}</h2>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Audit Trail & Decision Logs</p>
+                  <h2 className="text-xl font-black text-[var(--text-main)] uppercase italic tracking-tight">{selectedProjectLogs.name}</h2>
+                  <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-widest mt-1">Audit Trail & Decision Logs</p>
                 </div>
-                <button onClick={() => setSelectedProjectLogs(null)} className="p-3 bg-slate-950 border border-slate-800 rounded-2xl text-slate-500 hover:text-white transition-colors">
+                <button onClick={() => setSelectedProjectLogs(null)} className="p-3 bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl text-[var(--text-sub)] hover:text-[var(--text-main)] transition-colors text-[10px] font-black uppercase">
                   CLOSE
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto p-8 space-y-6">
                 {selectedProjectLogs.logs.length === 0 ? (
-                  <div className="text-center py-20 opacity-30 italic text-slate-500">No logs recorded yet.</div>
+                  <div className="text-center py-20 opacity-30 italic text-[var(--text-sub)]">No logs recorded yet.</div>
                 ) : (
                   selectedProjectLogs.logs.map((log: any) => (
                     <div key={log.id} className="relative pl-10 group/log">
-                      <div className="absolute left-0 top-0 bottom-0 w-px bg-slate-800 group-last/log:bg-transparent" />
-                      <div className="absolute left-[-4px] top-1.5 w-2 h-2 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                      <div className="absolute left-0 top-0 bottom-0 w-px bg-[var(--border)] group-last/log:bg-transparent" />
+                      <div className="absolute left-[-4px] top-1.5 w-2 h-2 rounded-full bg-[var(--accent)] shadow-[0_0_10px_rgba(117,81,255,0.5)]" />
                       <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                          <span className="text-[10px] font-black text-white uppercase tracking-widest bg-slate-800 px-2 py-0.5 rounded">{log.actor}</span>
-                          <span className="text-[8px] text-slate-500 font-bold font-mono">{new Date(log.created_at).toLocaleString()}</span>
+                          <span className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-widest bg-[var(--bg-page)] px-2 py-0.5 rounded border border-[var(--border)]">{log.actor}</span>
+                          <span className="text-[8px] text-[var(--text-sub)] font-bold font-mono">{new Date(log.created_at).toLocaleString()}</span>
                         </div>
-                        <p className="text-xs font-bold text-slate-300 italic">{log.action}</p>
-                        <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-[10px] font-mono text-slate-400">
+                        <p className="text-xs font-bold text-[var(--text-main)]/80 italic">{log.action}</p>
+                        <div className="p-4 bg-[var(--bg-page)] rounded-2xl border border-[var(--border)] text-[10px] font-mono text-[var(--text-sub)]">
                           <pre className="whitespace-pre-wrap">{JSON.stringify(log.new_payload, null, 2)}</pre>
                         </div>
                       </div>

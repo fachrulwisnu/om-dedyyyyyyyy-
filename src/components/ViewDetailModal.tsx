@@ -28,10 +28,10 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
   };
 
   const Section = ({ title, icon: Icon, children, className }: any) => (
-    <div className={cn("bg-black/20 rounded-2xl border border-white/5 p-6 mb-4", className)}>
+    <div className={cn("bg-[var(--bg-page)]/20 rounded-2xl border border-[var(--border)] p-6 mb-4", className)}>
       <div className="flex items-center gap-2 mb-4">
-        <Icon className="w-4 h-4 text-indigo-400" />
-        <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">{title}</h3>
+        <Icon className="w-4 h-4 text-[var(--accent)]" />
+        <h3 className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-[0.2em]">{title}</h3>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {children}
@@ -39,18 +39,18 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
     </div>
   );
 
-  const Stat = ({ label, value, colorClass = "text-white" }: any) => (
+  const Stat = ({ label, value, colorClass = "text-[var(--text-main)]" }: any) => (
     <div className="flex flex-col">
-      <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1.5">{label}</span>
+      <span className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest mb-1.5">{label}</span>
       <span className={cn("text-[13px] font-bold break-words whitespace-pre-wrap leading-relaxed", colorClass)}>
         {value === null || value === undefined || value === '' ? '-' : String(value)}
       </span>
     </div>
   );
 
-  const Badge = ({ label, value, color = "indigo" }: any) => {
+  const Badge = ({ label, value, color = "accent" }: any) => {
     const colors: Record<string, string> = {
-      indigo: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      accent: "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20",
       emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
       rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
       amber: "bg-amber-500/10 text-amber-400 border-amber-500/20",
@@ -77,24 +77,24 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-6xl h-[90vh] bg-[#1a1f30] rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col"
+          className="relative w-full max-w-6xl h-[90vh] bg-[var(--bg-card)] rounded-[2.5rem] border border-[var(--border)] shadow-2xl overflow-hidden flex flex-col"
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-black/40">
+          <div className="px-8 py-6 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-card)]/50">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 shadow-inner">
+              <div className="w-12 h-12 bg-[var(--accent)]/20 rounded-2xl flex items-center justify-center text-[var(--accent)] shadow-inner">
                 <Info className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">
+                <h2 className="text-2xl font-black text-[var(--text-main)] uppercase italic tracking-tighter leading-tight">
                   {project.project_name}
                 </h2>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest bg-indigo-400/10 px-2 py-0.5 rounded">
+                  <span className="text-[10px] text-[var(--accent)] font-black uppercase tracking-widest bg-[var(--accent)]/10 px-2 py-0.5 rounded">
                     ID: {project.ticket_id || 'NO_TICKET'}
                   </span>
-                  <div className="w-1 h-1 rounded-full bg-slate-700" />
-                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                  <div className="w-1 h-1 rounded-full bg-[var(--text-sub)]/30" />
+                  <span className="text-[9px] text-[var(--text-sub)] font-bold uppercase tracking-widest">
                     SYNCED FROM NOTION API
                   </span>
                 </div>
@@ -102,14 +102,14 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
             </div>
             <button 
               onClick={onClose}
-              className="p-3 hover:bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all group"
+              className="p-3 hover:bg-[var(--bg-page)] rounded-xl text-[var(--text-sub)] hover:text-[var(--text-main)] transition-all group"
             >
               <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
             </button>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="px-8 bg-black/20 border-b border-white/5 flex gap-8">
+          <div className="px-8 bg-[var(--bg-page)]/20 border-b border-[var(--border)] flex gap-8">
             {[
               { id: 'overview', label: 'Overview & SLA', icon: Activity },
               { id: 'timeline', label: 'Timeline Logs', icon: History },
@@ -121,16 +121,16 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
                 className={cn(
                   "py-4 flex items-center gap-2 border-b-2 transition-all relative",
                   activeTab === tab.id 
-                    ? "border-indigo-500 text-white font-black" 
-                    : "border-transparent text-slate-500 hover:text-slate-300 font-bold"
+                    ? "border-[var(--accent)] text-[var(--text-main)] font-black" 
+                    : "border-transparent text-[var(--text-sub)] hover:text-[var(--text-main)] font-bold"
                 )}
               >
-                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-indigo-400" : "text-current")} />
+                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-[var(--accent)]" : "text-current")} />
                 <span className="text-xs uppercase tracking-widest">{tab.label}</span>
                 {activeTab === tab.id && (
                   <motion.div 
                     layoutId="activeTabGlow"
-                    className="absolute inset-0 bg-indigo-500/5 blur-xl -z-10"
+                    className="absolute inset-0 bg-[var(--accent)]/5 blur-xl -z-10"
                   />
                 )}
               </button>
@@ -360,9 +360,9 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
           </div>
 
           {/* Footer */}
-          <div className="px-8 py-5 border-t border-white/5 bg-black/40 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-slate-500">
-               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+          <div className="px-8 py-5 border-t border-[var(--border)] bg-[var(--bg-card)]/40 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[var(--text-sub)]">
+               <div className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-pulse" />
                <span className="text-[10px] font-black uppercase tracking-[0.2em] italic opacity-60">
                  Read-only Data Node • Protocol: HTTPS/REST
                </span>
@@ -370,7 +370,7 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
             <div className="flex items-center gap-4">
               <button 
                 onClick={onClose}
-                className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5"
+                className="px-8 py-2.5 bg-[var(--bg-page)] hover:bg-[var(--bg-card)] text-[var(--text-main)] text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border border-[var(--border)]"
               >
                 Dismiss View
               </button>

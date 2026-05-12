@@ -59,20 +59,20 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_50%_50%,rgba(79,70,229,0.1),transparent)] transition-colors duration-300">
+    <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center p-6 bg-[radial-gradient(circle_at_50%_50%,var(--accent),transparent_0.1)] transition-colors duration-300">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-xl dark:shadow-[0_0_50px_rgba(79,70,229,0.1)] transition-colors duration-300"
+        className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl overflow-hidden shadow-xl transition-colors duration-300"
       >
-        <div className="p-10 border-b border-slate-200 dark:border-slate-800 bg-indigo-50 dark:bg-indigo-600/5 text-center transition-colors">
-          <div className="w-16 h-16 bg-white dark:bg-indigo-600/10 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-slate-200 dark:border-indigo-500/20 shadow-sm transition-all">
-            <Cpu className="w-8 h-8 text-indigo-600 dark:text-indigo-500" />
+        <div className="p-10 border-b border-[var(--border)] bg-[var(--accent)]/5 text-center transition-colors">
+          <div className="w-16 h-16 bg-[var(--bg-card)] rounded-2xl flex items-center justify-center mx-auto mb-6 border border-[var(--border)] shadow-sm transition-all">
+            <Cpu className="w-8 h-8 text-[var(--accent)]" />
           </div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase italic transition-colors">
-            OM <span className="text-indigo-600 dark:text-indigo-500">DEDY</span> <span className="text-slate-400 dark:text-slate-500 italic lowercase text-sm">v2.0</span>
+          <h1 className="text-3xl font-black text-[var(--text-main)] tracking-tighter uppercase italic transition-colors">
+            OM <span className="text-[var(--accent)]">DEDY</span> <span className="text-[var(--text-sub)] italic lowercase text-sm">v2.0</span>
           </h1>
-          <p className="text-[10px] text-slate-500 mt-2 font-bold uppercase tracking-[0.2em]">Operational Management & Delivery Deployment Yield</p>
+          <p className="text-[10px] text-[var(--text-sub)] mt-2 font-bold uppercase tracking-[0.2em]">Operational Management & Delivery Deployment Yield</p>
         </div>
 
         <form onSubmit={handleLogin} className="p-8 space-y-6">
@@ -85,31 +85,31 @@ export function LoginPage() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Access Identity</label>
+              <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Access Identity</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-600" />
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)]" />
                 <input 
                   type="email"
                   required
                   value={emailInput}
                   onChange={(e) => setEmailInput(e.target.value)}
                   placeholder="name@company.com"
-                  className="w-full px-4 py-3 bg-white dark:bg-[#0f1423] text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 pl-12 transition-all shadow-inner dark:shadow-none"
+                  className="w-full px-4 py-3 bg-[var(--bg-page)] text-[var(--text-main)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--accent)] pl-12 transition-all shadow-inner"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Crypto-Key</label>
+              <label className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest px-1">Crypto-Key</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-slate-600" />
+                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)]" />
                 <input 
                   type="password"
                   required
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full px-4 py-3 bg-white dark:bg-[#0f1423] text-slate-900 dark:text-white border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:border-indigo-500 pl-12 transition-all shadow-inner dark:shadow-none"
+                  className="w-full px-4 py-3 bg-[var(--bg-page)] text-[var(--text-main)] border border-[var(--border)] rounded-lg focus:outline-none focus:border-[var(--accent)] pl-12 transition-all shadow-inner"
                 />
               </div>
             </div>
@@ -119,7 +119,7 @@ export function LoginPage() {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black uppercase text-xs tracking-[0.2em] rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2 active:scale-98"
+              className="w-full py-4 bg-[var(--accent)] hover:bg-[var(--accent)]/90 disabled:opacity-50 text-white font-black uppercase text-xs tracking-[0.2em] rounded-xl shadow-lg shadow-[var(--accent)]/20 transition-all flex items-center justify-center gap-2 active:scale-98"
             >
               {loading ? "Authenticating..." : "Authorize Access"}
             </button>
@@ -127,15 +127,15 @@ export function LoginPage() {
               type="button"
               onClick={handleSignUp}
               disabled={loading}
-              className="w-full py-3 text-slate-500 hover:text-indigo-600 dark:hover:text-slate-300 font-bold uppercase text-[10px] tracking-widest transition-colors"
+              className="w-full py-3 text-[var(--text-sub)] hover:text-[var(--accent)] font-bold uppercase text-[10px] tracking-widest transition-colors"
             >
               Provision New Account
             </button>
           </div>
         </form>
 
-        <div className="p-8 bg-slate-50/50 dark:bg-slate-950/50 border-t border-slate-200 dark:border-slate-800/60 text-center transition-colors">
-          <p className="text-[9px] text-slate-400 dark:text-slate-600 leading-relaxed uppercase tracking-widest">
+        <div className="p-8 bg-[var(--bg-page)]/50 border-t border-[var(--border)] text-center transition-colors">
+          <p className="text-[9px] text-[var(--text-sub)] leading-relaxed uppercase tracking-widest">
             Authorized Personnel Only • Dynamic Governance Protocol v2.5.1
           </p>
         </div>

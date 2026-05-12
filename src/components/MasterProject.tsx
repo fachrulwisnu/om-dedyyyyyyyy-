@@ -315,51 +315,51 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
     <div className={cn("h-full flex flex-col space-y-6 pb-12", isMobile ? "px-2" : "px-0")}>
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-        <div className="bg-blue-900/20 border border-blue-800/50 p-4 rounded-3xl backdrop-blur-sm">
-          <p className="text-[10px] text-blue-400 font-black uppercase tracking-[0.2em] mb-1">STATUS OPEN</p>
-          <h2 className="text-3xl text-white font-black italic">{openCount}</h2>
+        <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/30 p-4 rounded-3xl backdrop-blur-sm">
+          <p className="text-[10px] text-[var(--accent)] font-black uppercase tracking-[0.2em] mb-1">STATUS OPEN</p>
+          <h2 className="text-3xl text-[var(--text-main)] font-black italic">{openCount}</h2>
         </div>
-        <div className="bg-slate-800/40 border border-slate-700/50 p-4 rounded-3xl backdrop-blur-sm">
-          <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em] mb-1">ON QUEUE</p>
-          <h2 className="text-3xl text-white font-black italic">{queueCount}</h2>
+        <div className="bg-[var(--text-sub)]/10 border border-[var(--text-sub)]/30 p-4 rounded-3xl backdrop-blur-sm">
+          <p className="text-[10px] text-[var(--text-sub)] font-black uppercase tracking-[0.2em] mb-1">ON QUEUE</p>
+          <h2 className="text-3xl text-[var(--text-main)] font-black italic">{queueCount}</h2>
         </div>
         <div className="bg-indigo-900/20 border border-indigo-800/50 p-4 rounded-3xl backdrop-blur-sm">
           <p className="text-[10px] text-indigo-400 font-black uppercase tracking-[0.2em] mb-1">ON PROGRESS</p>
-          <h2 className="text-3xl text-white font-black italic">{progressCount}</h2>
+          <h2 className="text-3xl text-[var(--text-main)] font-black italic">{progressCount}</h2>
         </div>
         <div className="bg-emerald-900/20 border border-emerald-800/50 p-4 rounded-3xl backdrop-blur-sm">
           <p className="text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] mb-1">LIVE PROJECTS</p>
-          <h2 className="text-3xl text-white font-black italic">{liveCount}</h2>
+          <h2 className="text-3xl text-[var(--text-main)] font-black italic">{liveCount}</h2>
         </div>
       </div>
 
       {/* Header & Controls */}
-      <div className={cn("flex flex-wrap items-center justify-between gap-6 bg-slate-900/50 p-6 rounded-[2.5rem] border border-slate-800 shadow-2xl", isMobile && "flex-col items-stretch")}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-6 bg-[var(--bg-card)]/50 p-6 rounded-[2.5rem] border border-[var(--border)] shadow-2xl", isMobile && "flex-col items-stretch")}>
         <div className="flex items-center gap-5">
-           <div className="w-16 h-16 bg-indigo-600/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
-              <FolderKanban className="w-8 h-8 text-indigo-400" />
+           <div className="w-16 h-16 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center border border-[var(--accent)]/20 shadow-lg shadow-[var(--accent)]/5">
+              <FolderKanban className="w-8 h-8 text-[var(--accent)]" />
            </div>
            <div>
-              <h2 className="text-2xl font-black text-white italic uppercase tracking-tighter">Master <span className="text-indigo-500">Projects</span></h2>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Central Repository Database</p>
+              <h2 className="text-2xl font-black text-[var(--text-main)] italic uppercase tracking-tighter">Master <span className="text-[var(--accent)]">Projects</span></h2>
+              <p className="text-[10px] text-[var(--text-sub)] font-bold uppercase tracking-[0.2em] mt-1">Central Repository Database</p>
            </div>
         </div>
 
         <div className={cn("flex items-center gap-4", isMobile && "flex-col")}>
            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-sub)]" />
               <input 
                 type="text"
                 placeholder="Search Ticket, Name, PIC..."
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                className="bg-slate-950 border border-slate-800 rounded-2xl pl-12 pr-6 py-3.5 text-xs text-white placeholder-slate-600 outline-none focus:border-indigo-500 transition-all w-72"
+                className="bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl pl-12 pr-6 py-3.5 text-xs text-[var(--text-main)] placeholder-[var(--text-sub)]/50 outline-none focus:border-[var(--accent)] transition-all w-72"
               />
            </div>
            <select 
              value={statusFilter}
              onChange={e => setStatusFilter(e.target.value)}
-             className="bg-slate-950 border border-slate-800 rounded-2xl px-6 py-3.5 text-xs text-indigo-400 font-bold outline-none focus:border-indigo-500 transition-all uppercase"
+             className="bg-[var(--bg-page)] border border-[var(--border)] rounded-2xl px-6 py-3.5 text-xs text-[var(--accent)] font-bold outline-none focus:border-[var(--accent)] transition-all uppercase"
            >
               <option value="ALL">ALL STATUS</option>
               <option value="OPEN">OPEN</option>
@@ -370,7 +370,7 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
            <div className="flex items-center gap-2">
              <button 
                onClick={() => exportMasterProjects(projects)}
-               className="bg-slate-800 hover:bg-slate-700 text-white p-3.5 rounded-2xl transition-all shadow-lg border border-slate-700"
+               className="bg-[var(--bg-card)] hover:bg-[var(--bg-page)] text-[var(--text-main)] p-3.5 rounded-2xl transition-all shadow-lg border border-[var(--border)]"
                title="Download Template"
              >
                  <Download className="w-5 h-5" />
@@ -380,14 +380,14 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
                  setImportSummary(null);
                  setIsImportOpen(true);
                }}
-               className="bg-slate-800 hover:bg-slate-700 text-white p-3.5 rounded-2xl transition-all shadow-lg border border-slate-700"
+               className="bg-[var(--bg-card)] hover:bg-[var(--bg-page)] text-[var(--text-main)] p-3.5 rounded-2xl transition-all shadow-lg border border-[var(--border)]"
                title="Import CSV"
              >
                 <Upload className="w-5 h-5" />
              </button>
              <button 
                onClick={() => setIsAddOpen(true)}
-               className="bg-gradient-to-tr from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white p-3.5 rounded-2xl transition-all shadow-lg shadow-indigo-600/20"
+               className="bg-gradient-to-tr from-[var(--accent)] to-[var(--accent)]/80 hover:from-[var(--accent)]/90 hover:to-[var(--accent)]/70 text-white p-3.5 rounded-2xl transition-all shadow-lg shadow-[var(--accent)]/20"
              >
                 <Plus className="w-5 h-5" />
              </button>
@@ -447,46 +447,46 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
       </AnimatePresence>
 
       {/* Main Container */}
-      <div className="flex-1 bg-slate-900/50 border border-slate-800 rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
+      <div className="flex-1 bg-[var(--bg-card)]/50 border border-[var(--border)] rounded-[2.5rem] overflow-hidden shadow-2xl flex flex-col">
         {/* Header - Desktop Only */}
         {!isMobile && (
-          <div className="grid grid-cols-[120px_1fr_150px_180px_180px_120px] bg-slate-950/50 border-b border-slate-800 px-6 py-5">
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Ticket ID</div>
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Project Name</div>
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Status</div>
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">PIC Name</div>
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">Owner / Div</div>
-            <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic text-center">Actions</div>
+          <div className="grid grid-cols-[120px_1fr_150px_180px_180px_120px] bg-[var(--bg-page)]/50 border-b border-[var(--border)] px-6 py-5">
+            <div className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic">Ticket ID</div>
+            <div className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic">Project Name</div>
+            <div className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic">Status</div>
+            <div className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic">PIC Name</div>
+            <div className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic">Owner / Div</div>
+            <div className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic text-center">Actions</div>
           </div>
         )}
 
-        <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-slate-800/50">
+        <div className="flex-1 overflow-y-auto scrollbar-hide divide-y divide-[var(--border)]/50">
           {loading ? (
             <div className="px-6 py-20 text-center">
               <div className="flex flex-col items-center gap-4">
-                 <RefreshCw className="w-8 h-8 text-indigo-500 animate-spin" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Synchronizing Master Hub...</span>
+                 <RefreshCw className="w-8 h-8 text-[var(--accent)] animate-spin" />
+                 <span className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest">Synchronizing Master Hub...</span>
               </div>
             </div>
           ) : filteredProjects.length === 0 ? (
             <div className="px-6 py-20 text-center">
               <div className="flex flex-col items-center gap-4">
-                 <AlertCircle className="w-10 h-10 text-slate-700" />
-                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Projects Found in the Perimeter</span>
+                 <AlertCircle className="w-10 h-10 text-[var(--text-sub)]/30" />
+                 <span className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest">No Projects Found in the Perimeter</span>
               </div>
             </div>
           ) : paginatedProjects.map((p) => (
             <div 
               key={p.id} 
               className={cn(
-                "group hover:bg-indigo-500/[0.05] transition-all cursor-pointer p-4 md:px-6 md:py-5",
+                "group hover:bg-[var(--accent)]/[0.05] transition-all cursor-pointer p-4 md:px-6 md:py-5",
                 "flex flex-col md:grid md:grid-cols-[120px_1fr_150px_180px_180px_120px] md:items-center gap-4 md:gap-0"
               )}
               onClick={() => handleOpenDetail(p)}
             >
               {/* Ticket ID */}
               <div className="flex items-center justify-between md:block">
-                <span className="px-2 py-1 bg-slate-950 border border-slate-800/80 rounded font-mono text-[10px] text-indigo-400 font-bold group-hover:border-indigo-500/50 transition-colors">
+                <span className="px-2 py-1 bg-[var(--bg-page)] border border-[var(--border)] rounded font-mono text-[10px] text-[var(--accent)] font-bold group-hover:border-[var(--accent)]/50 transition-colors">
                   {p.ticket_id}
                 </span>
                 {isMobile && (
@@ -495,7 +495,7 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
                     p.status === 'DONE' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]" :
                     p.status === 'ON PROGRESS' ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20 shadow-[0_0_15px_rgba(99,102,241,0.1)]" :
                     p.status === 'ON QUEUE' ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
-                    "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                    "bg-[var(--text-sub)]/10 text-[var(--text-sub)] border-[var(--text-sub)]/20"
                   )}>
                     {p.status}
                   </span>
@@ -504,10 +504,10 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
 
               {/* Project Name */}
               <div className="flex-1 min-w-0">
-                <h3 className="text-sm md:text-base font-black text-white italic tracking-tight line-clamp-2 md:line-clamp-1 group-hover:text-indigo-400 transition-colors">
+                <h3 className="text-sm md:text-base font-black text-[var(--text-main)] italic tracking-tight line-clamp-2 md:line-clamp-1 group-hover:text-[var(--accent)] transition-colors">
                   {p.project_name}
                 </h3>
-                <p className="text-[9px] text-slate-600 font-bold tracking-widest uppercase mt-1">
+                <p className="text-[9px] text-[var(--text-sub)] font-bold tracking-widest uppercase mt-1">
                   Updated: {format(new Date(p.updated_at), 'dd MMM yyyy')}
                 </p>
               </div>
@@ -520,7 +520,7 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
                     p.status === 'DONE' ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" :
                     p.status === 'ON PROGRESS' ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" :
                     p.status === 'ON QUEUE' ? "bg-purple-500/10 text-purple-400 border-purple-500/20" :
-                    "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                    "bg-[var(--text-sub)]/10 text-[var(--text-sub)] border-[var(--text-sub)]/20"
                   )}>
                     {p.status}
                   </span>
@@ -529,23 +529,23 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
 
               {/* PIC Name */}
               <div className="flex items-center gap-3">
-                 <div className="shrink-0 w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/50">
-                    <UserIcon className="w-4 h-4 text-indigo-400" />
+                 <div className="shrink-0 w-8 h-8 rounded-full bg-[var(--bg-page)] flex items-center justify-center border border-[var(--accent)]/20 group-hover:border-[var(--accent)]/50">
+                    <UserIcon className="w-4 h-4 text-[var(--accent)]" />
                  </div>
                  <div className="min-w-0">
-                    <p className="text-[10px] md:text-[11px] font-black text-slate-300 uppercase tracking-tight truncate">
+                    <p className="text-[10px] md:text-[11px] font-black text-[var(--text-main)]/80 uppercase tracking-tight truncate">
                       {p.pic_name}
                     </p>
-                    {isMobile && <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">PIC PERSONNEL</p>}
+                    {isMobile && <p className="text-[8px] text-[var(--text-sub)] font-bold uppercase tracking-widest mt-0.5">PIC PERSONNEL</p>}
                  </div>
               </div>
 
               {/* Owner / Div */}
               <div>
-                <p className="text-[10px] md:text-[11px] font-black text-white italic truncate max-w-[150px] md:max-w-none">
+                <p className="text-[10px] md:text-[11px] font-black text-[var(--text-main)] italic truncate max-w-[150px] md:max-w-none">
                   {p.owner_name}
                 </p>
-                <p className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                <p className="text-[9px] text-[var(--text-sub)] font-bold uppercase tracking-widest">
                   {p.div_owner}
                 </p>
               </div>
@@ -553,7 +553,7 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
               {/* Actions */}
               <div className={cn(
                 "flex items-center gap-2",
-                isMobile ? "justify-end pt-2 border-t border-slate-800" : "justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                isMobile ? "justify-end pt-2 border-t border-[var(--border)]" : "justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               )}>
                  <button 
                    onClick={(e) => {
@@ -561,7 +561,7 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
                      handleOpenDetail(p);
                      setTimeout(() => setIsEditMode(true), 100);
                    }}
-                   className="p-2.5 bg-slate-800 hover:bg-amber-600 text-slate-400 hover:text-white rounded-xl transition-all shadow-lg border border-slate-700 flex items-center gap-2"
+                   className="p-2.5 bg-[var(--bg-card)] hover:bg-amber-600 text-[var(--text-sub)] hover:text-white rounded-xl transition-all shadow-lg border border-[var(--border)] flex items-center gap-2"
                    title="Edit Project"
                  >
                    <Activity className="w-4 h-4" />
@@ -572,7 +572,7 @@ export function MasterProject({ user, isMobile }: { user: any, isMobile?: boolea
                      e.stopPropagation();
                      handleOpenAudit(p);
                    }}
-                   className="p-2.5 bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white rounded-xl transition-all shadow-lg border border-slate-700 flex items-center gap-2"
+                   className="p-2.5 bg-[var(--bg-card)] hover:bg-[var(--accent)] text-[var(--text-sub)] hover:text-white rounded-xl transition-all shadow-lg border border-[var(--border)] flex items-center gap-2"
                    title="History & Audit"
                  >
                    <History className="w-4 h-4" />

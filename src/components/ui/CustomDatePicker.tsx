@@ -25,7 +25,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
   const dateValue = selectedDate ? selectedDate.substring(0, 10) : '';
 
   return (
-    <div className={cn("relative w-full group min-h-[42px] bg-[var(--input-bg)] rounded-xl border border-[var(--border-color)] focus-within:border-[var(--primary)] transition-all overflow-hidden shadow-sm", disabled && "opacity-50 cursor-not-allowed")}>
+    <div className={cn("relative w-full group min-h-[42px] bg-[var(--bg-page)] rounded-xl border border-[var(--border)] focus-within:border-[var(--accent)] transition-all overflow-hidden shadow-sm", disabled && "opacity-50 cursor-not-allowed")}>
       <input
         type="date"
         value={dateValue}
@@ -35,7 +35,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         min={minDate ? minDate.toISOString().split('T')[0] : undefined}
         max={maxDate ? maxDate.toISOString().split('T')[0] : undefined}
         className={cn(`
-          absolute inset-0 w-full h-full px-3 py-2.5 bg-transparent text-[var(--text-primary)] text-sm font-medium outline-none cursor-pointer z-10
+          absolute inset-0 w-full h-full px-3 py-2.5 bg-transparent text-[var(--text-main)] text-sm font-medium outline-none cursor-pointer z-10
           /* STRETCH THE NATIVE BUTTON TO COVER THE WHOLE INPUT */
           [&::-webkit-calendar-picker-indicator]:absolute 
           [&::-webkit-calendar-picker-indicator]:top-0 
@@ -48,7 +48,7 @@ export const CustomDatePicker: React.FC<CustomDatePickerProps> = ({
         `, className)}
       />
       {/* CUSTOM ICON MUST HAVE pointer-events-none AND LOWER Z-INDEX */}
-      <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--primary)] w-4 h-4 pointer-events-none z-0 group-hover:opacity-100 opacity-60 transition-colors" />
+      <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[var(--accent)] w-4 h-4 pointer-events-none z-0 group-hover:opacity-100 opacity-60 transition-colors" />
     </div>
   );
 };
