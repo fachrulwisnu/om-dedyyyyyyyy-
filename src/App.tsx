@@ -1144,6 +1144,8 @@ export default function App() {
     return { roots, map };
   }, [filteredTasks]);
 
+  const [revertCount, setRevertCount] = useState(0);
+
   const [ownershipModal, setOwnershipModal] = useState<{
     isOpen: boolean;
     picName: string;
@@ -1180,6 +1182,7 @@ export default function App() {
         type: 'task',
         onCancel: () => {
           setOwnershipModal(prev => ({ ...prev, isOpen: false }));
+          setRevertCount(c => c + 1); // Trigger UI Revert
           fetchData(); // Revert local state
         },
         onConfirm: async () => {
@@ -1510,6 +1513,10 @@ export default function App() {
 
   // --- Auto-Sync Level 1 Tasks to Project Header ---
   useEffect(() => {
+    setOwnershipModal(prev => ({ ...prev, isOpen: false }));
+  }, [selectedProjectId]);
+
+  useEffect(() => {
     if (loading || projects.length === 0 || tasks.length === 0 || isSyncingRef.current) return;
 
     const syncProjects = async () => {
@@ -1545,7 +1552,8 @@ export default function App() {
              
              if (Object.keys(updatePayload).length > 0) {
                console.log(`Syncing project ${project.name} timeline (Expansion Only):`, updatePayload);
-               await handleUpdateProject(project.id, updatePayload);
+               // PASS bypassWarning: true to prevent modal popup during background sync
+               await handleUpdateProject(project.id, updatePayload, { bypassWarning: true });
                
                await taskService.createProjectRescheduleLog({
                  project_id: project.id,
@@ -1571,13 +1579,15 @@ export default function App() {
     return () => clearTimeout(timer);
   }, [tasks, projects.length, loading]);
   
-  const handleUpdateProject = async (id: string, updates: Partial<Project>) => {
+  const handleUpdateProject = async (id: string, updates: Partial<Project>, options?: { onRevert?: () => void, bypassWarning?: boolean }) => {
     const project = projects.find(p => p.id === id);
     if (!project) return;
 
     const isOwner = user?.name?.toLowerCase() === project.pic_name?.toLowerCase();
+    const bypassWarning = options?.bypassWarning;
+    const onRevert = options?.onRevert;
 
-    if (user && !isOwner && !isAdmin && !isSuperadmin) {
+    if (user && !isOwner && !isAdmin && !isSuperadmin && !bypassWarning) {
       // Intercept with warning modal
       setOwnershipModal({
         isOpen: true,
@@ -1586,6 +1596,7 @@ export default function App() {
         type: 'project',
         onCancel: () => {
           setOwnershipModal(prev => ({ ...prev, isOpen: false }));
+          onRevert?.();
           fetchData(); // Rollback local state
         },
         onConfirm: async () => {
@@ -1728,6 +1739,7 @@ export default function App() {
     hierarchicalTasks,
     expandedRows,
     scale,
+    revertCount,
     setRefreshKey,
     handleToggleExpand,
     handleUpdateTask,
@@ -2200,9 +2212,13 @@ export default function App() {
                project={editingProject}
                isOpen={isProjectDetailOpen}
                user={user}
-               onClose={() => setIsProjectDetailOpen(false)}
-               onUpdate={async (id, updates) => {
-                 await handleUpdateProject(id, updates);
+               onClose={() => {
+                 setIsProjectDetailOpen(false);
+                 setOwnershipModal(prev => ({ ...prev, isOpen: false }));
+                 setRevertCount(c => c + 1);
+               }}
+               onUpdate={async (id, updates, onRevert) => {
+                 await handleUpdateProject(id, updates, { onRevert });
                  setNotif("Project details updated successfully");
                }}
                isMobile={isMobile}
@@ -5394,7 +5410,7 @@ const ProjectRedirect = () => {
 };
 
 function GanttDetailView({ 
-  user, users, projectId: propsProjectId, setFocusedProjectId, projects, setProjects, tasks, hierarchicalTasks, expandedRows, scale, 
+  user, users, projectId: propsProjectId, setFocusedProjectId, projects, setProjects, tasks, hierarchicalTasks, expandedRows, scale, revertCount,
   setRefreshKey, handleToggleExpand, handleUpdateTask, handleUpdateProject, handleOpenAudit, handleDeleteTask, 
   setScale, setTasks, onReschedule, onNotif, auditLogs, historyEditLogs, isAdmin, isSuperadmin, isMobile, authLoading
 }: any) {
@@ -6003,13 +6019,14 @@ function GanttDetailView({
                       <div className="space-y-4">
                         {projectTree.roots.map((root: any) => (
                           <MobileTaskCard 
-                            key={root.id}
+                            key={`${root.id}-${revertCount}`}
                             task={root}
                             onToggleExpand={handleToggleExpand}
                             isExpanded={expandedRows.has(root.id)}
                             onUpdateTask={handleUpdateTask}
                             onDeleteTask={handleDeleteTask}
                             expandedRows={expandedRows}
+                            revertCount={revertCount}
                           />
                         ))}
                       </div>
@@ -6025,6 +6042,7 @@ function GanttDetailView({
                           tasks={filteredTasks}
                           projects={projects}
                           expandedRows={expandedRows}
+                          revertCount={revertCount}
                           onToggleExpand={handleToggleExpand}
                           onUpdateTask={handleUpdateTask}
                           onOpenAudit={handleOpenAudit}
@@ -7089,7 +7107,7 @@ function AuditLogTable({ logs }: { logs: ProjectRescheduleLog[] }) {
   );
 }
 
-function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onToggleExpand, onUpdateTask, onOpenAudit, onAddSubTask, onDeleteTask, disabled, isMobile }: any) {
+function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onToggleExpand, onUpdateTask, onOpenAudit, onAddSubTask, onDeleteTask, disabled, isMobile, revertCount }: any) {
   
   const renderTaskRows = (task: any, level: number = 0, index: number = 0, parentTask: any = null) => {
     if (!task) return null;
@@ -7107,7 +7125,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
     const hasControl = isOwner || isAdmin;
 
     return (
-      <React.Fragment key={`${task.custom_id || task.id}-${index}`}>
+      <React.Fragment key={`${task.id}-${index}-${revertCount}`}>
         <tr 
           onClick={() => !isProject && children.length > 0 && onToggleExpand(task.id)}
           className={cn(
@@ -7455,7 +7473,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               );
             }
             return uniqueRoots.map((task: any, idx: number) => {
-              const combinedKey = `${task.custom_id || task.id}-${idx}`;
+              const combinedKey = `${task.id}-${revertCount}-${idx}`;
               return <React.Fragment key={combinedKey}>{renderTaskRows(task, 0, idx, null)}</React.Fragment>;
             });
           })()}
@@ -7465,7 +7483,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
   );
 }
 
-function MobileTaskCard({ task, onToggleExpand, isExpanded, onUpdateTask, onDeleteTask, expandedRows, level = 0, gridStart, totalDuration }: any) {
+function MobileTaskCard({ task, onToggleExpand, isExpanded, onUpdateTask, onDeleteTask, expandedRows, revertCount, level = 0, gridStart, totalDuration }: any) {
   const [isEditing, setIsEditing] = useState(false);
   const hasChildren = task.children && task.children.length > 0;
   
@@ -7603,13 +7621,14 @@ function MobileTaskCard({ task, onToggleExpand, isExpanded, onUpdateTask, onDele
             <div className="p-2">
               {task.children.map((child: any) => (
                 <MobileTaskCard 
-                  key={child.id}
+                  key={`${child.id}-${revertCount}`}
                   task={child}
                   onToggleExpand={onToggleExpand}
                   isExpanded={expandedRows.has(child.id)}
                   onUpdateTask={onUpdateTask}
                   onDeleteTask={onDeleteTask}
                   expandedRows={expandedRows}
+                  revertCount={revertCount}
                   level={level + 1}
                   gridStart={gridStart}
                   totalDuration={totalDuration}

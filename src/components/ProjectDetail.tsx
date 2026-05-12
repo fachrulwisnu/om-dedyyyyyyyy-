@@ -25,7 +25,7 @@ interface ProjectDetailProps {
   isOpen: boolean;
   user: any;
   onClose: () => void;
-  onUpdate: (id: string, updates: Partial<Project>) => Promise<void>;
+  onUpdate: (id: string, updates: Partial<Project>, onRevert?: () => void) => Promise<void>;
   isMobile?: boolean;
 }
 
@@ -72,7 +72,15 @@ export default function ProjectDetail({ project, isOpen, user, onClose, onUpdate
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onUpdate(project.id, editedProject);
+      await onUpdate(project.id, editedProject, () => {
+        // REVERT: Reset local state to original project props
+        if (project) {
+          setEditedProject({ ...project });
+        }
+      });
+      // We don't close immediately here if we want to wait for update success
+      // But typically we close on success.
+      // If handleUpdateProject (in App.tsx) didn't throw error and finished, we close.
       onClose();
     } catch (err) {
       console.error("Failed to update project details:", err);
