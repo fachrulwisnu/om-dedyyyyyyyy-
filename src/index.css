@@ -3,8 +3,41 @@
 @variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    /* Antigravity Light Palette */
+    --bg-page: #F4F7FE;       /* Soft bluish white */
+    --bg-card: #FFFFFF;
+    --bg-sidebar: #FFFFFF;
+    --text-main: #1B2559;     /* Deep Navy for readability */
+    --text-sub: #A3AED0;      /* Muted Slate */
+    --border: #E9EDF7;
+    --accent: #4318FF;        /* Vibrant Blue */
+    
+    /* Semantic aliases */
+    --primary: var(--accent);
+    --success: #01B574;
+    --warning: #FFB547;
+    --danger: #EE5D50;
+    
+    /* Shadows */
+    --shadow-float: 0px 10px 30px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark {
+    --bg-page: #0B1437;
+    --bg-card: #111C44;
+    --bg-sidebar: #080E25;
+    --text-main: #FFFFFF;
+    --text-sub: #A3AED0;
+    --border: #1B254B;
+    --accent: #7551FF;
+    
+    --shadow-float: 0px 20px 50px rgba(0, 0, 0, 0.5);
+  }
+
   body {
-    @apply bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white transition-colors duration-300;
+    @apply bg-[var(--bg-page)] text-[var(--text-main)] transition-colors duration-300;
+    font-family: 'Inter', sans-serif;
   }
 
   /* Custom scrollbar */

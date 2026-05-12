@@ -214,6 +214,8 @@ export const taskService = {
       new_status: p.new_status,
       reason: p.reason,
       requested_by: p.requested_by,
+      swap_date: p.swap_date || null,
+      swap_status: p.swap_status || null,
       status: p.status || 'Pending',
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()

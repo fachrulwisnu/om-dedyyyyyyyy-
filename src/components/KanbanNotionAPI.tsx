@@ -44,8 +44,14 @@ export default function KanbanNotionAPI() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
 
-  const { session } = useAuth();
-  const isPublicView = !session;
+  const { session, currentUser, loading: authLoading } = useAuth();
+  const isPublicView = !session && !currentUser;
+
+  useEffect(() => {
+    const isLoggedIn = !isPublicView;
+    const userIdentifier = session?.user?.email || currentUser?.email || "Unknown";
+    console.log("Current Auth State:", isLoggedIn ? `Logged in as ${userIdentifier}` : "Not Logged In");
+  }, [session, currentUser, isPublicView]);
 
   const fetchSyncedData = async () => {
     setLoading(true);
@@ -57,6 +63,12 @@ export default function KanbanNotionAPI() {
       
       if (error) throw error;
       setData(data || []);
+      // Task 4: Log streams found in DB
+      const uniqueStreams = Array.from(new Set((data || []).map(p => {
+        const raw = p.raw_data || {};
+        return (raw["Type Project"] || "UNCATEGORIZED").trim().toUpperCase();
+      })));
+      console.log("Streams found in DB:", uniqueStreams);
     } catch (err: any) {
       console.error("Error fetching synced data:", err);
     } finally {
@@ -76,15 +88,12 @@ export default function KanbanNotionAPI() {
 
       // SECURITY: Privacy Gate for Public View
       if (isPublicView) {
-        // 1. Hide specific categories
-        if (projectType === "INTERNAL IT" || projectType === "UNCATEGORIZED") {
-          return false;
-        }
+        // 1. Hide specific categories (INTERNAL IT & UNCATEGORIZED)
+        const isInternalStream = ["INTERNAL IT", "UNCATEGORIZED"].includes(projectType);
+        if (isInternalStream) return false;
         
         // 2. Hide Canceled projects
-        if (status === "CANCELED") {
-          return false;
-        }
+        if (status === "CANCELED") return false;
       }
 
       const matchesSearch = 
@@ -270,12 +279,14 @@ export default function KanbanNotionAPI() {
     setIsModalOpen(true);
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="h-screen bg-[#0a0f1d] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-10 h-10 text-indigo-500 animate-spin" />
-          <p className="text-slate-500 font-bold uppercase tracking-widest animate-pulse">Initializing Data Stream...</p>
+          <p className="text-slate-500 font-bold uppercase tracking-widest animate-pulse">
+            {authLoading ? "Verifying Session..." : "Initializing Data Stream..."}
+          </p>
         </div>
       </div>
     );
@@ -335,7 +346,10 @@ export default function KanbanNotionAPI() {
           {selectedStatuses.length === MIGRATION_STATUSES.length && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
         </button>
 
-        {MIGRATION_STATUSES.filter(s => isPublicView ? s.toUpperCase() !== 'CANCELED' : true).map((status) => {
+        {MIGRATION_STATUSES.filter(s => {
+          if (isPublicView && s.toUpperCase() === 'CANCELED') return false;
+          return true;
+        }).map((status) => {
           const count = statusCounts[status] || 0;
           const isActive = selectedStatuses.includes(status);
           return (
@@ -379,8 +393,9 @@ export default function KanbanNotionAPI() {
       {/* Accordion Categories */}
       <div className="space-y-4 mt-6 pb-20">
         {CATEGORY_ORDER.map(category => {
-          // Strict Public Fallback (just in case)
-          if (isPublicView && (category === "INTERNAL IT" || category === "UNCATEGORIZED")) return null;
+          // Dynamic Stream Filtering
+          const isInternal = ["INTERNAL IT", "UNCATEGORIZED"].includes(category.toUpperCase());
+          if (isInternal && isPublicView) return null;
 
           const categoryProjects = groupedProjects[category] || [];
           

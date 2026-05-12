@@ -255,29 +255,20 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
 const StatusBadge = ({ status, type = 'task' }: { status: string, type?: 'project' | 'task' }) => {
   const styles: Record<string, string> = {
-    // Task Status
-    'To Do': 'bg-slate-500/10 text-slate-400 border-slate-500/20',
-    'In Progress': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'On Review': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'Done': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    'Overdue': 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    'Early': 'bg-lime-500/10 text-lime-400 border-lime-500/20',
-    'Hold': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-    'Cancel': 'bg-zinc-900/40 text-zinc-500 border-zinc-800/50',
+    // Task Status (Antigravity Soft Ghost Style)
+    'To Do': 'bg-slate-50 text-slate-500 border-slate-200',
+    'In Progress': 'bg-indigo-50 text-indigo-600 border-indigo-100',
+    'On Review': 'bg-amber-50 text-amber-600 border-amber-100',
+    'Done': 'bg-emerald-50 text-emerald-600 border-emerald-100',
+    'Overdue': 'bg-rose-50 text-rose-600 border-rose-100',
+    'Early': 'bg-lime-50 text-lime-600 border-lime-100',
+    'Hold': 'bg-purple-50 text-purple-600 border-purple-100',
+    'Cancel': 'bg-zinc-50 text-zinc-500 border-zinc-200',
     
-    // Fallbacks
-    'On Progress': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'Review': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'On Hold': 'bg-purple-500/10 text-purple-400 border-purple-500/20',
-
     // Project Status
-    'FSD On Progress': 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    'FSD On Review': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'Development On Progress': 'bg-blue-600/10 text-blue-500 border-blue-600/20',
-    'SIT On Progress': 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    'UAT On Progress': 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    'Project Late': 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    'LIVE': 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    'FSD On Progress': 'bg-blue-50 text-blue-600 border-blue-100',
+    'Development On Progress': 'bg-blue-50 text-blue-600 border-blue-100',
+    'LIVE': 'bg-emerald-50 text-emerald-600 border-emerald-100',
   };
 
   // Add logic for dynamic overdue labels like "Overdue 5 days"
@@ -1956,12 +1947,12 @@ export default function App() {
             </div>
           </div>
         )}
-        <header className={cn("h-20 border-b border-slate-200 dark:border-slate-800/60 flex items-center justify-between bg-white/80 dark:bg-slate-950/50 backdrop-blur-md z-30 shrink-0 transition-colors duration-300", isMobile ? "px-4" : "px-8")}>
+        <header className={cn("h-20 border-b border-[var(--border)] flex items-center justify-between bg-[var(--bg-card)]/80 backdrop-blur-md z-30 shrink-0 transition-colors duration-300", isMobile ? "px-4" : "px-8")}>
           <div className="flex items-center gap-4">
              {isMobile && (
                <button 
                  onClick={() => setIsMobileMenuOpen(true)}
-                 className="p-2 -ml-2 text-slate-400 hover:text-indigo-600 dark:hover:text-white"
+                 className="p-2 -ml-2 text-[var(--text-sub)] hover:text-[var(--accent)]"
                >
                  <Menu className="w-6 h-6" />
                </button>
@@ -1969,14 +1960,14 @@ export default function App() {
              {activeView === 'GANTT_DETAIL' && selectedProjectId && (
                <button 
                  onClick={() => { setActiveView('PROJECTS'); setSelectedProjectId(null); }}
-                 className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors text-slate-500 dark:hover:text-white border border-slate-200 dark:border-transparent"
+                 className="p-2 hover:bg-[var(--bg-page)] rounded-lg transition-colors text-[var(--text-sub)] hover:text-[var(--accent)] border border-[var(--border)]"
                >
                  <ArrowLeft className="w-5 h-5" />
                </button>
              )}
              <div>
-               <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tighter flex items-center gap-3 uppercase italic transition-colors">
-                 {activeView === 'PROJECTS' && <span>OM <span className="text-indigo-600 dark:text-indigo-500">DEDY</span></span>}
+               <h2 className="text-xl font-black text-[var(--text-main)] tracking-tighter flex items-center gap-3 uppercase italic transition-colors">
+                 {activeView === 'PROJECTS' && <span>OM <span className="text-[var(--accent)]">DEDY</span></span>}
                  {activeView === 'KANBAN' && 'Project Status Monitoring'}
                  {activeView === 'PERSONEL' && 'Personel OM DEDY'}
                  {activeView === 'RESCHEDULE' && 'Reschedule Om Dedy'}
@@ -1994,9 +1985,9 @@ export default function App() {
                             const { totalHours, project: p } = projectHeaderStats;
                             return (
                               <>
-                                <div className="bg-slate-100 dark:bg-slate-800/80 px-2 py-1 rounded-md border border-slate-200 dark:border-slate-700 flex items-center gap-1.5 shadow-sm transition-colors">
-                                  <Clock className="w-3 h-3 text-indigo-600 dark:text-indigo-400" />
-                                  <span className="text-[10px] font-black text-slate-600 dark:text-slate-300 tracking-wider uppercase">
+                                <div className="bg-[var(--bg-page)] px-2 py-1 rounded-md border border-[var(--border)] flex items-center gap-1.5 shadow-sm transition-colors">
+                                  <Clock className="w-3 h-3 text-[var(--accent)]" />
+                                  <span className="text-[10px] font-black text-[var(--text-main)] tracking-wider uppercase">
                                     ⏱️ {totalHours.toFixed(1)} HOURS
                                   </span>
                                 </div>
@@ -2004,7 +1995,7 @@ export default function App() {
                                   "px-2 py-1 rounded-md border text-[10px] font-black tracking-widest uppercase transition-colors",
                                   p?.status === ProjectStatus.LIVE ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" :
                                   p?.status === ProjectStatus.IN_PROGRESS || p?.status === ProjectStatus.FSD_PROGRESS ? "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400" :
-                                  "bg-slate-200 dark:bg-slate-800/50 border-slate-300 dark:border-slate-700 text-slate-500 dark:text-slate-500"
+                                  "bg-[var(--bg-card)] border-[var(--border)] text-[var(--text-sub)]"
                                 )}>
                                   {p?.status === ProjectStatus.IN_PROGRESS || p?.status === ProjectStatus.FSD_PROGRESS ? 'FSD ON PROGRESS' : p?.status || 'UNKNOWN'}
                                 </div>
@@ -2016,17 +2007,17 @@ export default function App() {
                     ) : 'Om Dedy Timeline'
                   )}
                </h2>
-               <p className="text-[9px] text-slate-400 dark:text-slate-600 font-black uppercase tracking-[0.3em] transition-colors">WITH OM DEDY EVERYTHING WILL BE DELIVERED</p>
+               <p className="text-[9px] text-[var(--text-sub)] font-black uppercase tracking-[0.3em] transition-colors">WITH OM DEDY EVERYTHING WILL BE DELIVERED</p>
              </div>
           </div>
 
              <div className="flex items-center gap-4">
               {activeView === 'GANTT_DETAIL' && (
-                <div className="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-800 scale-90 sm:scale-100 origin-right">
+                <div className="flex bg-[var(--bg-page)] p-1 rounded-lg border border-[var(--border)] scale-90 sm:scale-100 origin-right">
                   {isMobile ? (
                     <button
                       onClick={() => setScale(scale === 'DAY' ? 'WEEK' : scale === 'WEEK' ? 'MONTH' : 'DAY')}
-                      className="px-4 py-1.5 rounded-md text-[10px] font-black tracking-widest bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 capitalize shadow-sm transition-all"
+                      className="px-4 py-1.5 rounded-md text-[10px] font-black tracking-widest bg-[var(--bg-card)] text-[var(--accent)] capitalize shadow-sm transition-all"
                     >
                       {scale}
                     </button>
@@ -2038,8 +2029,8 @@ export default function App() {
                         className={cn(
                           "px-3 py-1 rounded-md text-[10px] font-bold tracking-wider transition-all",
                           scale === s 
-                            ? "bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-sm" 
-                            : "text-slate-500 dark:text-slate-500 hover:text-slate-900 dark:hover:text-slate-300"
+                            ? "bg-[var(--bg-card)] text-[var(--accent)] shadow-sm" 
+                            : "text-[var(--text-sub)] hover:text-[var(--text-main)]"
                         )}
                       >
                         {s}
@@ -2055,9 +2046,9 @@ export default function App() {
                     navigator.clipboard.writeText(window.location.href);
                     setNotif("🔗 Public Link Copied to Clipboard");
                   }}
-                  className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border border-slate-700 transition-all group"
+                  className="flex items-center gap-2 bg-[var(--bg-card)] hover:bg-[var(--bg-page)] text-[var(--text-main)] px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest border border-[var(--border)] transition-all group shadow-sm"
                 >
-                  <ExternalLink className="w-3.5 h-3.5 text-indigo-400 group-hover:scale-110 transition-transform" />
+                  <ExternalLink className="w-3.5 h-3.5 text-[var(--accent)] group-hover:scale-110 transition-transform" />
                   Copy Public Link
                 </button>
               )}
@@ -2065,12 +2056,12 @@ export default function App() {
             {user && (
               <button 
                 onClick={() => setIsProfileModalOpen(true)}
-                className="p-2 text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-colors"
+                className="p-2 text-[var(--text-sub)] hover:text-[var(--accent)] transition-colors"
               >
                 <SettingsIcon className="w-5 h-5" />
               </button>
             )}
-               <div className="pl-4 border-l border-slate-200 dark:border-slate-800 ml-2">
+               <div className="pl-4 border-l border-[var(--border)] ml-2">
                  <ThemeToggle />
                </div>
              </div>
@@ -2214,6 +2205,7 @@ export default function App() {
                user={user}
                onClose={() => {
                  setIsProjectDetailOpen(false);
+                 setEditingProject(null);
                  setOwnershipModal(prev => ({ ...prev, isOpen: false }));
                  setRevertCount(c => c + 1);
                }}
@@ -2299,18 +2291,18 @@ export default function App() {
 
                     if (activeAuditTab === 'HISTORY_EDIT') {
                       return (
-                        <div className="overflow-x-auto bg-[#0F111A] rounded-lg border border-slate-800">
-                          <table className="w-full text-left text-[10px] text-slate-300">
-                            <thead className="bg-[#16192B] text-slate-500 uppercase font-black tracking-widest">
+                        <div className="overflow-x-auto bg-[var(--bg-card)] rounded-2xl border border-[var(--border-color)] shadow-sm">
+                          <table className="w-full text-left text-[10px] text-[var(--text-primary)]">
+                            <thead className="bg-[var(--bg-main)] text-[var(--text-secondary)] uppercase font-black tracking-widest border-b border-[var(--border-color)]">
                               <tr>
-                                <th className="px-4 py-3 border-b border-slate-800">PIC Name</th>
-                                <th className="px-4 py-3 border-b border-slate-800">Date Editing</th>
-                                <th className="px-4 py-3 border-b border-slate-800">Field</th>
-                                <th className="px-4 py-3 border-b border-slate-800">Before</th>
-                                <th className="px-4 py-3 border-b border-slate-800">After</th>
+                                <th className="px-4 py-3">PIC Name</th>
+                                <th className="px-4 py-3">Date Editing</th>
+                                <th className="px-4 py-3">Field</th>
+                                <th className="px-4 py-3">Before</th>
+                                <th className="px-4 py-3">After</th>
                               </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-800">
+                            <tbody className="divide-y divide-[var(--border-color)]">
                               {taskHistoryLogs.length === 0 ? (
                                 <tr>
                                   <td colSpan={5} className="px-4 py-12 text-center text-slate-500 italic">
@@ -3697,8 +3689,8 @@ function PortfolioDashboard({
                 return (
                   <motion.div
                     key={combinedKey}
-                    whileHover={{ y: -4 }}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 cursor-pointer hover:border-indigo-500/50 transition-all group relative overflow-hidden shadow-sm hover:shadow-xl dark:shadow-none"
+                    whileHover={{ y: -8 }}
+                    className="bg-[var(--bg-card)] border border-[var(--border-color)] rounded-2xl p-6 cursor-pointer hover:border-[var(--primary)]/50 transition-all group relative overflow-hidden shadow-[var(--shadow-float)]"
                   >
               <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 {user && (
@@ -3707,7 +3699,7 @@ function PortfolioDashboard({
                       e.stopPropagation();
                       onReschedule(p);
                     }}
-                    className="p-2 bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 hover:border-indigo-200 dark:hover:border-indigo-500/50"
+                    className="p-2 bg-[var(--bg-card)] hover:bg-[var(--bg-main)] text-[var(--text-secondary)] hover:text-[var(--primary)] rounded-lg transition-colors border border-[var(--border-color)] hover:border-[var(--primary)]/50"
                     title="Reschedule Project"
                   >
                     <Calendar className="w-3.5 h-3.5" />
@@ -3720,7 +3712,7 @@ function PortfolioDashboard({
                       setEditingProject(p);
                       setIsProjectDetailOpen(true);
                     }}
-                    className="p-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600"
+                    className="p-2 bg-white hover:bg-slate-50 text-[var(--text-sub)] hover:text-[var(--primary)] rounded-lg transition-colors border border-[var(--border-subtle)] hover:border-slate-300"
                     title="Edit Project Details"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
@@ -3732,7 +3724,7 @@ function PortfolioDashboard({
                       e.stopPropagation();
                       setDeleteId(p.id);
                     }}
-                    className="p-2 bg-white dark:bg-slate-800 hover:bg-rose-50 dark:hover:bg-rose-500/20 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg transition-colors border border-slate-200 dark:border-slate-700 hover:border-rose-200 dark:hover:border-rose-500/50"
+                    className="p-2 bg-white hover:bg-rose-50 text-[var(--text-sub)] hover:text-rose-500 rounded-lg transition-colors border border-[var(--border-subtle)] hover:border-rose-200"
                     title="Archive Project"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -3742,8 +3734,8 @@ function PortfolioDashboard({
 
                   <div onClick={() => onOpenProject(p.id)}>
                 <div className="flex justify-between items-start mb-6">
-                  <div className="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-xl flex items-center justify-center group-hover:bg-indigo-500/10 transition-all">
-                    <FolderKanban className="w-6 h-6 text-slate-400 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
+                  <div className="w-12 h-12 bg-[var(--bg-main)] rounded-xl flex items-center justify-center group-hover:bg-[var(--primary)]/10 transition-all">
+                    <FolderKanban className="w-6 h-6 text-[var(--text-sub)] group-hover:text-[var(--primary)] transition-colors" />
                   </div>
                   <div onClick={(e) => e.stopPropagation()}>
                     <ProjectStatusSelector status={p.status} onUpdate={(v) => onUpdateProject(p.id, { status: v })} disabled={!user} />
@@ -3758,61 +3750,61 @@ function PortfolioDashboard({
                       setNotif('Project title synchronized');
                     }
                   }}
-                  className="text-lg font-bold text-slate-900 dark:text-white mb-2 bg-transparent border-none outline-none focus:text-indigo-600 dark:focus:text-indigo-400 w-full transition-colors"
+                  className="text-lg font-bold text-[var(--text-main)] mb-2 bg-transparent border-none outline-none focus:text-[var(--primary)] w-full transition-colors"
                   placeholder="Untitled Project"
                   disabled={!user}
                 />
                 
                 <div className="flex flex-col gap-1.5 mb-2">
                   {p.global_status && (
-                    <div className="flex items-center gap-2 bg-indigo-50 dark:bg-indigo-500/5 px-2 py-1 rounded border border-indigo-100 dark:border-indigo-500/10 mb-1 transition-colors">
-                      <Zap className="w-3 h-3 text-indigo-400" />
-                      <span className="text-[9px] font-black text-indigo-400 uppercase tracking-widest italic">{p.global_status}</span>
+                    <div className="flex items-center gap-2 bg-blue-50 px-2 py-1 rounded border border-blue-100 mb-1 transition-colors">
+                      <Zap className="w-3 h-3 text-[var(--primary)]" />
+                      <span className="text-[9px] font-black text-[var(--primary)] uppercase tracking-widest italic">{p.global_status}</span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                    <UserIcon className="w-3 h-3 text-indigo-500" />
-                    <span>PIC: <span className="text-slate-900 dark:text-slate-300 transition-colors uppercase">{p.pic_name || p.leader_email || 'Unassigned'}</span></span>
+                  <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                    <UserIcon className="w-3 h-3 text-[var(--primary)]" />
+                    <span>PIC: <span className="text-[var(--text-primary)] transition-colors font-bold uppercase">{p.pic_name || p.leader_email || 'Unassigned'}</span></span>
                   </div>
                   {(p.owner_name || p.div_owner) && (
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                      <ShieldCheck className="w-3 h-3 text-indigo-400" />
-                      <span>OWNER: <span className="text-slate-900 dark:text-slate-300 transition-colors uppercase">{p.owner_name || '-'} ({p.div_owner || '-'})</span></span>
+                    <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                      <ShieldCheck className="w-3 h-3 text-[var(--secondary)]" />
+                      <span>OWNER: <span className="text-[var(--text-primary)] transition-colors font-bold uppercase">{p.owner_name || '-'} ({p.div_owner || '-'})</span></span>
                     </div>
                   )}
-                  <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                    <Clock className="w-3 h-3 text-indigo-500" />
-                    <span>MAN HOURS: <span className="text-slate-700 dark:text-slate-300 transition-colors">
+                  <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-secondary)] uppercase tracking-widest">
+                    <Clock className="w-3 h-3 text-[var(--primary)]" />
+                    <span>MAN HOURS: <span className="text-[var(--text-primary)] transition-colors font-bold">
                       {tasks
                         .filter(t => t.project_id === p.id && t.level === 1)
                         .reduce((sum, t) => sum + (Number(t.man_hours) || 0), 0)
                         .toFixed(1)}
                     </span></span>
                   </div>
-                  <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                    <Clock className="w-3 h-3 text-slate-600" />
-                    <span>Timeline: <span className="text-slate-700 dark:text-slate-300 font-mono tracking-tighter transition-colors">
+                  <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-sub)] uppercase tracking-widest">
+                    <Calendar className="w-3 h-3 text-[var(--primary)]" />
+                    <span>Timeline: <span className="text-[var(--text-main)] font-mono tracking-tighter transition-colors font-bold">
                       {p.start_date ? format(new Date(p.start_date), 'MMM dd') : 'Belum Set'} - {p.end_date ? format(new Date(p.end_date), 'MMM dd, yyyy') : 'Belum Set'}
                     </span></span>
                   </div>
                 </div>
 
                 {/* Add this inside the card body, below the MAN HOURS / TIMELINE section */}
-                <div className="mt-3 pt-3 border-t border-slate-200 dark:border-gray-700/50">
+                <div className="mt-3 pt-3 border-t border-[var(--border-color)]">
                   <div className="flex items-start gap-2 text-[11px]">
-                    <FileText className="w-3.5 h-3.5 text-indigo-500 dark:text-blue-400 shrink-0 mt-0.5" />
+                    <FileText className="w-3.5 h-3.5 text-[var(--primary)] shrink-0 mt-0.5" />
                     <div className="flex flex-col">
-                      <span className="text-slate-500 dark:text-gray-500 font-semibold uppercase text-[9px]">Project Diajukan</span>
-                      <span className="text-slate-700 dark:text-gray-300 line-clamp-2 italic" title={p.project_diajukan || "Belum ada informasi"}>
+                      <span className="text-[var(--text-secondary)] font-semibold uppercase text-[9px]">Project Diajukan</span>
+                      <span className="text-[var(--text-primary)] line-clamp-2 italic" title={p.project_diajukan || "Belum ada informasi"}>
                         {p.project_diajukan || "-"}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-600 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-[var(--text-secondary)] mt-4 pt-4 border-t border-[var(--border-color)] group-hover:text-[var(--primary)] transition-colors">
                   <span>View Full Timeline</span>
-                  <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 text-indigo-400" />
+                  <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 text-[var(--primary)]" />
                 </div>
               </div>
             </motion.div>
@@ -3839,12 +3831,12 @@ function PortfolioDashboard({
 }
 
 const SCHEDULE_STATUS_COLORS: Record<string, string> = {
-  'WFO': 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_8px_rgba(16,185,129,0.1)]',
-  'WFH': 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20 shadow-[0_0_8px_rgba(99,102,241,0.1)]',
-  'WFC': 'text-amber-400 bg-amber-500/10 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]',
-  'A2': 'text-amber-400 bg-amber-500/10 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]',
-  'LIBUR': 'text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.1)]',
-  'LATE': 'text-rose-400 bg-rose-500/10 border-rose-500/20 shadow-[0_0_8px_rgba(244,63,94,0.1)]',
+  'WFO': 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/20 dark:bg-emerald-500/10 border-emerald-500/30 dark:border-emerald-500/20 shadow-sm',
+  'WFH': 'text-blue-700 dark:text-blue-400 bg-blue-500/20 dark:bg-blue-500/10 border-blue-500/30 dark:border-blue-500/20 shadow-sm',
+  'WFC': 'text-amber-700 dark:text-amber-400 bg-amber-500/20 dark:bg-amber-500/10 border-amber-500/30 dark:border-amber-500/20 shadow-sm',
+  'A2': 'text-indigo-700 dark:text-indigo-400 bg-indigo-500/20 dark:bg-indigo-500/10 border-indigo-500/30 dark:border-indigo-500/20 shadow-sm',
+  'LIBUR': 'text-rose-700 dark:text-rose-400 bg-rose-500/20 dark:bg-rose-500/10 border-rose-500/30 dark:border-rose-500/20 shadow-sm',
+  'LATE': 'text-rose-700 dark:text-rose-400 bg-rose-500/20 dark:bg-rose-500/10 border-rose-500/30 dark:border-rose-500/20 shadow-sm',
 };
 
 function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, setOwnershipModal, onNotif, isMobile }: { 
@@ -4378,69 +4370,69 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
 
       {/* Monthly Statistics Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 flex items-center gap-4 group hover:bg-emerald-500/5 transition-all">
-          <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
-            < Rocket className="w-6 h-6 text-emerald-400" />
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-5 flex items-center gap-4 group hover:bg-[var(--bg-page)] transition-all shadow-sm">
+          <div className="w-12 h-12 bg-[var(--success)]/10 rounded-2xl flex items-center justify-center border border-[var(--success)]/20 shadow-lg shadow-[var(--success)]/5">
+            <Rocket className="w-6 h-6 text-[var(--success)]" />
           </div>
           <div>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total WFO</p>
-            <h4 className="text-2xl font-black text-white italic">{stats.WFO}</h4>
+            <p className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] mb-1">Total WFO</p>
+            <h4 className="text-2xl font-black text-[var(--text-main)] italic">{stats.WFO}</h4>
           </div>
         </div>
-        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 flex items-center gap-4 group hover:bg-indigo-500/5 transition-all">
-          <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
-            <Activity className="w-6 h-6 text-indigo-400" />
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-5 flex items-center gap-4 group hover:bg-[var(--bg-page)] transition-all shadow-sm">
+          <div className="w-12 h-12 bg-[var(--accent)]/10 rounded-2xl flex items-center justify-center border border-[var(--accent)]/20 shadow-lg shadow-[var(--accent)]/5">
+            <Activity className="w-6 h-6 text-[var(--accent)]" />
           </div>
           <div>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Total WFH</p>
-            <h4 className="text-2xl font-black text-white italic">{stats.WFH}</h4>
+            <p className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] mb-1">Total WFH</p>
+            <h4 className="text-2xl font-black text-[var(--text-main)] italic">{stats.WFH}</h4>
           </div>
         </div>
-        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 flex items-center gap-4 group hover:bg-rose-500/5 transition-all">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-5 flex items-center gap-4 group hover:bg-rose-500/5 transition-all shadow-sm">
           <div className="w-12 h-12 bg-rose-500/10 rounded-2xl flex items-center justify-center border border-rose-500/20 shadow-lg shadow-rose-500/5">
-            <Filter className="w-6 h-6 text-rose-400" />
+            <Filter className="w-6 h-6 text-rose-500" />
           </div>
           <div>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Absence/Libur</p>
-            <h4 className="text-2xl font-black text-white italic">{stats.CUTI_LIBUR}</h4>
+            <p className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] mb-1">Absence/Libur</p>
+            <h4 className="text-2xl font-black text-[var(--text-main)] italic">{stats.CUTI_LIBUR}</h4>
           </div>
         </div>
-        <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-5 flex items-center gap-4 group hover:bg-amber-500/5 transition-all">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-5 flex items-center gap-4 group hover:bg-amber-500/5 transition-all shadow-sm">
           <div className="w-12 h-12 bg-amber-500/10 rounded-2xl flex items-center justify-center border border-amber-500/20 shadow-lg shadow-amber-500/5">
-            <LayoutGrid className="w-6 h-6 text-amber-400" />
+            <LayoutGrid className="w-6 h-6 text-amber-500" />
           </div>
           <div>
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mb-1">Outstation/WFC</p>
-            <h4 className="text-2xl font-black text-white italic">{stats.WFC}</h4>
+            <p className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] mb-1">Outstation/WFC</p>
+            <h4 className="text-2xl font-black text-[var(--text-main)] italic">{stats.WFC}</h4>
           </div>
         </div>
       </div>
 
-      <div className="bg-slate-900/30 border border-slate-800/80 rounded-[2.5rem] overflow-hidden flex flex-col backdrop-blur-xl shadow-2xl">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-[2.5rem] overflow-hidden flex flex-col backdrop-blur-xl shadow-2xl">
         <div className="overflow-auto relative min-h-[500px]">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="bg-slate-900/90 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md">
-                <th className="sticky left-0 z-50 bg-slate-950 px-8 py-5 border-r border-slate-800 min-w-[240px] text-left">
+              <tr className="bg-[var(--bg-card)] border-b border-[var(--border)] sticky top-0 z-40 backdrop-blur-md">
+                <th className="sticky left-0 z-50 bg-[var(--bg-card)] px-8 py-5 border-r border-[var(--border)] min-w-[240px] text-left">
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">PIC RESOURCE</span>
+                    <div className="w-2 h-2 rounded-full bg-[var(--accent)] animate-pulse" />
+                    <span className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.3em]">PIC RESOURCE</span>
                   </div>
                 </th>
                 {days.map((d, di) => (
                   <th key={getSafeKey({id: d.toISOString()}, di, 'omdedy-header')} className={cn(
-                    "px-4 py-5 border-r border-slate-800/20 min-w-[70px] transition-all",
-                    isToday(d) ? "bg-indigo-500/20 ring-1 ring-inset ring-indigo-500/30" : "hover:bg-white/[0.02]"
+                    "px-4 py-5 border-r border-[var(--border)]/10 min-w-[70px] transition-all",
+                    isToday(d) ? "bg-[var(--accent)]/10 ring-1 ring-inset ring-[var(--accent)]/30" : "hover:bg-[var(--accent)]/5"
                   )}>
                     <div className="flex flex-col gap-1 items-center relative group/header">
                        <span className={cn(
                          "text-xl font-black italic tracking-tighter",
-                         isToday(d) ? "text-indigo-400" : (HOLIDAYS_2026[format(d, 'yyyy-MM-dd')] ? "text-rose-500" : (isWeekend(d) ? "text-rose-500/80" : "text-white"))
+                         isToday(d) ? "text-[var(--accent)]" : (HOLIDAYS_2026[format(d, 'yyyy-MM-dd')] ? "text-rose-500" : (isWeekend(d) ? "text-rose-500/80" : "text-[var(--text-main)]"))
                        )}>
                          {format(d, 'dd')}
                        </span>
                        <span className={cn(
-                         "text-[8px] font-black text-slate-500 uppercase tracking-widest",
+                         "text-[8px] font-black text-[var(--text-sub)] uppercase tracking-widest",
                          CUTI_BERSAMA_2026[format(d, 'yyyy-MM-dd')] && "text-amber-500"
                        )}>
                          {format(d, 'EEE')}
@@ -4461,33 +4453,33 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
                 <tr>
                   <td colSpan={days.length + 1} className="py-32">
                      <div className="flex flex-col items-center gap-4">
-                        <Activity className="w-10 h-10 text-indigo-500 animate-pulse" />
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em]">Synchronizing Capacity Grid...</p>
+                        <Activity className="w-10 h-10 text-[var(--primary)] animate-pulse" />
+                        <p className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.4em]">Synchronizing Capacity Grid...</p>
                      </div>
                   </td>
                 </tr>
               ) : pics.length === 0 ? (
                 <tr>
                    <td colSpan={days.length + 1} className="py-20 text-center">
-                     <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest italic">No PIC Data Available for this period</p>
+                     <p className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-widest italic">No PIC Data Available for this period</p>
                    </td>
                 </tr>
               ) : pics.map((pic, pi) => (
-                <tr key={getSafeKey({id: pic}, pi, 'resource-row')} className="group border-b border-white/[0.02] hover:bg-white/[0.01] transition-all">
-                   <td className="sticky left-0 z-30 bg-slate-950/95 backdrop-blur-md px-6 py-4 border-r border-slate-800 transition-colors">
+                <tr key={getSafeKey({id: pic}, pi, 'resource-row')} className="group border-b border-[var(--border)] hover:bg-[var(--bg-page)] transition-all">
+                   <td className="sticky left-0 z-30 bg-[var(--bg-card)] px-6 py-4 border-r border-[var(--border)] transition-colors">
                      <div className="flex flex-col gap-1.5">
-                       <span className="font-black text-sm italic text-slate-300 tracking-tighter group-hover:text-indigo-400">
+                       <span className="font-black text-sm italic text-[var(--text-main)] tracking-tighter group-hover:text-[var(--accent)]">
                          {pic}
                        </span>
                        <div className="flex items-center gap-2">
-                         <div className="flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
-                           <span className="text-[8px] font-black text-emerald-500">O: {picStats[pic]?.WFO || 0}</span>
+                         <div className="flex items-center gap-1 bg-[var(--success)]/10 px-1.5 py-0.5 rounded-md border border-[var(--success)]/20">
+                           <span className="text-[8px] font-black text-[var(--success)]">O: {picStats[pic]?.WFO || 0}</span>
                          </div>
-                         <div className="flex items-center gap-1 bg-indigo-500/10 px-1.5 py-0.5 rounded-md border border-indigo-500/20">
-                           <span className="text-[8px] font-black text-indigo-400">H: {picStats[pic]?.WFH || 0}</span>
+                         <div className="flex items-center gap-1 bg-[var(--accent)]/10 px-1.5 py-0.5 rounded-md border border-[var(--accent)]/20">
+                           <span className="text-[8px] font-black text-[var(--accent)]">H: {picStats[pic]?.WFH || 0}</span>
                          </div>
-                         <div className="flex items-center gap-1 bg-slate-800 px-1.5 py-0.5 rounded-md border border-slate-700">
-                           <span className="text-[8px] font-black text-slate-400">T: {picStats[pic]?.TOTAL || 0}</span>
+                         <div className="flex items-center gap-1 bg-[var(--bg-page)] px-1.5 py-0.5 rounded-md border border-[var(--border)]">
+                           <span className="text-[8px] font-black text-[var(--text-sub)]">T: {picStats[pic]?.TOTAL || 0}</span>
                          </div>
                        </div>
                      </div>
@@ -4502,8 +4494,8 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
                      
                      return (
                        <td key={getSafeKey({id: `${pic}-${dateKey}`}, di, 'omdedy-cell')} className={cn(
-                         "p-2 border-r border-slate-800/10 text-center relative group/cell",
-                         isToday(d) && "bg-indigo-500/5",
+                         "p-2 border-r border-[var(--border)]/10 text-center relative group/cell",
+                         isToday(d) && "bg-[var(--accent)]/5",
                          holiday && "bg-rose-500/5",
                          cuti && "bg-amber-500/5"
                        )}>
@@ -4679,7 +4671,13 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
                               selectedDate={requestModal.swapDate || ''}
                               onChange={(date) => {
                                 const swapCurrentStatus = scheduleGrid[requestModal.pic]?.[date] || '';
-                                setRequestModal({ ...requestModal, swapDate: date, swapCurrentStatus });
+                                // 🔥 UX: Auto-suggest the original status for the substitute date
+                                setRequestModal({ 
+                                  ...requestModal, 
+                                  swapDate: date, 
+                                  swapCurrentStatus,
+                                  swapStatus: requestModal.currentStatus // Suggest the original status
+                                });
                               }}
                             />
                           </div>
@@ -4892,10 +4890,10 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
         </div>
       )}
 
-      <div className="bg-slate-900/50 border border-slate-800 p-6 rounded-[2rem] flex flex-wrap gap-8 items-center backdrop-blur-md">
-         <div className="flex items-center gap-3 pr-8 border-r border-slate-800">
-            <Filter className="w-4 h-4 text-slate-500" />
-            <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">Status Legend</span>
+      <div className="bg-[var(--bg-card)]/80 backdrop-blur-md border border-[var(--border)] p-6 rounded-[2rem] flex flex-wrap gap-8 items-center">
+         <div className="flex items-center gap-3 pr-8 border-r border-[var(--border)]">
+            <Filter className="w-4 h-4 text-[var(--text-sub)]" />
+            <span className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.3em]">Status Legend</span>
          </div>
          {[
            { label: 'WFO - Work From Office', color: 'emerald', code: 'WFO' },
@@ -4908,7 +4906,7 @@ function OmDedySchedule({ user, users, setActiveView, isAdmin, isSuperadmin, set
                 "w-4 h-4 rounded-lg border",
                 SCHEDULE_STATUS_COLORS[item.code]
               )} />
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{item.label}</span>
+              <span className="text-[10px] font-bold text-[var(--text-sub)] uppercase tracking-widest">{item.label}</span>
            </div>
          ))}
       </div>
@@ -5096,13 +5094,13 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
         ) : (
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-slate-800 bg-slate-900/50">
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Nama PIC</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Email PIC</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Password</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Access Level</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Role</th>
-                <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] text-right">Action</th>
+              <tr className="border-b border-[var(--border-subtle)] bg-[var(--bg-main)]">
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Nama PIC</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Email PIC</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Password</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Access Level</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Role</th>
+                <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-[0.2em] text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/50">
@@ -5113,30 +5111,30 @@ function PersonelManagement({ users, projects, currentUser, onRefresh, isAdmin, 
                 return (
                   <tr 
                     key={personnelKey} 
-                    className="hover:bg-indigo-500/5 transition-all group cursor-pointer border-b border-slate-800/30"
+                    className="hover:bg-[var(--bg-main)] transition-all group cursor-pointer border-b border-[var(--border-subtle)]"
                     onClick={() => setSelectedPIC(u)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-[10px] text-indigo-400 uppercase">
+                        <div className="w-8 h-8 rounded-full bg-[var(--bg-main)] border border-[var(--border-subtle)] flex items-center justify-center font-bold text-[10px] text-[var(--primary)] uppercase">
                           {u.name?.charAt(0)}
                         </div>
-                        <span className="font-bold text-slate-200">{u.name}</span>
+                        <span className="font-bold text-[var(--text-main)]">{u.name}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                       <span className="text-[11px] text-slate-400 font-mono">{u.email}</span>
+                       <span className="text-[11px] text-[var(--text-sub)] font-mono">{u.email}</span>
                     </td>
                     <td className="px-6 py-4">
-                       <span className="text-[11px] text-slate-500 font-mono">••••••••</span>
+                       <span className="text-[11px] text-[var(--text-sub)]/30 font-mono">••••••••</span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-wider">
+                      <span className="px-2 py-1 rounded bg-[var(--primary)]/10 border border-[var(--primary)]/20 text-[var(--primary)] text-[10px] font-black uppercase tracking-wider">
                         {u.access_level}
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-black text-slate-600 text-[10px] uppercase tracking-[0.15em]">{u.role}</span>
+                      <span className="font-black text-[var(--text-sub)] text-[10px] uppercase tracking-[0.15em]">{u.role}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -5249,7 +5247,7 @@ function KanbanView({ projects, tasks, onOpenGantt, onUpdateProject }: { project
   const [projectSearch, setProjectSearch] = useState('');
 
   const KANBAN_COLUMNS = [
-    { id: 'To Do', title: 'TO DO / ON QUEUE', color: 'bg-slate-500' },
+    { id: 'To Do', title: 'TO DO / ON QUEUE', color: 'bg-slate-400 dark:bg-slate-500' },
     { id: 'FSD On Progress', title: 'FSD ON PROGRESS', color: 'bg-blue-500' },
     { id: 'Development On Progress', title: 'DEV ON PROGRESS', color: 'bg-indigo-500' },
     { id: 'SIT On Progress', title: 'SIT ON PROGRESS', color: 'bg-cyan-500' },
@@ -5282,30 +5280,30 @@ function KanbanView({ projects, tasks, onOpenGantt, onUpdateProject }: { project
 
   return (
     <div className="flex flex-col h-full space-y-6">
-      <header className="sticky top-0 z-20 bg-white/80 dark:bg-[#020617]/80 backdrop-blur-md py-4 border-b border-slate-200 dark:border-slate-800/50 mb-6 flex flex-wrap items-center justify-between gap-4 transition-colors">
+      <header className="sticky top-0 z-20 bg-[var(--bg-card)]/80 backdrop-blur-md py-4 border-b border-[var(--border)] mb-6 flex flex-wrap items-center justify-between gap-4 transition-colors">
         <div className="flex items-center gap-4 flex-1 max-w-2xl min-w-[300px]">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--text-sub)]" />
             <input 
               type="text"
               placeholder="Filter Project Name..."
               value={projectSearch}
               onChange={(e) => setProjectSearch(e.target.value)}
-              className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl pl-9 pr-4 py-2 text-[11px] text-slate-900 dark:text-slate-300 focus:border-indigo-500 outline-none transition-all shadow-inner dark:shadow-none"
+              className="w-full bg-[var(--bg-page)]/50 border border-[var(--border)] rounded-xl pl-9 pr-4 py-2 text-[11px] text-[var(--text-main)] focus:border-[var(--accent)] outline-none transition-all shadow-inner dark:shadow-none"
             />
           </div>
           <select 
             value={picFilter}
             onChange={(e) => setPicFilter(e.target.value)}
-            className="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 text-[11px] text-slate-700 dark:text-slate-400 outline-none transition-all"
+            className="bg-[var(--bg-page)]/50 border border-[var(--border)] rounded-xl px-4 py-2 text-[11px] text-[var(--text-sub)] outline-none transition-all"
           >
             <option value="all">All PIC</option>
             {uniquePics.map(pic => <option key={pic} value={pic}>{pic}</option>)}
           </select>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-lg">
+        <div className="flex items-center gap-2 px-3 py-1 bg-[var(--bg-page)]/50 border border-[var(--border)] rounded-lg">
           <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Real-time Sync Active</span>
+          <span className="text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">Real-time Sync Active</span>
         </div>
       </header>
 
@@ -5315,13 +5313,13 @@ function KanbanView({ projects, tasks, onOpenGantt, onUpdateProject }: { project
             const colProjects = getProjectsByStatus(col.id);
 
             return (
-              <div key={getSafeKey(col, i, 'kanban-col')} className="flex-1 w-[350px] min-w-[350px] shrink-0 bg-slate-100/50 dark:bg-slate-900/30 rounded-2xl border border-slate-200 dark:border-slate-800/40 p-4 flex flex-col gap-4 snap-center transition-colors">
+              <div key={getSafeKey(col, i, 'kanban-col')} className="flex-1 w-[350px] min-w-[350px] shrink-0 bg-[var(--bg-page)]/50 rounded-2xl border border-[var(--border)] p-4 flex flex-col gap-4 snap-center transition-colors">
                 <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-2">
                     <div className={cn("w-2 h-2 rounded-full", col.color)} />
-                    <h3 className="text-[10px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-[0.15em]">{col.title}</h3>
+                    <h3 className="text-[10px] font-black text-[var(--text-sub)] uppercase tracking-[0.15em]">{col.title}</h3>
                   </div>
-                  <span className="bg-white dark:bg-slate-800 px-2 py-0.5 rounded text-[10px] font-mono text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-700">{colProjects.length}</span>
+                  <span className="bg-[var(--bg-card)] px-2 py-0.5 rounded text-[10px] font-mono text-[var(--text-sub)] border border-[var(--border)]">{colProjects.length}</span>
                 </div>
 
                 <div className="flex-1 overflow-y-auto space-y-4 scrollbar-hide py-2">
@@ -5337,54 +5335,54 @@ function KanbanView({ projects, tasks, onOpenGantt, onUpdateProject }: { project
                         key={getSafeKey(p, j, 'kanban-project')}
                         onClick={() => onUpdateProject(p.id, { status: col.id as ProjectStatus })}
                         className={cn(
-                          "bg-white dark:bg-slate-900 border rounded-xl p-4 shadow-sm hover:shadow-xl cursor-pointer transition-all hover:bg-slate-50 dark:hover:bg-slate-800/40 group relative overflow-hidden",
-                          isLate ? "border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.1)]" : "border-slate-200 dark:border-slate-800 hover:border-indigo-500/50"
+                          "bg-[var(--bg-card)] border rounded-xl p-4 shadow-sm hover:shadow-xl cursor-pointer transition-all hover:bg-[var(--bg-page)] group relative overflow-hidden",
+                          isLate ? "border-rose-500/50 shadow-[0_0_10px_rgba(244,63,94,0.1)]" : "border-[var(--border)] hover:border-[var(--accent)]/50"
                         )}
                       >
                         <div className="relative z-10">
                           <div className="flex justify-between items-start gap-2 mb-2">
-                            <h4 className="text-xs font-black text-slate-900 dark:text-white italic uppercase tracking-tighter transition-colors">{p.name}</h4>
+                            <h4 className="text-xs font-black text-[var(--text-main)] italic uppercase tracking-tighter transition-colors">{p.name}</h4>
                             {isLate && (
                               <span className="px-1.5 py-0.5 bg-rose-500 text-white text-[7px] font-black uppercase tracking-widest rounded animate-pulse">LATE</span>
                             )}
                           </div>
                           
                           <div className="flex flex-col gap-1.5 mb-4">
-                             <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                               <UserIcon className="w-3 h-3 text-indigo-500" />
-                               <span>PIC: <span className="text-slate-700 dark:text-slate-300 transition-colors uppercase">{p.pic_name || p.leader_email || 'Unassigned'}</span></span>
+                             <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-sub)] uppercase tracking-widest">
+                               <UserIcon className="w-3 h-3 text-[var(--accent)]" />
+                               <span>PIC: <span className="text-[var(--text-main)] transition-colors font-bold uppercase">{p.pic_name || p.leader_email || 'Unassigned'}</span></span>
                              </div>
-                             <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
-                               <Clock className="w-3 h-3 text-slate-400 dark:text-slate-600" />
-                               <span>Updated: <span className="font-mono text-slate-700 dark:text-slate-300 transition-colors">{p.updated_at ? format(new Date(p.updated_at), 'MM/dd') : 'N/A'}</span></span>
+                             <div className="flex items-center gap-2 text-[9px] font-bold text-[var(--text-sub)] uppercase tracking-widest">
+                               <Clock className="w-3 h-3 text-[var(--text-sub)]" />
+                               <span>Updated: <span className="font-mono text-[var(--text-main)] transition-colors">{p.updated_at ? format(new Date(p.updated_at), 'MM/dd') : 'N/A'}</span></span>
                              </div>
                           </div>
                           
                           <div className="space-y-1.5">
                             <div className="flex justify-between text-[9px] font-bold uppercase tracking-tighter italic">
-                              <span className="text-slate-500">Infrastructure Health</span>
-                              <span className="text-indigo-600 dark:text-indigo-400">{Math.round(progress)}%</span>
+                              <span className="text-[var(--text-sub)]">Infrastructure Health</span>
+                              <span className="text-[var(--accent)]">{Math.round(progress)}%</span>
                             </div>
-                            <div className="h-1 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div className="h-1 bg-[var(--bg-page)] rounded-full overflow-hidden">
                               <motion.div 
                                 initial={{ width: 0 }}
                                 animate={{ width: `${progress}%` }}
                                 className={cn(
                                   "h-full",
-                                  progress === 100 ? "bg-emerald-500" : "bg-indigo-600 dark:bg-indigo-500"
+                                  progress === 100 ? "bg-emerald-500" : "bg-[var(--accent)]"
                                 )}
                               />
                             </div>
                           </div>
 
-                          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                          <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between">
                             <button 
                               onClick={(e) => { e.stopPropagation(); onOpenGantt(p.id); }}
-                              className="px-3 py-1.5 bg-indigo-600 dark:bg-gradient-to-r dark:from-indigo-600 dark:to-violet-600 hover:bg-indigo-700 dark:hover:from-indigo-500 dark:hover:to-violet-500 rounded-lg text-[9px] font-black uppercase tracking-widest text-white transition-all shadow-md dark:shadow-lg active:scale-95"
+                              className="px-3 py-1.5 bg-[var(--accent)] hover:bg-[var(--accent)]/90 rounded-lg text-[9px] font-black uppercase tracking-widest text-white transition-all shadow-md active:scale-95"
                             >
                               Gantt Detail
                             </button>
-                            <div className="w-6 h-6 rounded-lg bg-slate-50 dark:bg-slate-950 flex items-center justify-center font-black text-[8px] text-indigo-600 dark:text-indigo-500 border border-slate-200 dark:border-slate-800">
+                            <div className="w-6 h-6 rounded-lg bg-[var(--bg-page)] flex items-center justify-center font-black text-[8px] text-[var(--accent)] border border-[var(--border)]">
                               {(p.name || '?').charAt(0)}
                             </div>
                           </div>
@@ -5835,7 +5833,7 @@ function GanttDetailView({
           {/* TOP: Task Manager (Only in Detail View) */}
           {!isGlobalView && (
             <div className="h-auto max-h-[480px] flex flex-col bg-white dark:bg-slate-950/20 border border-slate-200 dark:border-slate-800/60 rounded-2xl overflow-y-auto shadow-xl dark:shadow-2xl shrink-0 scrollbar-hide transition-colors">
-      <div className={cn("p-4 border-b border-slate-200 dark:border-slate-800/60 flex flex-wrap items-center justify-between bg-slate-50 dark:bg-zinc-900/40 gap-4", isMobile && "px-4")}>
+      <div className={cn("p-4 border-b border-[var(--border-subtle)] flex flex-wrap items-center justify-between bg-white gap-4", isMobile && "px-4")}>
                 <div className="flex items-center gap-6">
                   <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-white/5">
                     <button 
@@ -6798,13 +6796,13 @@ function AuditLogView({ logs, projects, users, isMobile }: { logs: AuditLog[], p
             </div>
           ) : (
             <table className="w-full text-left">
-              <thead className="sticky top-0 z-10 bg-slate-900 shadow-md">
-                <tr className="border-b border-slate-800">
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Timestamp</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Actor (Name)</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Project Mapping</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em]">Operational Action</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] text-right">Insight</th>
+              <thead className="sticky top-0 z-10 bg-[var(--bg-main)] shadow-sm">
+                <tr className="border-b border-[var(--border-color)]">
+                  <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-[0.2em]">Timestamp</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none">Actor (Name)</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none">Project Mapping</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest leading-none">Operational Action</th>
+                  <th className="px-6 py-4 text-[9px] font-black text-[var(--text-secondary)] uppercase tracking-widest text-right leading-none">Insight</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/50 text-[12px] text-slate-400">
@@ -6947,28 +6945,28 @@ function SystemLogTable({ logs }: { logs: AuditLog[] }) {
     return <div className="text-center py-10 text-slate-500 font-bold uppercase text-[10px] tracking-widest border border-dashed border-slate-800 rounded-2xl">No system logs recorded</div>;
   }
   return (
-    <div className="overflow-hidden bg-slate-900/50 rounded-2xl border border-white/5 shadow-2xl">
+    <div className="overflow-hidden bg-white rounded-2xl border border-[var(--border-subtle)] shadow-sm">
       <table className="w-full text-left border-collapse">
-        <thead className="bg-slate-950/80 sticky top-0 z-10 border-b border-white/5">
+        <thead className="bg-[var(--bg-main)] sticky top-0 z-10 border-b border-[var(--border-subtle)]">
           <tr>
-            <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Action</th>
-            <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest text-center">Auth By</th>
-            <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest text-right">Timestamp</th>
+            <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">Action</th>
+            <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">Auth By</th>
+            <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest text-right">Timestamp</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-white/5">
+        <tbody className="divide-y divide-[var(--border-subtle)]">
           {logs.map((log) => (
-            <tr key={log.id} className="hover:bg-indigo-500/5 transition-colors group">
+            <tr key={log.id} className="hover:bg-[var(--bg-main)] transition-colors group">
               <td className="px-6 py-4">
-                <span className="text-[11px] font-black text-slate-200 uppercase tracking-tight group-hover:text-white transition-colors">{log.action || 'INTERNAL OPERATION'}</span>
+                <span className="text-[11px] font-black text-[var(--text-main)] uppercase tracking-tight group-hover:text-[var(--primary)] transition-colors">{log.action || 'INTERNAL OPERATION'}</span>
               </td>
               <td className="px-6 py-4 text-center">
-                <span className="text-[10px] font-black text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-full border border-emerald-400/20 uppercase tracking-widest">
+                <span className="text-[10px] font-black text-[var(--success)] bg-[var(--success)]/10 px-3 py-1 rounded-full border border-[var(--success)]/20 uppercase tracking-widest">
                   {log.actor || 'SYSTEM'}
                 </span>
               </td>
               <td className="px-6 py-4 text-right">
-                <span className="text-[10px] font-mono text-slate-500 font-bold">
+                <span className="text-[10px] font-mono text-[var(--text-sub)] font-bold">
                   {log.created_at ? format(new Date(log.created_at), 'dd/MM/yy HH:mm') : '-'}
                 </span>
               </td>
@@ -6985,47 +6983,47 @@ function HistoryEditTable({ logs, users }: { logs: HistoryEditProject[], users: 
     return <div className="text-center py-10 text-slate-500 font-bold uppercase text-[10px] tracking-widest border border-dashed border-slate-800 rounded-2xl">No user edits recorded</div>;
   }
   return (
-    <div className="overflow-hidden bg-slate-900/50 rounded-2xl border border-white/5 shadow-2xl">
+    <div className="overflow-hidden bg-white rounded-2xl border border-[var(--border-subtle)] shadow-sm">
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[800px]">
-          <thead className="bg-slate-950/80 sticky top-0 z-10 border-b border-white/5">
+          <thead className="bg-[var(--bg-main)] sticky top-0 z-10 border-b border-[var(--border-subtle)]">
             <tr>
-              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest w-[150px]">PIC Name</th>
-              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest text-center w-[120px]">Date</th>
-              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest w-[150px]">Field Name</th>
-              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest">Before</th>
-              <th className="px-6 py-4 text-[9px] font-black text-indigo-400 uppercase tracking-widest">After</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest w-[150px]">PIC Name</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center w-[120px]">Date</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest w-[150px]">Field Name</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">Before</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">After</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-white/5">
+          <tbody className="divide-y divide-[var(--border-subtle)]">
             {logs.map((log) => {
               const actorName = users.find(u => u.email === log.pic_name)?.name || log.pic_name;
               
               return (
-                <tr key={log.id} className="hover:bg-indigo-500/5 transition-colors group">
+                <tr key={log.id} className="hover:bg-[var(--bg-main)] transition-colors group">
                   <td className="px-6 py-3">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded bg-indigo-600/10 flex items-center justify-center border border-indigo-500/20">
-                        <UserIcon className="w-3 h-3 text-indigo-400" />
+                      <div className="w-6 h-6 rounded bg-[var(--primary)]/10 flex items-center justify-center border border-[var(--primary)]/20">
+                        <UserIcon className="w-3 h-3 text-[var(--primary)]" />
                       </div>
-                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-tight">{actorName}</span>
+                      <span className="text-[10px] font-black text-[var(--text-main)] uppercase tracking-tight">{actorName}</span>
                     </div>
                   </td>
                   <td className="px-6 py-3 text-center">
-                    <span className="text-[9px] font-mono text-slate-500 font-bold">
+                    <span className="text-[9px] font-mono text-[var(--text-sub)] font-bold">
                       {log.created_at ? format(new Date(log.created_at), 'dd/MM/yy') : '-'}
                     </span>
                   </td>
                   <td className="px-6 py-3">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{log.field_name}</span>
+                    <span className="text-[10px] font-bold text-[var(--text-sub)] uppercase tracking-tight">{log.field_name}</span>
                   </td>
                   <td className="px-6 py-3">
-                    <div className="max-w-[200px] truncate text-[10px] text-rose-400/60 line-through italic">
+                    <div className="max-w-[200px] truncate text-[10px] text-[var(--danger)]/60 line-through italic">
                        {log.before_value}
                     </div>
                   </td>
                   <td className="px-6 py-3">
-                    <div className="max-w-[200px] truncate text-[10px] text-emerald-400 font-bold italic">
+                    <div className="max-w-[200px] truncate text-[10px] text-[var(--success)] font-bold italic">
                        {log.after_value}
                     </div>
                   </td>
@@ -7050,16 +7048,16 @@ function AuditLogTable({ logs }: { logs: ProjectRescheduleLog[] }) {
   }
 
   return (
-    <div className="overflow-hidden border border-white/5 rounded-2xl bg-slate-900/40">
+    <div className="overflow-hidden border border-[var(--border-subtle)] rounded-2xl bg-white shadow-sm">
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse min-w-[800px]">
-          <thead>
-            <tr className="bg-slate-950/50 border-b border-white/5">
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Timestamp</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Authorized By</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Previous Timeline</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest text-center">Target Timeline</th>
-              <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-widest">Reason / Justification</th>
+          <thead className="bg-[var(--bg-main)] border-b border-[var(--border-subtle)]">
+            <tr>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">Timestamp</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">Authorized By</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">Previous Timeline</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest text-center">Target Timeline</th>
+              <th className="px-6 py-4 text-[9px] font-black text-[var(--text-sub)] uppercase tracking-widest">Reason / Justification</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/5">
@@ -7129,12 +7127,12 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
         <tr 
           onClick={() => !isProject && children.length > 0 && onToggleExpand(task.id)}
           className={cn(
-            "border-b border-white/5 transition-all group cursor-pointer hover:bg-white/5 relative",
-            level === 0 ? "bg-slate-900/40" : "bg-slate-800/10",
-            level === 1 && isExpanded ? "bg-slate-800/60" : "hover:bg-white/10",
-            health === 'OVERDUE' && "border-l-4 border-l-rose-500 bg-rose-500/10",
-            health === 'OVER SLA' && "border-l-4 border-l-amber-500 bg-amber-500/10",
-            !hasControl && "hover:bg-amber-500/5 transition-colors"
+            "border-b border-[var(--border)] transition-all group cursor-pointer hover:bg-[var(--bg-page)] relative",
+            level === 0 ? "bg-[var(--bg-page)]/40" : "bg-[var(--bg-card)]",
+            level === 1 && isExpanded ? "bg-[var(--bg-page)]" : "hover:bg-[var(--bg-page)]/60",
+            health === 'OVERDUE' && "border-l-4 border-l-[var(--danger)] bg-[var(--danger)]/10",
+            health === 'OVER SLA' && "border-l-4 border-l-[var(--warning)] bg-[var(--warning)]/10",
+            !hasControl && "hover:bg-[var(--warning)]/5 transition-colors"
           )}
         >
           {/* Node Selector / Title */}
@@ -7163,7 +7161,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               <div className="flex-1 min-w-0" onClick={e => e.stopPropagation()}>
                 <div className="flex items-center gap-2">
                   {task.custom_id && (
-                    <span className="shrink-0 px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-[8px] font-black text-slate-400 font-mono tracking-tighter shadow-sm select-none">
+                    <span className="shrink-0 px-1.5 py-0.5 rounded bg-[var(--bg-page)] border border-[var(--border)] text-[8px] font-black text-[var(--text-sub)] font-mono tracking-tighter shadow-sm select-none">
                       {task.custom_id}
                     </span>
                   )}
@@ -7173,7 +7171,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                       onChange={(v) => onUpdateTask(task.id, 'title', v)}
                       disabled={disabled}
                       className={cn(
-                        "bg-transparent border-none p-0 text-zinc-100 font-semibold italic text-sm tracking-tight hover:bg-slate-800/50 rounded px-2 focus:ring-1 focus:ring-indigo-500 min-w-[100px]",
+                        "bg-transparent border-none p-0 text-[var(--text-main)] font-semibold italic text-sm tracking-tight hover:bg-[var(--bg-page)] rounded px-2 focus:ring-1 focus:ring-[var(--accent)] min-w-[100px]",
                         disabled && "opacity-80"
                       )}
                     />
@@ -7183,8 +7181,8 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                       onSave={(v) => onUpdateTask(task.id, 'title', v)}
                       className={cn(
                         "bg-transparent outline-none border-none focus:ring-1 focus:ring-emerald-500 w-full truncate leading-relaxed",
-                        isProject ? "text-base font-bold uppercase text-white tracking-tight" : 
-                        "text-zinc-200 text-xs font-medium tracking-wider"
+                        isProject ? "text-base font-bold uppercase text-[var(--text-main)] tracking-tight" : 
+                        "text-[var(--text-main)] text-xs font-medium tracking-wider"
                       )}
                       placeholder="Enter the task breakdown name..."
                       disabled={disabled}
@@ -7234,12 +7232,12 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                     type="number"
                     value={(task.man_hours || 0).toString()} 
                     onSave={(v) => onUpdateTask(task.id, 'man_hours', parseFloat(v) || 0)}
-                    className="w-12 bg-slate-800 text-[10px] text-center rounded border border-slate-700 text-indigo-400 font-black"
+                    className="w-12 bg-[var(--bg-card)] text-[10px] text-center rounded border border-[var(--border)] text-[var(--accent)] font-black"
                     disabled={disabled}
                   />
-                  <span className="text-[8px] text-slate-600 font-bold">h</span>
+                  <span className="text-[8px] text-[var(--text-sub)] font-bold">h</span>
                 </div>
-                <div className="text-[7px] text-slate-500 font-black uppercase tracking-tighter bg-slate-900/50 px-1.5 py-0.5 rounded border border-white/5">
+                <div className="text-[7px] text-[var(--text-sub)] font-black uppercase tracking-tighter bg-[var(--bg-page)] px-1.5 py-0.5 rounded border border-[var(--border)]">
                   {formatWorkday(task.man_hours || 0)}
                 </div>
              </div>
@@ -7250,14 +7248,14 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
             <EditableInput 
               value={task.assignee || ''} 
               onSave={(v) => onUpdateTask(task.id, 'assignee', v)}
-              className="bg-slate-800/80 text-[10px] font-bold text-center p-1 rounded border border-slate-700 text-slate-300 outline-none focus:border-indigo-500 w-full"
+              className="bg-[var(--bg-card)] text-[10px] font-bold text-center p-1 rounded border border-[var(--border)] text-[var(--text-main)] outline-none focus:border-[var(--accent)] w-full"
               placeholder="PIC"
               disabled={disabled}
             />
           </td>
 
           {/* Realized Finish Date */}
-          <td className="px-4 py-4 bg-indigo-500/5" onClick={e => e.stopPropagation()}>
+          <td className="px-4 py-4 bg-blue-500/5" onClick={e => e.stopPropagation()}>
             <CustomDatePicker 
               selectedDate={task.realized_finish_date ? format(new Date(task.realized_finish_date), 'yyyy-MM-dd') : ''}
               minDate={task.start_time ? new Date(task.start_time) : undefined}
@@ -7272,7 +7270,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                 
                 onUpdateTask(task.id, 'realized_finish_date', val);
               }}
-              className="bg-transparent border-none text-[10px] text-white font-mono text-center w-full outline-none focus:ring-1 focus:ring-indigo-500 rounded"
+              className="bg-transparent border-none text-[10px] text-[var(--text-main)] font-mono text-center w-full outline-none focus:ring-1 focus:ring-[var(--accent)] rounded"
               disabled={disabled}
             />
           </td>
@@ -7283,7 +7281,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               <EditableInput 
                 value={task.developer_name || ''} 
                 onSave={(v) => onUpdateTask(task.id, 'developer_name', v)}
-                className="bg-slate-950/50 border border-slate-800 text-[10px] px-1.5 py-1 rounded text-indigo-400/80 text-center hover:border-slate-700 transition-all font-mono w-full"
+                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] px-1.5 py-1 rounded text-[var(--accent)] text-center hover:border-[var(--accent)]/50 transition-all font-mono w-full"
                 placeholder="Dev"
                 disabled={disabled}
               />
@@ -7296,7 +7294,7 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
               <EditableInput 
                 value={task.qa_name || ''} 
                 onSave={(v) => onUpdateTask(task.id, 'qa_name', v)}
-                className="bg-slate-950/50 border border-slate-800 text-[10px] px-1.5 py-1 rounded text-purple-400/80 text-center hover:border-slate-700 transition-all font-mono w-full"
+                className="bg-[var(--bg-page)] border border-[var(--border)] text-[10px] px-1.5 py-1 rounded text-purple-600 dark:text-purple-400 text-center hover:border-purple-500/50 transition-all font-mono w-full"
                 placeholder="QA"
                 disabled={disabled}
               />
@@ -7435,20 +7433,20 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
   return (
     <div className="overflow-x-auto w-full scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
       <table className={cn("w-full text-left border-collapse", isMobile ? "min-w-[1000px]" : "min-w-[1600px]")}>
-        <thead className="sticky top-0 z-40 bg-slate-900 border-b border-white/5">
-          <tr className="shadow-xl">
-            <th className="px-6 py-4 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] min-w-[300px]">Hierarchy & Governance</th>
-            <th className="px-2 py-4 text-[9px] font-black text-indigo-500 uppercase tracking-widest text-center w-24">Man-Hours</th>
-            <th className="px-4 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-40 text-center">PIC</th>
-            <th className="px-4 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-32 text-center bg-indigo-500/5">Realized Finish</th>
-            <th className="px-2 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-24 text-center">Dev</th>
-            <th className="px-2 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-24 text-center">QA</th>
-            <th className="px-4 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-24 text-center">Start</th>
-            <th className="px-4 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-24 text-center">End</th>
-            <th className="px-4 py-4 text-[9px] font-black text-slate-600 uppercase tracking-widest w-32 text-center">Status</th>
-            <th className="px-4 py-4 text-[9px] font-black text-indigo-500 uppercase tracking-widest w-[250px]"><div className="flex items-center justify-center gap-1"><UserIcon className="w-2.5 h-2.5"/> Fachrul Feedback</div></th>
-            <th className="px-4 py-4 text-[9px] font-black text-indigo-500 uppercase tracking-widest w-[250px]"><div className="flex items-center justify-center gap-1"><UserIcon className="w-2.5 h-2.5"/> Barra Feedback</div></th>
-            <th className="px-6 py-4 text-[9px] font-black text-slate-500 uppercase tracking-widest w-40 text-right">Comm Ops</th>
+        <thead className="sticky top-0 z-40 bg-[var(--bg-page)] border-b border-[var(--border)]">
+          <tr className="shadow-sm">
+            <th className="px-6 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-[0.2em] min-w-[300px]">Hierarchy & Governance</th>
+            <th className="px-2 py-4 text-[9px] font-black text-[var(--accent)] uppercase tracking-widest text-center w-24">Man-Hours</th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-40 text-center">PIC</th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-32 text-center bg-blue-500/5">Realized Finish</th>
+            <th className="px-2 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-24 text-center">Dev</th>
+            <th className="px-2 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-24 text-center">QA</th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-24 text-center">Start</th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-24 text-center">End</th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-32 text-center">Status</th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--accent)] uppercase tracking-widest w-[250px]"><div className="flex items-center justify-center gap-1"><UserIcon className="w-2.5 h-2.5"/> Fachrul Feedback</div></th>
+            <th className="px-4 py-4 text-[9px] font-black text-[var(--accent)] uppercase tracking-widest w-[250px]"><div className="flex items-center justify-center gap-1"><UserIcon className="w-2.5 h-2.5"/> Barra Feedback</div></th>
+            <th className="px-6 py-4 text-[9px] font-black text-[var(--text-main)] uppercase tracking-widest w-40 text-right">Comm Ops</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-white/5">

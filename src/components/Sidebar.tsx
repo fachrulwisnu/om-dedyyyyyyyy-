@@ -104,29 +104,29 @@ export function Sidebar({
 
   return (
     <aside className={cn(
-      "bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 transition-all duration-300 flex flex-col z-40 shrink-0 relative",
+      "bg-[var(--bg-sidebar)] transition-all duration-300 flex flex-col z-40 shrink-0 relative shadow-[var(--shadow-float)] border-r border-[var(--border)]",
       isOpen ? "w-72" : "w-16"
     )}>
       {/* Collapse Toggle Button */}
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className="absolute -right-3 top-24 w-6 h-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full flex items-center justify-center z-50 text-slate-400 hover:text-indigo-600 dark:hover:text-white transition-all shadow-xl"
+        className="absolute -right-3 top-24 w-6 h-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-full flex items-center justify-center z-50 text-slate-400 hover:text-[var(--accent)] transition-all shadow-xl"
       >
         {isOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
       </button>
 
       {/* Brand Header */}
-      <div className="h-20 flex items-center justify-between px-4 border-b border-slate-200 dark:border-slate-800 shrink-0 overflow-hidden">
+      <div className="h-20 flex items-center justify-between px-4 shrink-0 overflow-hidden">
         <div className="flex items-center">
-          <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 group cursor-pointer hover:rotate-12 transition-transform">
+          <div className="w-10 h-10 bg-[var(--accent)] rounded-xl flex items-center justify-center shrink-0 shadow-lg shadow-[rgba(67,24,255,0.2)] group cursor-pointer hover:rotate-12 transition-transform">
             <span className="text-lg font-black text-white">OD</span>
           </div>
           {isOpen && (
             <div className="ml-3">
-              <h1 className="font-black text-slate-900 dark:text-white uppercase italic tracking-tighter text-xl leading-none">
-                OM <span className="text-indigo-500">DEDY</span>
+              <h1 className="font-black text-[var(--text-main)] uppercase italic tracking-tighter text-xl leading-none">
+                OM <span className="text-[var(--accent)]">DEDY</span>
               </h1>
-              <p className="text-[7px] text-slate-500 font-black tracking-[0.05em] uppercase leading-tight mt-1">
+              <p className="text-[7px] text-[var(--text-sub)] font-black tracking-[0.05em] uppercase leading-tight mt-1">
                 Operational Monitoring Dashboard
               </p>
             </div>
@@ -152,7 +152,7 @@ export function Sidebar({
           />
         ))}
 
-        <div className="h-px bg-slate-200 dark:bg-slate-800/50 mx-4 my-2" />
+        <div className="h-px bg-[var(--border)] mx-4 my-2" />
 
         {/* 1. PROJECT LIST */}
         <div className="mb-2">
@@ -164,19 +164,19 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isProjectMenuActive 
-                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
             )}
           >
             <div className="flex items-center">
-              <LayoutDashboard className={cn("w-5 h-5 shrink-0 transition-colors z-10", isProjectMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Om Dedy Project List</span>}
+              <LayoutDashboard className={cn("w-5 h-5 shrink-0 transition-colors z-10", isProjectMenuActive ? "text-[var(--accent)]" : "text-[var(--text-sub)] group-hover:text-[var(--text-main)]")} />
+              {isOpen && <span className={cn("ml-4 font-bold text-xs uppercase tracking-widest truncate z-10", isProjectMenuActive ? "text-[var(--text-main)]" : "")}>Om Dedy Project List</span>}
             </div>
-            {isOpen && (isProjectsExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
-            {isProjectMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+            {isOpen && (isProjectsExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-sub)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-sub)]" />)}
+            {isProjectMenuActive && <div className="absolute right-0 top-2 bottom-2 w-1 bg-[var(--accent)] rounded-l-full" />}
           </div>
           {isOpen && isProjectsExpanded && (
-            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="mt-1 ml-4 border-l border-[var(--border)] space-y-1">
               {projectSubItems.map((item) => (
                 <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} />
               ))}
@@ -194,19 +194,19 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isNotionMenuActive 
-                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
             )}
           >
             <div className="flex items-center">
-              <Database className={cn("w-5 h-5 shrink-0 transition-colors z-10", isNotionMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Om Dedy Notion</span>}
+              <Database className={cn("w-5 h-5 shrink-0 transition-colors z-10", isNotionMenuActive ? "text-[var(--accent)]" : "text-[var(--text-sub)] group-hover:text-[var(--text-main)]")} />
+              {isOpen && <span className={cn("ml-4 font-bold text-xs uppercase tracking-widest truncate z-10", isNotionMenuActive ? "text-[var(--text-main)]" : "")}>Om Dedy Notion</span>}
             </div>
-            {isOpen && (isNotionExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
-            {isNotionMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+            {isOpen && (isNotionExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-sub)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-sub)]" />)}
+            {isNotionMenuActive && <div className="absolute right-0 top-2 bottom-2 w-1 bg-[var(--accent)] rounded-l-full" />}
           </div>
           {isOpen && isNotionExpanded && (
-            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="mt-1 ml-4 border-l border-[var(--border)] space-y-1">
               {notionSubItems.map((item) => (
                 <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} />
               ))}
@@ -224,19 +224,19 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isExternalMenuActive 
-                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
             )}
           >
             <div className="flex items-center">
-              <Zap className={cn("w-5 h-5 shrink-0 transition-colors z-10", isExternalMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">External Integration</span>}
+              <Zap className={cn("w-5 h-5 shrink-0 transition-colors z-10", isExternalMenuActive ? "text-[var(--accent)]" : "text-[var(--text-sub)] group-hover:text-[var(--text-main)]")} />
+              {isOpen && <span className={cn("ml-4 font-bold text-xs uppercase tracking-widest truncate z-10", isExternalMenuActive ? "text-[var(--text-main)]" : "")}>External Integration</span>}
             </div>
-            {isOpen && (isExternalExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
-            {isExternalMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+            {isOpen && (isExternalExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-sub)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-sub)]" />)}
+            {isExternalMenuActive && <div className="absolute right-0 top-2 bottom-2 w-1 bg-[var(--accent)] rounded-l-full" />}
           </div>
           {isOpen && isExternalExpanded && (
-            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="mt-1 ml-4 border-l border-[var(--border)] space-y-1">
               {externalSubItems.map((item) => (
                 <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} />
               ))}
@@ -254,19 +254,19 @@ export function Sidebar({
             className={cn(
               "w-full flex items-center justify-between py-3 px-4 transition-all relative group cursor-pointer",
               isAdminMenuActive 
-                ? "text-indigo-600 dark:text-white bg-gradient-to-r from-indigo-600/10 dark:from-indigo-600/20 to-transparent" 
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/5"
+                ? "text-[var(--accent)] font-bold bg-blue-50 dark:bg-[var(--accent)]/10" 
+                : "text-[var(--text-sub)] hover:text-[var(--text-main)] hover:bg-blue-50 dark:hover:bg-white/5"
             )}
           >
             <div className="flex items-center">
-              <Users className={cn("w-5 h-5 shrink-0 transition-colors z-10", isAdminMenuActive ? "text-indigo-400" : "text-slate-500 group-hover:text-slate-300")} />
-              {isOpen && <span className="ml-4 font-bold text-xs uppercase tracking-widest truncate z-10">Administrative</span>}
+              <Users className={cn("w-5 h-5 shrink-0 transition-colors z-10", isAdminMenuActive ? "text-[var(--accent)]" : "text-[var(--text-sub)] group-hover:text-[var(--text-main)]")} />
+              {isOpen && <span className={cn("ml-4 font-bold text-xs uppercase tracking-widest truncate z-10", isAdminMenuActive ? "text-[var(--text-main)]" : "")}>Administrative</span>}
             </div>
-            {isOpen && (isAdminExpanded ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />)}
-            {isAdminMenuActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 shadow-[0_0_10px_#6366f1]" />}
+            {isOpen && (isAdminExpanded ? <ChevronUp className="w-4 h-4 text-[var(--text-sub)]" /> : <ChevronDown className="w-4 h-4 text-[var(--text-sub)]" />)}
+            {isAdminMenuActive && <div className="absolute right-0 top-2 bottom-2 w-1 bg-[var(--accent)] rounded-l-full" />}
           </div>
           {isOpen && isAdminExpanded && (
-            <div className="mt-1 ml-4 border-l border-slate-200 dark:border-slate-800 space-y-1">
+            <div className="mt-1 ml-4 border-l border-[var(--border)] space-y-1">
               {adminSubItems.map((item) => (
                 <SidebarItem key={item.id} to={item.path} label={item.label} icon={item.icon} isOpen={isOpen} isActive={activeView === item.id} roles={item.roles} userRole={userRole} badgeCount={item.badgeCount} />
               ))}
@@ -276,21 +276,21 @@ export function Sidebar({
       </nav>
 
       {/* User Footer */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 grow-0 mt-8">
+      <div className="p-4 shrink-0 mt-auto">
         {isOpen && user ? (
-          <div className="bg-slate-100 dark:bg-slate-950/50 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div className="bg-[var(--bg-page)] p-4 rounded-2xl border border-[var(--border)]">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-indigo-500/30 flex items-center justify-center overflow-hidden">
-                <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 capitalize">{user.email?.charAt(0) || '?'}</span>
+              <div className="w-8 h-8 rounded-full bg-[var(--bg-card)] border border-[var(--border)] flex items-center justify-center overflow-hidden">
+                <span className="text-[10px] font-black text-[var(--accent)] capitalize">{user.email?.charAt(0) || '?'}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate">{user?.email}</p>
-                <p className="text-[9px] text-slate-500 uppercase tracking-widest font-bold">{userRole}</p>
+                <p className="text-[10px] font-bold text-[var(--text-main)] truncate">{user?.email}</p>
+                <p className="text-[9px] text-[var(--text-sub)] uppercase tracking-widest font-bold">{userRole}</p>
               </div>
             </div>
             <button 
               onClick={onLogout}
-              className="w-full flex items-center justify-center gap-2 py-2 bg-white dark:bg-slate-800 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 rounded-lg text-[10px] font-bold uppercase transition-all border border-slate-200 dark:border-transparent"
+              className="w-full flex items-center justify-center gap-2 py-2 bg-[var(--bg-card)] hover:bg-rose-50 text-rose-500 rounded-xl text-[10px] font-bold uppercase transition-all border border-[var(--border)]"
             >
               <LogOut className="w-3.5 h-3.5" /> Log Out
             </button>
@@ -300,7 +300,7 @@ export function Sidebar({
             <ThemeToggle />
             <button 
               onClick={onLogout}
-              className="w-full flex items-center justify-center p-2 text-slate-500 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
+              className="w-full flex items-center justify-center p-2 text-[var(--text-sub)] hover:text-rose-500 transition-colors"
               title="Log Out"
             >
               <LogOut className="w-5 h-5" />
@@ -311,7 +311,7 @@ export function Sidebar({
             <button 
               onClick={() => navigate('/login')} 
               className={cn(
-                "w-full flex items-center justify-center gap-2 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-900/20",
+                "w-full flex items-center justify-center gap-2 py-3 bg-[var(--accent)] hover:bg-[#3311CC] text-white font-bold rounded-xl transition-all shadow-lg shadow-[rgba(67,24,255,0.2)]",
                 !isOpen && "p-3 w-auto"
               )}
               title="Login to Dashboard"
