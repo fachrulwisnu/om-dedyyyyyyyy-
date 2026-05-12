@@ -53,7 +53,8 @@ import {
   Filter,
   Copy,
   Database,
-  FileText
+  FileText,
+  Info
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -2695,11 +2696,13 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
     end_date: '',
     duration_hours: 0,
     man_hours: 0,
+    keterangan: '',
     subtasks: [{ 
       id: createPersistentId(), 
       custom_id: `#TS-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
       title: '', 
       assignee: user?.name || user?.email || '',
+      keterangan: '',
       start_date: '',
       end_date: '',
       duration_hours: 0,
@@ -2768,6 +2771,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
       custom_id: `#PH-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
       title: PHASE_L1_OPTIONS[0], 
       assignee: pic || user?.name || user?.email || '',
+      keterangan: '',
       start_date: '',
       end_date: '',
       duration_hours: 0,
@@ -2777,6 +2781,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         custom_id: `#TS-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
         title: '', 
         assignee: pic || user?.name || user?.email || '',
+        keterangan: '',
         start_date: '',
         end_date: '',
         duration_hours: 0,
@@ -2794,6 +2799,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         custom_id: `#TS-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
         title: '', 
         assignee: pic || user?.name || user?.email || '',
+        keterangan: '',
         start_date: '',
         end_date: '',
         duration_hours: 0,
@@ -2853,6 +2859,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
         const l1 = await taskService.createTask({
           title: phase.title || 'Untitled Phase',
           custom_id: (phase as any).custom_id,
+          keterangan: phase.keterangan || '',
           project_id: prj.id,
           assignee: (phase as any).assignee || finalPic,
           start_time: phaseStart.toISOString(),
@@ -2879,6 +2886,7 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
           await taskService.createTask({
             title: sub.title || 'Untitled Sub-task',
             custom_id: (sub as any).custom_id,
+            keterangan: sub.keterangan || '',
             project_id: prj.id,
             parent_id: l1.id,
             assignee: (sub as any).assignee || finalPic,
@@ -3060,6 +3068,17 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                         }}
                         className="w-full"
                       />
+                      <textarea 
+                        rows={1}
+                        value={phase.keterangan || ''}
+                        placeholder="Phase Description / Detail Breakdown..."
+                        onChange={(e) => {
+                          const newPhases = [...phases];
+                          newPhases[pIdx].keterangan = e.target.value;
+                          setPhases(newPhases);
+                        }}
+                        className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-[var(--accent)]/50 transition-all mt-1 resize-none overflow-hidden hover:bg-white/10 focus:bg-white/10"
+                      />
                     </div>
 
                     <div className={cn("flex flex-col gap-1", isMobile && "w-full")}>
@@ -3193,7 +3212,18 @@ function CreateProjectModal({ onClose, onSuccess, user, users, isMobile }: { onC
                                 newPhases[pIdx].subtasks[sIdx].title = v;
                                 setPhases(newPhases);
                               }}
-                              className="w-full bg-transparent border-b border-[var(--border)] text-xs text-[var(--text-sub)] py-1.5 outline-none focus:border-[var(--accent)]/50 transition-all font-medium"
+                              className="w-full bg-transparent border-b border-[var(--border)] text-xs text-[var(--text-main)] py-1.5 outline-none focus:border-[var(--accent)]/50 transition-all font-bold"
+                            />
+                            <textarea 
+                              rows={1}
+                              value={sub.keterangan || ''}
+                              placeholder="Keterangan / Detail Breakdown..."
+                              onChange={(e) => {
+                                const newPhases = [...phases];
+                                newPhases[pIdx].subtasks[sIdx].keterangan = e.target.value;
+                                setPhases(newPhases);
+                              }}
+                              className="w-full bg-white/5 border border-white/10 text-white rounded-lg px-2 py-1.5 text-[10px] outline-none focus:border-[var(--accent)]/50 transition-all mt-1 resize-none overflow-hidden hover:bg-white/10 focus:bg-white/10"
                             />
                           </div>
 
@@ -7200,6 +7230,31 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
                     />
                   )}
                   <HealthBadge health={health} />
+                  
+                  {/* Keterangan Field: Icon Info with Expansion */}
+                  {task.keterangan && (
+                    <div className="relative group/info">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleExpand(`info-${task.id}`);
+                        }}
+                        className={cn(
+                          "p-1 rounded-full transition-all flex items-center justify-center",
+                          expandedRows.has(`info-${task.id}`) 
+                            ? "bg-indigo-500 text-white" 
+                            : "bg-slate-800 text-indigo-400 hover:bg-indigo-500 hover:text-white"
+                        )}
+                      >
+                        <Info className="w-3 h-3" />
+                      </button>
+                      
+                      <div className="absolute bottom-full mb-2 hidden group-hover/info:block w-max max-w-xs bg-slate-900 border border-indigo-500/30 text-indigo-100 text-[10px] rounded p-2 z-[100] shadow-xl font-medium tracking-tight">
+                        Click to view Detail Breakdown
+                      </div>
+                    </div>
+                  )}
+
                   {(() => {
                     const collisions = getCollision(task, tasks, projects);
                     const conflict = level > 0 && parentTask && isWBSConflict(parentTask, task);
@@ -7428,6 +7483,33 @@ function GanttTree({ user, users, roots, map, tasks, projects, expandedRows, onT
             </div>
           </td>
         </tr>
+        
+        {/* Keterangan Expansion Row */}
+        <AnimatePresence>
+          {expandedRows.has(`info-${task.id}`) && (
+            <motion.tr 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-indigo-500/5 border-b border-indigo-500/10"
+            >
+              <td colSpan={12} className="px-12 py-4">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-[10px] font-black text-indigo-400 uppercase tracking-widest">
+                    <FileText className="w-3.5 h-3.5" />
+                    Detail Breakdown / Keterangan
+                  </div>
+                  <DeferredTextarea 
+                    value={task.keterangan || ''}
+                    onSave={(v) => onUpdateTask(task.id, 'keterangan', v)}
+                    className="w-full bg-slate-900/50 border border-indigo-500/20 rounded-xl p-4 text-xs text-slate-300 outline-none focus:border-indigo-500/50 transition-all font-medium leading-relaxed min-h-[80px]"
+                    placeholder="Enter full technical detail or breakdown description..."
+                  />
+                </div>
+              </td>
+            </motion.tr>
+          )}
+        </AnimatePresence>
         
         {isExpanded && (() => {
           const uniqueChildren = (children || []).filter((v: any, i: number, a: any[]) => !!v && a.findIndex(t => t.id === v.id) === i);

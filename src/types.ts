@@ -70,6 +70,7 @@ export interface Task {
   created_by_name?: string;
   status: TaskStatus;
   custom_id: string; // Visible ID like #PH-XXXX or #TS-XXXX
+  keterangan?: string;
   approval_fachrul: string | null;
   suggestion_fachrul: string | null;
   approval_barra: string | null;
