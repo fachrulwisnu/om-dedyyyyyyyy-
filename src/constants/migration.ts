@@ -10,7 +10,9 @@ export const MIGRATION_STATUSES = [
   'Hold By Owner',
   'Hold By IT',
   'Hold By Client/Vendor',
-  'Canceled'
+  'Canceled',
+  'Live On Queue',
+  'Live On Monitoring'
 ];
 
 export const STATUS_COLORS: Record<string, string> = {
@@ -25,5 +27,7 @@ export const STATUS_COLORS: Record<string, string> = {
   'Hold By Owner': 'bg-red-900/50 text-red-300 border-red-700',
   'Hold By IT': 'bg-red-900/50 text-red-300 border-red-700',
   'Hold By Client/Vendor': 'bg-red-900/50 text-red-300 border-red-700',
-  'Canceled': 'bg-red-950/50 text-red-400 border-red-900'
+  'Canceled': 'bg-red-950/50 text-red-400 border-red-900',
+  'Live On Queue': 'bg-emerald-900/50 text-emerald-300 border-emerald-700',
+  'Live On Monitoring': 'bg-green-900/50 text-green-300 border-green-700'
 };

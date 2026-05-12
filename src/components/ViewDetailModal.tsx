@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Info, Star, Calendar, Clock, Activity, History, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Info, Star, Calendar, Clock, Activity, History, AlertCircle, CheckCircle2, TrendingUp, BarChart3, ListChecks } from 'lucide-react';
 import { NotionApiProject } from '../types';
 import { cn } from '../lib/utils';
 
@@ -11,9 +11,21 @@ interface ViewDetailModalProps {
 }
 
 export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetailModalProps) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'timeline' | 'feedback'>('overview');
+
   if (!isOpen || !project) return null;
 
   const raw = project.raw_data || {};
+
+  // Helper to colorize SLA
+  const getSlaColor = (status: string | any) => {
+    if (typeof status !== 'string') return "text-gray-400 border-gray-600 bg-gray-800";
+    if (status.includes("Achieved")) return "text-emerald-400 border-emerald-400/30 bg-emerald-400/10";
+    if (status.includes("Not Achieved")) return "text-red-400 border-red-400/30 bg-red-400/10";
+    if (status.includes("TRUE")) return "text-emerald-400 border-emerald-400/30 bg-emerald-400/10";
+    if (status.includes("FALSE")) return "text-red-400 border-red-400/30 bg-red-400/10";
+    return "text-gray-400 border-gray-600 bg-gray-800"; // default/Without/empty
+  };
 
   const Section = ({ title, icon: Icon, children, className }: any) => (
     <div className={cn("bg-black/20 rounded-2xl border border-white/5 p-6 mb-4", className)}>
@@ -36,6 +48,21 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
     </div>
   );
 
+  const Badge = ({ label, value, color = "indigo" }: any) => {
+    const colors: Record<string, string> = {
+      indigo: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+      emerald: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      rose: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+      amber: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    };
+    return (
+      <div className={cn("px-4 py-3 rounded-xl border flex flex-col gap-1", colors[color])}>
+        <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{label}</span>
+        <span className="text-sm font-black">{value || '-'}</span>
+      </div>
+    );
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8">
@@ -50,120 +77,308 @@ export default function ViewDetailModal({ project, isOpen, onClose }: ViewDetail
           initial={{ opacity: 0, scale: 0.95, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          className="relative w-full max-w-6xl max-h-[90vh] bg-[#1a1f30] rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col"
+          className="relative w-full max-w-6xl h-[90vh] bg-[#1a1f30] rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden flex flex-col"
         >
           {/* Header */}
           <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between bg-black/40">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 bg-indigo-500/20 rounded-xl flex items-center justify-center text-indigo-400">
-                <Info className="w-5 h-5" />
+              <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400 shadow-inner">
+                <Info className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-black text-white uppercase italic tracking-tighter">
+                <h2 className="text-2xl font-black text-white uppercase italic tracking-tighter leading-tight">
                   {project.project_name}
                 </h2>
-                <p className="text-[9px] text-indigo-400 font-black uppercase tracking-widest mt-0.5">
-                  ID: {project.ticket_id || 'NOT_SIGNED'} • SOURCE: NOTION API
-                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <span className="text-[10px] text-indigo-400 font-black uppercase tracking-widest bg-indigo-400/10 px-2 py-0.5 rounded">
+                    ID: {project.ticket_id || 'NO_TICKET'}
+                  </span>
+                  <div className="w-1 h-1 rounded-full bg-slate-700" />
+                  <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">
+                    SYNCED FROM NOTION API
+                  </span>
+                </div>
               </div>
             </div>
             <button 
               onClick={onClose}
-              className="p-3 hover:bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all"
+              className="p-3 hover:bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all group"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6 group-hover:rotate-90 transition-transform duration-300" />
             </button>
           </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-6">
-            
-            {/* Quick Actions / Status Bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 border-l-4 border-l-indigo-500">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Status</span>
-                <span className="text-xs font-bold text-white uppercase">{project.last_status}</span>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 border-l-4 border-l-emerald-500">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">PIC</span>
-                <span className="text-xs font-bold text-white uppercase">{project.pic_name}</span>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 border-l-4 border-l-amber-500">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Category</span>
-                <span className="text-xs font-bold text-white uppercase">{project.project_type}</span>
-              </div>
-              <div className="p-4 bg-white/5 rounded-2xl border border-white/5 border-l-4 border-l-rose-500">
-                <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Division</span>
-                <span className="text-xs font-bold text-white uppercase">{project.owner_div || 'GENERAL'}</span>
-              </div>
-            </div>
+          {/* Navigation Tabs */}
+          <div className="px-8 bg-black/20 border-b border-white/5 flex gap-8">
+            {[
+              { id: 'overview', label: 'Overview & SLA', icon: Activity },
+              { id: 'timeline', label: 'Timeline Logs', icon: History },
+              { id: 'feedback', label: 'Feedback Metrics', icon: BarChart3 }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={cn(
+                  "py-4 flex items-center gap-2 border-b-2 transition-all relative",
+                  activeTab === tab.id 
+                    ? "border-indigo-500 text-white font-black" 
+                    : "border-transparent text-slate-500 hover:text-slate-300 font-bold"
+                )}
+              >
+                <tab.icon className={cn("w-4 h-4", activeTab === tab.id ? "text-indigo-400" : "text-current")} />
+                <span className="text-xs uppercase tracking-widest">{tab.label}</span>
+                {activeTab === tab.id && (
+                  <motion.div 
+                    layoutId="activeTabGlow"
+                    className="absolute inset-0 bg-indigo-500/5 blur-xl -z-10"
+                  />
+                )}
+              </button>
+            ))}
+          </div>
 
-            {/* Sections */}
-            <Section title="Main Information" icon={Info}>
-              <Stat label="Owner Name" value={project.owner_name} />
-              <Stat label="Ticket ID" value={project.ticket_id} />
-              <Stat label="Project Name" value={project.project_name} />
-              <Stat label="Last Update Log" value={project.last_update_log} />
-            </Section>
+          {/* Content Area */}
+          <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <AnimatePresence mode="wait">
+              {activeTab === 'overview' && (
+                <motion.div
+                  key="overview"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-6"
+                >
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 space-y-6">
+                       <Section title="Project Metadata" icon={ListChecks}>
+                          <Stat label="Project Name" value={raw["Project Name"] || project.project_name} />
+                          <Stat label="Ticket ID" value={raw["Ticket"] || project.ticket_id} />
+                          <Stat label="Project Type" value={raw["Type Project"] || project.project_type} />
+                          <Stat label="PIC Name" value={raw["PIC Name"] || project.pic_name} />
+                          <Stat label="Owner Name" value={raw["Owner Name"] || project.owner_name} />
+                          <Stat label="Division" value={raw["Owner Div"] || project.owner_div} />
+                       </Section>
 
-            <Section title="Feedback Scores" icon={Star}>
-              <Stat label="Nilai Kebutuhan" value={raw['Nilai Kebutuhan']} />
-              <Stat label="Konflik" value={raw['Konflik']} />
-              <Stat label="Komunikasi" value={raw['Komunikasi']} />
-              <Stat label="Waktu" value={raw['Waktu']} />
-              <Stat label="Kolaborasi" value={raw['Kolaborasi']} />
-              <Stat label="Teknis" value={raw['Teknis']} />
-              <Stat label="Rata-rata" value={raw['Rata-rata']} colorClass="text-indigo-400 font-black" />
-            </Section>
+                      {/* Performance & Effort Metrics Dashboard */}
+                      <div className="space-y-6">
+                        {/* Top Meta Stats */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="bg-black/20 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Effective Days</p>
+                            <p className="text-2xl font-black text-white">{raw["Total Effective days"] || "-"} <span className="text-xs font-normal text-slate-600 italic">Days</span></p>
+                          </div>
+                          <div className="bg-black/20 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Project Diajukan</p>
+                            <p className="text-2xl font-black text-white">{raw["Project diajukan"] || "-"}</p>
+                          </div>
+                          <div className="bg-black/20 p-4 rounded-2xl border border-white/5 flex flex-col gap-1">
+                            <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Progress PMA</p>
+                            <p className="text-2xl font-black text-white">{raw["Progress PMA"] || "-"}</p>
+                          </div>
+                        </div>
 
-            <Section title="Milestone Feedback" icon={Activity}>
-              <Stat label="Diskusi FPS" value={raw['Diskusi FPS']} />
-              <Stat label="Review FSD" value={raw['Review FSD']} />
-              <Stat label="Dev Fixing" value={raw['Dev Fixing']} />
-              <Stat label="SIT" value={raw['SIT']} />
-              <Stat label="UAT CR" value={raw['UAT CR']} />
-            </Section>
+                        {/* Phase Performance Grid */}
+                        <div className="bg-black/20 rounded-2xl border border-white/5 p-6">
+                          <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+                             <TrendingUp className="w-4 h-4 text-indigo-400" />
+                             <h3 className="text-[10px] font-black text-white uppercase tracking-[0.2em]">Phase Performance (SLA & Late Days)</h3>
+                          </div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {[
+                              { phase: "FSD Performance", sla: raw["FSD SLA Status"], late: raw["(FSD) Late Days"], elapse: raw["(FSD) Elapse Days"] },
+                              { phase: "DEV Performance", sla: raw["DEV SLA"], late: raw["(Dev) Late Days"], elapse: raw["(Dev) Elapse Days"] },
+                              { phase: "SIT Performance", sla: raw["SIT SLA Status"], late: raw["(SIT) Late Days"], elapse: raw["(SIT) Elapse Days"] },
+                              { phase: "UAT Performance", sla: raw["UAT SLA Status"], late: raw["(UAT) Late Days"], elapse: raw["(UAT) Elapse Days"] },
+                            ].map((item, i) => (
+                              <div key={i} className={cn("p-4 rounded-2xl border border-white/5 flex flex-col gap-3 transition-all", getSlaColor(item.sla))}>
+                                <p className="text-[10px] uppercase font-black tracking-widest opacity-80">{item.phase}</p>
+                                <div className="space-y-2 text-[11px] font-bold">
+                                  <div className="flex justify-between items-center"><span className="opacity-40 uppercase text-[9px]">SLA</span> <span className={cn(item.sla === 'Achieved' ? 'text-emerald-400' : '')}>{item.sla || "-"}</span></div>
+                                  <div className="flex justify-between items-center"><span className="opacity-40 uppercase text-[9px]">Late</span> <span>{item.late || "-"}</span></div>
+                                  <div className="flex justify-between items-center"><span className="opacity-40 uppercase text-[9px]">Elapse</span> <span>{item.elapse || "-"} <span className="opacity-30 text-[9px]">Days</span></span></div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
 
-            <Section title="Live & Monitoring" icon={CheckCircle2}>
-              <Stat label="Compiler MG" value={raw['Compiler MG']} />
-              <Stat label="Realized Finish" value={raw['Realized Finish']} />
-              <Stat label="Live Plan" value={raw['Live Plan']} />
-              <Stat label="Late Days" value={raw['Late Days']} colorClass={raw['Late Days'] > 0 ? "text-rose-400" : "text-emerald-400"} />
-              <Stat label="Status Live" value={raw['Status Live']} />
-              <Stat label="Monitoring Review" value={raw['Monitoring Review']} />
-            </Section>
+                        {/* Effective Days Breakdown */}
+                        <div className="bg-black/40 p-6 rounded-3xl border border-white/5">
+                          <div className="flex items-center gap-2 mb-3">
+                             <Clock className="w-4 h-4 text-indigo-400" />
+                             <h4 className="text-[10px] font-black text-white uppercase tracking-widest">Effective Days Breakdown</h4>
+                          </div>
+                          <pre className="text-[11px] text-slate-400 whitespace-pre-wrap font-mono leading-relaxed bg-black/20 p-5 rounded-2xl border border-white/10 shadow-inner">
+                            {raw["Effective days"] || "Tidak ada detail waktu."}
+                          </pre>
+                        </div>
+                      </div>
+                     </div>
 
-            <Section title="Temporal Analysis" icon={Clock}>
-              <Stat label="Total Effective Days" value={raw['Total Effective Days']} />
-              <Stat label="FPS Approved" value={raw['FPS Approved']} />
-              <Stat label="Selisih Waktu FSD" value={raw['Selisih Waktu FSD']} />
-              <Stat label="Hold Sequential" value={raw['Hold Sequential']} />
-              <Stat label="Recall History" value={raw['Recall History']} />
-            </Section>
+                     <div className="space-y-6">
+                        <div className="bg-indigo-600/10 border border-indigo-500/20 rounded-3xl p-6 shadow-xl">
+                           <h3 className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                              <Activity className="w-4 h-4" />
+                              Current Execution State
+                           </h3>
+                           <div className="space-y-4">
+                              <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Global Status</span>
+                                 <span className="text-sm font-black text-white">{raw["Last Status"] || project.last_status}</span>
+                              </div>
+                              <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">FSD Status</span>
+                                 <span className="text-sm font-black text-white">{raw["(FSD) Status"] || project.fsd_status || '-'}</span>
+                              </div>
+                              <div className="p-4 bg-black/20 rounded-2xl border border-white/5">
+                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">UAT Status</span>
+                                 <span className="text-sm font-black text-white">{raw["(UAT) Status"] || project.uat_status || '-'}</span>
+                              </div>
+                           </div>
+                        </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
 
-            <Section title="Raw Sync Data" icon={Activity} className="opacity-60 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
-               <div className="col-span-full">
-                 <pre className="text-[10px] font-mono bg-black/40 p-4 rounded-xl overflow-x-auto max-h-60 custom-scrollbar text-slate-500">
-                   {JSON.stringify(raw, null, 2)}
-                 </pre>
-               </div>
-            </Section>
+              {activeTab === 'timeline' && (
+                <motion.div
+                  key="timeline"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="h-full flex flex-col gap-6"
+                >
+                  <div className="bg-black/20 rounded-3xl border border-white/5 flex-1 flex flex-col overflow-hidden">
+                    <div className="px-6 py-4 border-b border-white/5 bg-white/5 flex items-center justify-between">
+                       <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2">
+                          <History className="w-4 h-4 text-indigo-400" />
+                          Activity Execution Logs
+                       </h3>
+                    </div>
+                    <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+                       <div className="space-y-6 relative before:absolute before:left-3 before:top-2 before:bottom-2 before:w-px before:bg-white/5">
+                          <div className="relative pl-10">
+                             <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center">
+                                <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                             </div>
+                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block mb-1">Last Update Log</span>
+                             <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-xs text-slate-300 leading-relaxed font-medium">
+                                {project.last_update_log || 'No logs available for this project.'}
+                             </div>
+                          </div>
+
+                          {raw['(Dev) Progress Updated'] && (
+                            <div className="relative pl-10">
+                              <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-amber-600/20 border border-amber-500/40 flex items-center justify-center">
+                                 <div className="w-2 h-2 rounded-full bg-amber-500" />
+                              </div>
+                              <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest block mb-1">Dev Progress Update</span>
+                              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-xs text-slate-300 leading-relaxed font-medium">
+                                 {raw['(Dev) Progress Updated']}
+                              </div>
+                            </div>
+                          )}
+
+                          {raw['(FSD) Progress Updated'] && (
+                            <div className="relative pl-10">
+                              <div className="absolute left-0 top-1.5 w-6 h-6 rounded-full bg-emerald-600/20 border border-emerald-500/40 flex items-center justify-center">
+                                 <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                              </div>
+                              <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest block mb-1">FSD Progress Update</span>
+                              <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-xs text-slate-300 leading-relaxed font-medium">
+                                 {raw['(FSD) Progress Updated']}
+                              </div>
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {activeTab === 'feedback' && (
+                <motion.div
+                  key="feedback"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  className="space-y-8"
+                >
+                  <div className="flex items-center justify-between bg-indigo-600/10 border border-indigo-500/20 rounded-3xl p-8 mb-8">
+                     <div className="flex items-center gap-6">
+                        <div className="w-20 h-20 bg-indigo-600 rounded-3xl flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                           <BarChart3 className="w-10 h-10 text-white" />
+                        </div>
+                        <div>
+                           <h3 className="text-xl font-black text-white uppercase italic tracking-tighter">Overall Performance Score</h3>
+                           <p className="text-indigo-400 text-xs font-bold mt-1 uppercase tracking-widest">Weighted metric based on user feedback categories</p>
+                        </div>
+                     </div>
+                     <div className="text-right">
+                        <div className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Rata-rata Nilai Feedback User New</div>
+                        <div className="text-6xl font-black text-indigo-500 tracking-tighter drop-shadow-lg flex items-baseline gap-2">
+                           {project.feedback_overall_score || raw['Rata-rata Nilai Feedback User New :'] || '0.0'}
+                           <span className="text-xl text-indigo-400/40 italic">/ 5.0</span>
+                        </div>
+                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[
+                      { label: "Pemahaman Kebutuhan Klien", val: raw["Nilai Feedback User : Memahami kebutuhan klien dengan tepat."] },
+                      { label: "Kejelasan Komunikasi", val: raw["Nilai Feedback User :\nKejelasan komunikasi dan mudah dihubungi."] },
+                      { label: "Manajemen Konflik", val: raw["Nilai Feedback User :\nMembantu menyelesaikan konflik di dalam Project."] },
+                      { label: "Keterampilan Teknis & Dok", val: raw["Nilai Feedback User :\nKeterampilan teknis dan dokumentasi Project yang lengkap."] },
+                      { label: "Ketepatan Waktu", val: raw["Nilai Feedback User :\nMemenuhi terget waktu Project."] },
+                      { label: "Kolaborasi Antar Dept", val: raw["Nilai Feedback User :\nDapat berkolaborasi dengan Department lain dengan baik dalam Project"] },
+                      { label: "Review FSD & IT Internal", val: raw["Nilai Feedback User :\nPembuatan FSD dan Review Internal IT"] },
+                      { label: "Development & Fixing", val: raw["Nilai Feedback User :\nDevelopment (include Fixing temuan selama Testing PIC dan SIT)"] },
+                      { label: "UAT & Change Request", val: raw["Nilai Feedback User :\nUAT (include perbaikan temuan UAT) dan Change Request 1"] },
+                    ].map((item, idx) => (
+                      <div key={idx} className="p-4 bg-black/20 rounded-2xl border border-white/5 flex flex-col gap-2">
+                        <div className="flex flex-col">
+                           <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">{item.label}</span>
+                           <div className="flex items-center gap-2">
+                              {item.val === null || item.val === "" || item.val === undefined ? (
+                                <span className="text-[11px] text-slate-600 italic font-medium italic">Belum dinilai</span>
+                              ) : (
+                                <>
+                                  <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
+                                  <span className="text-lg font-black text-white leading-none">{item.val}</span>
+                                  <span className="text-[10px] text-slate-500 italic font-bold">Points</span>
+                                </>
+                              )}
+                           </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Footer */}
-          <div className="px-8 py-4 border-t border-white/5 bg-black/20 flex items-center justify-between">
-            <span className="text-[9px] font-black text-slate-600 uppercase tracking-widest italic">
-              * This is read-only data synchronized directly from Notion API
-            </span>
-            <button 
-              onClick={onClose}
-              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase tracking-widest rounded-lg transition-all"
-            >
-              Close Record
-            </button>
+          <div className="px-8 py-5 border-t border-white/5 bg-black/40 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-slate-500">
+               <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+               <span className="text-[10px] font-black uppercase tracking-[0.2em] italic opacity-60">
+                 Read-only Data Node • Protocol: HTTPS/REST
+               </span>
+            </div>
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={onClose}
+                className="px-8 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-[11px] font-black uppercase tracking-widest rounded-xl transition-all border border-white/5"
+              >
+                Dismiss View
+              </button>
+            </div>
           </div>
         </motion.div>
       </div>
     </AnimatePresence>
   );
 }
+

@@ -24,6 +24,7 @@ import ViewDetailModal from './ViewDetailModal';
 export default function KanbanNotionAPI() {
   const [data, setData] = useState<NotionApiProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>(MIGRATION_STATUSES);
   const [selectedProject, setSelectedProject] = useState<NotionApiProject | null>(null);
@@ -64,9 +65,11 @@ export default function KanbanNotionAPI() {
         item.project_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.ticket_id?.toLowerCase().includes(searchQuery.toLowerCase());
       
-      return matchesSearch;
+      const matchesStatus = selectedStatuses.includes(item.last_status);
+      
+      return matchesSearch && matchesStatus;
     });
-  }, [data, searchQuery]);
+  }, [data, searchQuery, selectedStatuses]);
 
   const toggleStatusFilter = (status: string) => {
     setSelectedStatuses(prev => 
@@ -74,6 +77,23 @@ export default function KanbanNotionAPI() {
         ? prev.filter(s => s !== status)
         : [...prev, status]
     );
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const response = await fetch('/api/sync-notion', { method: 'POST' });
+      const result = await response.json();
+      if (result.success) {
+        await fetchSyncedData();
+      } else {
+        console.error("Sync failed:", result.error);
+      }
+    } catch (err) {
+      console.error("Sync error:", err);
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const handleCardClick = (project: NotionApiProject) => {
@@ -109,6 +129,27 @@ export default function KanbanNotionAPI() {
             </p>
           </div>
         </div>
+
+        <button 
+          onClick={handleSync}
+          disabled={syncing}
+          className={cn(
+            "px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-indigo-600/20 flex items-center gap-2",
+            syncing && "opacity-70 cursor-not-allowed"
+          )}
+        >
+          {syncing ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Synchronizing...
+            </>
+          ) : (
+            <>
+              <Clock className="w-4 h-4" />
+              Synchronize Now
+            </>
+          )}
+        </button>
       </div>
 
       {/* Summary Stat Cards */}
@@ -121,11 +162,11 @@ export default function KanbanNotionAPI() {
           )}
         >
           <div className={cn("text-[10px] font-black uppercase tracking-widest", selectedStatuses.length === MIGRATION_STATUSES.length ? "text-white/60" : "text-slate-500")}>TOTAL PROJECTS</div>
-          <div className="text-2xl font-black text-white">{data.length}</div>
+          <div className="text-2xl font-black text-white">{filteredData.length}</div>
           {selectedStatuses.length === MIGRATION_STATUSES.length && <div className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
         </button>
 
-        {MIGRATION_STATUSES.slice(0, 13).map((status) => {
+        {MIGRATION_STATUSES.map((status) => {
           const count = statusCounts[status] || 0;
           const isActive = selectedStatuses.includes(status);
           return (
@@ -191,51 +232,84 @@ export default function KanbanNotionAPI() {
               <div className="bg-[#1a1f30]/40 border-x border-b border-white/5 rounded-b-2xl p-3 min-h-[500px] flex flex-col gap-3">
                 <AnimatePresence mode="popLayout">
                   {statusProjects.length > 0 ? (
-                    statusProjects.map((project) => (
-                      <motion.div
-                        key={project.id}
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        whileHover={{ y: -2 }}
-                        onClick={() => handleCardClick(project)}
-                        className="bg-[#1a1f30] border border-white/5 p-4 rounded-xl cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-600/5 transition-all shadow-lg group relative overflow-hidden"
-                      >
-                         <div className="relative z-10">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-[9px] font-mono font-bold text-indigo-400 bg-indigo-400/10 px-2 py-0.5 rounded">
-                                {project.ticket_id || 'NOT_SIGNED'}
-                              </span>
-                              <div className="flex items-center gap-1.5">
-                                 <Clock className="w-2.5 h-2.5 text-slate-600" />
-                                 <span className="text-[8px] font-black text-slate-600 uppercase">
-                                   {project.updated_at ? new Date(project.updated_at).toLocaleDateString() : '-'}
-                                 </span>
-                              </div>
+                    statusProjects.map((project) => {
+                      // 1. Safely access the jsonb object
+                      const raw = project.raw_data || {};
+
+                      // 2. Extract values directly using EXACT Notion keys
+                      const projectName = raw["Project Name"] || project.project_name || "Unknown Project";
+                      const ticketId = raw["Ticket"] || project.ticket_id || "-";
+                      const picName = raw["PIC Name"] || "-";
+                      const ownerName = raw["Owner Name"] || "-";
+                      const ownerDiv = raw["Owner Div"] || "-";
+
+                      const fpsApproved = raw["Tgl FPS disetujui"] || "-";
+                      const fsdPlan = raw["(FSD) Plan in Week"] || "-";
+                      const fsdStatus = raw["(FSD) Status"] || "-";
+                      const devPlan = raw["(Dev) Plan in Week"] || "-";
+                      const devReal = raw["(Dev) Realized In Date"] || "-";
+                      const uatBatch = raw["(UAT) Batch\nMisal isinya :\n1 (23-11-2021)\n2 (29-11-2021, dilanjutkan 02-12-2021)"] || raw["(UAT) Batch"] || "-";
+                      const uatLate = raw["(UAT) Late Days"] || "-";
+                      const liveRealized = raw["(Live) Realized in Date"] || "-";
+
+                      return (
+                        <motion.div
+                          key={project.id}
+                          layout
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          whileHover={{ y: -2 }}
+                          onClick={() => handleCardClick(project)}
+                          className="bg-[#1a1f30] border border-white/10 p-4 rounded-2xl cursor-pointer hover:border-indigo-500/50 hover:bg-indigo-600/5 transition-all shadow-xl group relative overflow-hidden flex flex-col h-full max-h-[340px]"
+                        >
+                          <div className="relative z-10 flex flex-col h-full">
+                            {/* Header */}
+                            <div className="flex justify-between items-start mb-1">
+                              <span className="text-[10px] text-slate-500 font-mono bg-black/20 px-2 py-0.5 rounded">#{ticketId}</span>
+                              <span className="text-[10px] text-slate-500 font-bold">{raw["Kuartal"] || ""}</span>
+                            </div>
+                            <h3 className="font-bold text-sm text-white line-clamp-2 leading-tight group-hover:text-indigo-400 transition-colors">
+                              {projectName}
+                            </h3>
+                            
+                            {/* PIC & Owner */}
+                            <div className="mt-2 text-[10px] text-slate-400 space-y-0.5">
+                              <p className="truncate"><span className="text-indigo-400/80 font-bold">PIC:</span> {picName}</p>
+                              <p className="truncate"><span className="text-indigo-400/80 font-bold">OWNER:</span> {ownerName} • {ownerDiv}</p>
                             </div>
                             
-                            <h4 className="text-[12px] font-bold text-white group-hover:text-indigo-400 mb-3 line-clamp-2 leading-tight">
-                              {project.project_name}
-                            </h4>
-
-                            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5">
-                               <div className="w-6 h-6 rounded-lg bg-indigo-500/20 flex items-center justify-center text-[10px] font-black text-indigo-400">
-                                 {project.pic_name?.charAt(0) || '?'}
-                               </div>
-                               <div className="flex flex-col">
-                                 <span className="text-[10px] font-bold text-slate-400 leading-none mb-1">{project.pic_name}</span>
-                                 <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest leading-none">
-                                   {project.owner_div || 'GENERAL'}
-                                 </span>
-                               </div>
+                            {/* Timeline Divider */}
+                            <div className="border-t border-white/5 my-3"></div>
+                            
+                            {/* Timeline - USING GRID FOR PERFECT ALIGNMENT & DATA CONTAINER */}
+                            <div className="grid grid-cols-[40px_1fr] gap-y-2.5 text-[11px] text-slate-300 mt-3 bg-black/40 p-2.5 rounded-xl border border-white/5">
+                              {/* FPS */}
+                              <span className="font-bold text-sky-400 uppercase text-[9px] tracking-widest mt-[2px]">FPS:</span>
+                              <span className="line-clamp-2 leading-snug">{fpsApproved}</span>
+                              
+                              {/* FSD */}
+                              <span className="font-bold text-purple-400 uppercase text-[9px] tracking-widest mt-[2px]">FSD:</span>
+                              <span className="line-clamp-2 leading-snug">Plan: {fsdPlan} | {fsdStatus}</span>
+                              
+                              {/* DEV */}
+                              <span className="font-bold text-orange-400 uppercase text-[9px] tracking-widest mt-[2px]">DEV:</span>
+                              <span className="line-clamp-2 leading-snug">Plan: {devPlan} | Real: {devReal}</span>
+                              
+                              {/* UAT */}
+                              <span className="font-bold text-pink-400 uppercase text-[9px] tracking-widest mt-[2px]">UAT:</span>
+                              <span className="line-clamp-2 leading-snug">Batch: {uatBatch} | Late: {uatLate}</span>
+                              
+                              {/* LIVE */}
+                              <span className="font-bold text-emerald-400 uppercase text-[9px] tracking-widest mt-[2px]">LIVE:</span>
+                              <span className="line-clamp-2 leading-snug">{liveRealized}</span>
                             </div>
-                         </div>
-                         
-                         {/* Subtle Background Glow */}
-                         <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -translate-y-12 translate-x-12 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </motion.div>
-                    ))
+                          </div>
+                          
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full -translate-y-16 translate-x-16 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        </motion.div>
+                      );
+                    })
                   ) : (
                     <motion.div 
                       layout

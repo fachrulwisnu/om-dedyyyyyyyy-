@@ -20,6 +20,27 @@ const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+// Helper to find Notion property by keyword
+const getVal = (props: any, keyword: string) => {
+  if (!props) return null;
+  const key = Object.keys(props).find(k => k.toLowerCase().includes(keyword.toLowerCase()));
+  if (!key) return null;
+  const p = props[key];
+  // Handle different Notion types
+  if (p.type === 'rich_text') return p.rich_text[0]?.plain_text || null;
+  if (p.type === 'title') return p.title[0]?.plain_text || null;
+  if (p.type === 'select') return p.select?.name || null;
+  if (p.type === 'date') return p.date?.start || null;
+  if (p.type === 'number') return p.number || null;
+  if (p.type === 'status') return p.status?.name || null;
+  if (p.type === 'formula') {
+    if (p.formula.type === 'string') return p.formula.string;
+    if (p.formula.type === 'number') return p.formula.number;
+  }
+  if (p.type === 'multi_select') return p.multi_select?.map((s: any) => s.name).join(', ') || null;
+  return null;
+};
+
 // Mapping helper
 function getPropertyValue(prop: any): any {
   if (!prop) return null;
@@ -154,43 +175,58 @@ app.post("/sync-notion", async (req, res) => {
     const projectsToUpsert = allRecords.map((page: any) => {
       const props = page.properties;
       
-      const ticket_id = getPropertyValue(props['Ticket']);
-      const project_name = getPropertyValue(props['Name']) || getPropertyValue(props['Project Name']);
-      
-      if (!project_name) return null;
-
-      const last_status = getPropertyValue(props['Last Status']) || 'On Queue';
-      const pic_name = getPropertyValue(props['PIC Name']) || 'Unassigned';
-      const owner_div = getPropertyValue(props['Owner Div']);
-      const owner_name = getPropertyValue(props['Owner Name']);
-      const project_type = getPropertyValue(props['Type Project']) || 'Uncategorized';
-      const last_update_log = getPropertyValue(props['Last Update']) || getPropertyValue(props['(Dev) Progress Updated']) || getPropertyValue(props['(SIT) Progress Updated']);
-
-      const statusLower = (last_status || '').toLowerCase();
-      // Keep only active projects for the API view
-      if (
-        statusLower.includes('live') || 
-        statusLower.includes('monitoring') || 
-        statusLower.includes('done')
-      ) {
-        return null;
-      }
-
-      const raw_data: any = {};
+      // Flatten properties first to meet "flatData" assumption
+      const flatData: any = {};
       Object.keys(props).forEach(key => {
-        raw_data[key] = getPropertyValue(props[key]);
+        flatData[key] = getPropertyValue(props[key]);
       });
 
+      const project_name = flatData["Project Name"] || flatData["Name"];
+      if (!project_name) return null;
+
+      const last_status = flatData["Last Status"] || 'On Queue';
+
       return {
-        ticket_id,
+        // Core Metadata
+        ticket_id: flatData["Ticket"] || null,
         project_name,
         last_status,
-        pic_name,
-        owner_div,
-        owner_name,
-        project_type,
-        last_update_log,
-        raw_data,
+        pic_name: flatData["PIC Name"] || 'Unassigned',
+        owner_name: flatData["Owner Name"] || null,
+        owner_div: flatData["Owner Div"] || null,
+        project_type: flatData["Type Project"] || 'Uncategorized',
+        last_update_log: flatData["Last Update"] || flatData["(Dev) Progress Updated"] || flatData["(SIT) Progress Updated"],
+        notion_last_edited: page.last_edited_time,
+        prioritas_mgmt: flatData["Prioritas Mgmt"] || null,
+        pic_short_name: flatData["PIC Short Name"] || null,
+
+        // Timeline & Sequential Data
+        tgl_fps_disetujui: flatData["Tgl FPS disetujui"] || null,
+        fsd_plan_week: flatData["(FSD) Plan in Week"] || null,
+        fsd_status: flatData["(FSD) Status"] || null,
+        fsd_realized_owner_approved: flatData["(FSD) Realized in Date Diisi saat Approval Digital FSD by Owner selesai"] || null,
+        
+        dev_plan_week: flatData["(Dev) Plan in Week"] || null,
+        dev_realized_date: flatData["(Dev) Realized In Date"] || null,
+        dev_late_days: flatData["(Dev) Late Days"] || null,
+
+        sit_plan_week: flatData["(SIT) Plan in Week"] || null,
+        sit_batch: flatData["(SIT) Batch.\nMisal isinya :\n1 (21-11-2021 to 24-11-2021)\n2 (28-11-2021 to 01-12-2021)"] || null,
+
+        uat_plan_week: flatData["(UAT) Plan in Week"] || null,
+        uat_batch: flatData["(UAT) Batch\nMisal isinya :\n1 (23-11-2021)\n2 (29-11-2021, dilanjutkan 02-12-2021)"] || flatData["(UAT) Batch"] || null,
+        uat_status: flatData["(UAT) Status"] || null,
+        uat_late_days: flatData["(UAT) Late Days"] || null,
+        
+        live_realized: flatData["(Live) Realized in Date"] || null,
+        monitoring_days: flatData["Monitoring After Live\n15, 30, 60 Hari (Kecil/Menengah/Besar)"] || flatData["Monitoring After Live"] || null,
+        
+        sla_mandays: flatData["SLA Mandays"] || null,
+        reschedule_uat: flatData["Reschedule UAT"] || null,
+        jumlah_reminder_uat: flatData["Jumlah Reminder UAT"] || null,
+        feedback_overall_score: flatData["Rata-rata Nilai Feedback User New :"] || 0,
+        
+        raw_data: flatData,
         updated_at: new Date().toISOString()
       };
     }).filter(Boolean);
